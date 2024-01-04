@@ -10,7 +10,8 @@
         video,
         canvas,
         angle,
-        alpha,
+        alpha0,
+        alpha1,
         op,
     } = ocx.create_child_mapping({
         children: [{
@@ -28,7 +29,7 @@
                 _key: 'angle',
                 tag:  'input',
                 attrs: {
-                    id:   'angle',
+                    id:    'angle',
                     type:  'number',
                     min:   0,
                     max:   2*Math.PI,
@@ -39,13 +40,30 @@
         }, {
             children: [{
                 tag: 'label',
-                children: [ 'alpha' ],
-                attrs: { for: 'alpha' },
+                children: [ 'alpha0' ],
+                attrs: { for: 'alpha0' },
             }, {
-                _key: 'alpha',
+                _key: 'alpha0',
                 tag:  'input',
                 attrs: {
-                    id:   'alpha',
+                    id:    'alpha0',
+                    type:  'number',
+                    min:   0,
+                    max:   1,
+                    value: 1,
+                    step:  0.1,
+                },
+            }],
+        }, {
+            children: [{
+                tag: 'label',
+                children: [ 'alpha1' ],
+                attrs: { for: 'alpha1' },
+            }, {
+                _key: 'alpha1',
+                tag:  'input',
+                attrs: {
+                    id:    'alpha1',
                     type:  'number',
                     min:   0,
                     max:   1,
@@ -62,23 +80,22 @@
                 _key: 'op',
                 tag:  'select',
                 attrs: {
-                    id:   'op',
+                    id: 'op',
                 },
-                children: [ 'source-over', 'source-in', 'source-out', 'source-atop',
-                            'destination-over', 'destination-in', 'destination-out', 'destination-atop',
-                            'lighter', 'copy', 'xor', 'multiply', 'screen', 'overlay',
-                            'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light',
-                            'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
-                          ].map(op => {
-                              return {
-                                  tag: 'option',
-                                  attrs: {
-                                      value: op,
-                                      ...((op === 'difference') ? { selected: '' } : {}),
-                                  },
-                                  children: [ op ],
-                              };
-                          }),
+                children: [
+                    'source-over', 'source-in', 'source-out', 'source-atop',
+                    'destination-over', 'destination-in', 'destination-out', 'destination-atop',
+                    'lighter', 'copy', 'xor', 'multiply', 'screen', 'overlay',
+                    'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light',
+                    'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
+                ].map(op => ({
+                    tag: 'option',
+                    attrs: {
+                        value: op,
+                        ...((op === 'difference') ? { selected: '' } : {}),
+                    },
+                    children: [ op ],
+                })),
             }],
         }],
     });
@@ -88,8 +105,8 @@
     function render() {
         const context = canvas.getContext('2d');
 
-        context.globalAlpha = 1;
-        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = +alpha0.value;
+        context.globalCompositeOperation = 'copy';
 
         const buffer = new OffscreenCanvas(width, height);
         {
@@ -105,7 +122,7 @@
         context.drawImage(buffer, 0, 0, width, height);
         context.resetTransform();
 
-        context.globalAlpha = +alpha.value;
+        context.globalAlpha = +alpha1.value;
         context.globalCompositeOperation = op.value;
         context.drawImage(video, 0, 0, width, height);
     }
