@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-c65389d7-e3d5-4094-9931-ee8377f7a49f" data-type="javascript">
+const markdown = `
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/2
+~~~ plain !
+--- Day 2: Red-Nosed Reports ---
+
+Fortunately, the first location The Historians want to search isn't a long walk from the Chief Historian's office.
+
+While the Red-Nosed Reindeer nuclear fusion/fission plant appears to contain no sign of the Chief Historian, the engineers there run up to you as soon as they see you. Apparently, they still talk about the time Rudolph was saved through molecular synthesis from a single electron.
+
+They're quick to add that - since you're already here - they'd really appreciate your help analyzing some unusual data from the Red-Nosed reactor. You turn to check if The Historians are waiting for you, but they seem to have already divided into groups that are currently searching every corner of the facility. You offer to help with the unusual data.
+
+The unusual data (your puzzle input) consists of many reports, one report per line. Each report is a list of numbers called levels that are separated by spaces. For example:
+
+7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9
+
+This example data contains six reports each containing five levels.
+
+The engineers are trying to figure out which reports are safe. The Red-Nosed reactor safety systems can only tolerate levels that are either gradually increasing or gradually decreasing. So, a report only counts as safe if both of the following are true:
+
+    The levels are either all increasing or all decreasing.
+    Any two adjacent levels differ by at least one and at most three.
+
+In the example above, the reports can be found safe or unsafe by checking those rules:
+
+    7 6 4 2 1: Safe because the levels are all decreasing by 1 or 2.
+    1 2 7 8 9: Unsafe because 2 7 is an increase of 5.
+    9 7 6 2 1: Unsafe because 6 2 is a decrease of 4.
+    1 3 2 4 5: Unsafe because 1 3 is increasing but 3 2 is decreasing.
+    8 6 4 4 1: Unsafe because 4 4 is neither an increase or a decrease.
+    1 3 6 7 9: Safe because the levels are all increasing by 1, 2, or 3.
+
+So, in this example, 2 reports are safe.
+
+Analyze the unusual data from the engineers. How many reports are safe?
+~~~
+`;
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+await ccx.markdown(markdown);
+</bq-cell>
+<bq-cell id="id-129b3ada-89ee-4118-80a1-50f316e02a1a" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// input_data is a string containing sets of at least two numbers separated by whitespace,
+// and with each set ending with a newline
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data + '\n';  // newline to simplify loop termination later</bq-cell>
+<bq-cell id="id-0b28dbf2-321b-458f-92e2-970a120a8e1d" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// display the input data
+await ocx.println('input data:');
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-height': '20ch',
+        'max-width':  'fit-content',
+        padding:      '1em',
+        overflow:     'auto',
+        border:       '1px solid lightgrey',
+    },
+});
+await ccx.render_text(this.input_data.trim());
+</bq-cell>
+<bq-cell id="id-797fd632-ee58-4ffe-8dcc-b9dae00bae3e" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// parse input_data and gather into array reports containing arrays of levels from each line
+this.reports = [];
+for (let i = 0, eol; i < this.input_data.length && (eol = this.input_data.indexOf('\n', i)) !== -1; i = eol+1) {
+    const line = this.input_data.slice(i, eol).trim();
+    if (line) {
+        const levels = line.split(/[\s]+/).map(str => +str);  // split on whitespace and convert to numbers
+        if (levels.some(level => typeof level !== 'number' || Number.isNaN(level))) {
+            throw new Error(`bad input_data line at i = ${i}`);
+        }
+        if (levels.length < 2) {
+            throw new Error(`not enough levels at i = ${i}`);
+        }
+        this.reports.push(levels);
+    }
+}</bq-cell>
+<bq-cell id="id-4d2c7aaa-6453-4025-9adf-5611a16d9623" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// make labels for each result
+this.report_labels = this.reports.map(report => report.join(' '));
+const max_label_length = this.report_labels.reduce((max, label) => ((max < label.length) ? label.length : max), 0);
+for (const label of this.report_labels) {
+    if (max_label_length < label.length) {
+        max_label_length = label.length;
+    }
+}
+for (let i = 0; i < this.report_labels.length; i++) {
+    const label = this.report_labels[i];
+    this.report_labels[i] = (label+':').padEnd(max_label_length+1, ' ');
+}</bq-cell>
+<bq-cell id="id-f48cdb42-bc9f-412a-a42d-1645bec9da97" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+this.max_delta_magnitude = 3;
+
+// The error analyzer function for a given report.
+// The return value will be a string describing an error or undefined if no error.
+this.report_analyzer = (report) => {
+    const deltas = report.map((_, i) => {
+        if (i <= 0) {
+            return undefined;
+        } else {
+            return (report[i] - report[i-1]);
+        }
+    });
+    const increasing = (deltas[1] > 0);
+    for (let i = 1; i < deltas.length; i++) {
+        const delta = deltas[i];
+        if (delta === 0) {
+            return `level remained constant at reading ${report[i]}`;
+        } else if (delta > 0) {
+            if (!increasing) {
+                return `level changed from decreasing to increasing at reading ${report[i]}`
+            }
+            if (delta > this.max_delta_magnitude) {
+                return `level changed by more than ${this.max_delta_magnitude} between reading ${report[i-1]} and ${report[i]}`
+            }
+        } else {  // delta < 0
+            if (increasing) {
+                return `level changed from increasing to decreasing at reading ${report[i]}`
+            }
+            if (delta < -this.max_delta_magnitude) {
+                return `level changed by more than ${this.max_delta_magnitude} between reading ${report[i-1]} and ${report[i]}`
+            }
+        }
+    }
+    return null;  // no error found
+};</bq-cell>
+<bq-cell id="id-85f492f4-453f-4de3-a601-d185d56c5720" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// Get results array with one element for each report.
+// Each element will be an array [ had_error, comment ]
+const results = this.reports.map((report, report_index) => {
+    const error = this.report_analyzer(report);
+    if (error) {
+        return [ true, `${this.report_labels[report_index]} UNSAFE; ${error}` ];
+    } else {
+        const increasing = report[0] < report[report.length - 1];
+        return [ false, `${this.report_labels[report_index]} SAFE; all levels steadily ${increasing ? 'increasing' : 'decreasing'} by no more than ${this.max_delta_magnitude}` ];
+    }
+});
+
+// display the results
+const safe_count = results.filter(([ had_error ]) => !had_error).length;
+const answer_element = await ocx.markdown(`**There were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**`);
+await ocx.println('results:');
+const ccx = ocx.create_child_ocx({
+    style: {
+        'font-family': 'monospace',
+        'max-height':  '60ch',
+        'max-width':   'fit-content',
+        padding:       '1em',
+        overflow:      'auto',
+        border:        '1px solid lightgrey',
+    },
+});
+await ccx.render_text(results.map(([ _, comment ]) => comment).join('\n'));
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-e23f6792-fadd-43a7-bbae-a0d0d2809253" data-type="javascript">await print__();
+
+const markdown = `
+~~~ plain !
+--- Part Two ---
+
+The engineers are surprised by the low number of safe reports until they realize they forgot to tell you about the Problem Dampener.
+
+The Problem Dampener is a reactor-mounted module that lets the reactor safety systems tolerate a single bad level in what would otherwise be a safe report. It's like the bad level never happened!
+
+Now, the same rules apply as before, except if removing a single level from an unsafe report would make it safe, the report instead counts as safe.
+
+More of the above example's reports are now safe:
+
+    7 6 4 2 1: Safe without removing any level.
+    1 2 7 8 9: Unsafe regardless of which level is removed.
+    9 7 6 2 1: Unsafe regardless of which level is removed.
+    1 3 2 4 5: Safe by removing the second level, 3.
+    8 6 4 4 1: Safe by removing the third level, 4.
+    1 3 6 7 9: Safe without removing any level.
+
+Thanks to the Problem Dampener, 4 reports are actually safe!
+
+Update your analysis by handling situations where the Problem Dampener can remove a single level from unsafe reports. How many reports are now safe?
+~~~
+`;
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '120ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+await ccx.markdown(markdown);</bq-cell>
+<bq-cell id="id-9d15b57a-97cf-46eb-a2e3-e2c156069eb4" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// Get results array with one element for each report.
+// Each element will be an array [ had_error, comment ]
+const results = this.reports.map((report, report_index) => {
+    const error = this.report_analyzer(report);
+    if (error) {
+        if (report.length > 2) {  // don't leave just one level reading
+            // try to "dampen" the report by removing one level reading
+            for (let omission_index = 0; omission_index < report.length; omission_index++) {
+                const dampened_report = report.filter((_, i) => (i !== omission_index));
+                const dampened_error = this.report_analyzer(dampened_report);
+                if (!dampened_error) {
+                    const increasing = dampened_report[0] < dampened_report[dampened_report.length - 1];
+                    return [ false, `${this.report_labels[report_index]} SAFE*; after omitting ${report[omission_index]} at index ${omission_index}, all levels steadily ${increasing ? 'increasing' : 'decreasing'} by no more than ${this.max_delta_magnitude}` ]
+                }
+            }
+        }
+        return [ true, `${this.report_labels[report_index]} UNSAFE; ${error}` ];
+    } else {  // !error
+        const increasing = report[0] < report[report.length - 1];
+        return [ false, `${this.report_labels[report_index]} SAFE; all levels steadily ${increasing ? 'increasing' : 'decreasing'} by no more than ${this.max_delta_magnitude}` ];
+    }
+});
+
+// display the results
+const safe_count = results.filter(([ had_error ]) => !had_error).length;
+const answer_element = await ocx.markdown(`**After "dampening" the reports, there were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**`);
+await ocx.println('results:');
+const ccx = ocx.create_child_ocx({
+    style: {
+        'font-family': 'monospace',
+        'max-height':  '60ch',
+        'max-width':   'fit-content',
+        padding:       '1em',
+        overflow:      'auto',
+        border:        '1px solid lightgrey',
+    },
+});
+await ccx.render_text(results.map(([ _, comment ]) => comment).join('\n'));
+</bq-cell>
+</body>
+</html>
