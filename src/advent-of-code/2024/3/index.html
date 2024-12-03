@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-6db339fd-91ee-47ab-8d08-d6e014bccd51" data-type="javascript">
+const markdown = `
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/3
+~~~ code
+--- Day 3: Mull It Over ---
+
+"Our computers are having issues, so I have no idea if we have any Chief Historians in stock!
+You're welcome to check the warehouse, though," says the mildly flustered shopkeeper at the
+North Pole Toboggan Rental Shop. The Historians head out to take a look.
+
+The shopkeeper turns to you. "Any chance you can see why our computers are having issues again?"
+
+The computer appears to be trying to run a program, but its memory (your puzzle input) is corrupted.
+All of the instructions have been jumbled up!
+
+It seems like the goal of the program is just to multiply some numbers. It does that with instructions
+like mul(X,Y), where X and Y are each 1-3 digit numbers. For instance, mul(44,46) multiplies 44 by 46
+to get a result of 2024. Similarly, mul(123,4) would multiply 123 by 4.
+
+However, because the program's memory has been corrupted, there are also many invalid characters that
+should be ignored, even if they look like part of a mul instruction.
+Sequences like mul(4*, mul(6,9!, ?(12,34), or mul ( 2 , 4 ) do nothing.
+
+For example, consider the following section of corrupted memory:
+
+xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+ ^^^^^^^^                    ^^^^^^^^                ^^^^^^^^^^^^^^^^^
+
+Only the four highlighted sections are real mul instructions. Adding up the result of each instruction
+produces 161 (2*4 + 5*5 + 11*8 + 8*5).
+
+Scan the corrupted memory for uncorrupted mul instructions. What do you get if you add up all of the
+results of the multiplications?
+~~~
+`;
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+await ccx.markdown(markdown);
+</bq-cell>
+<bq-cell id="id-75a382c4-9839-4552-b3dd-7c827745ded7" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// input_data is a long string of characters.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data;</bq-cell>
+<bq-cell id="id-d6b4d231-b397-4e3f-bb20-6b1cbaff0a68" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+// display the input data
+await ocx.println('input data:');
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-height': '20ch',
+        'max-width':  'fit-content',
+        padding:      '1em',
+        overflow:     'auto',
+        border:       '1px solid lightgrey',
+    },
+});
+await ccx.render_text(this.input_data);</bq-cell>
+<bq-cell id="id-915cacaa-d73d-4683-93c3-1d2fc00a0321" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+const found_expressions = [];
+const found_arguments   = [];
+for (let i = 0; i < this.input_data.length; ) {
+    const match = this.input_data.slice(i).match(/mul[(]([\d]{1,3})[,]([\d]{1,3})[)]/);
+    if (!match) {
+        break;  // nothing more to process
+    } else {
+        const start = i + match.index;
+        const end   = start + match[0].length;
+        i = end;
+        found_expressions.push(this.input_data.slice(start, end));
+        found_arguments.push([ +match[1], +match[2] ]);
+    }
+}
+
+const sum_of_multiplying_arguments = found_arguments
+    .map(([ a, b ]) => a*b)
+    .reduce((total, m) => total+m);
+
+// display the answer
+const answer_element = await ocx.markdown(`**The sum of the results of the ${found_expressions.length} mul() instruction${found_expressions.length === 1 ? '' : 's'} is ${sum_of_multiplying_arguments}.**`);
+
+// display found_expressions
+await ocx.println(`found expressions (${found_expressions.length}):`);
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-height': '20ch',
+        'max-width':  'fit-content',
+        padding:      '1em',
+        overflow:     'auto',
+        border:       '1px solid lightgrey',
+    },
+});
+await ccx.render_text(found_expressions.join('\n'));
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-02210983-3814-470f-984b-3c3a200e3ea9" data-type="javascript">await print__();
+
+const markdown = `
+~~~ plain !
+--- Part Two ---
+
+As you scan through the corrupted memory, you notice that some of the conditional statements are also still intact. If you handle some of the uncorrupted conditional statements in the program, you might be able to get an even more accurate result.
+
+There are two new instructions you'll need to handle:
+
+    The do() instruction enables future mul instructions.
+    The don't() instruction disables future mul instructions.
+
+Only the most recent do() or don't() instruction applies. At the beginning of the program, mul instructions are enabled.
+
+For example:
+
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+
+This corrupted memory is similar to the example from before, but this time the mul(5,5) and mul(11,8) instructions are disabled because there is a don't() instruction before them. The other mul instructions function normally, including the one at the end that gets re-enabled by a do() instruction.
+
+This time, the sum of the results is 48 (2*4 + 8*5).
+
+Handle the new instructions; what do you get if you add up all of the results of just the enabled multiplications?
+~~~
+`;
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '120ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+await ccx.markdown(markdown);</bq-cell>
+<bq-cell id="id-0f59a8a8-4da1-41ab-86c8-9139ba75239c" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
+
+const found_expressions = [];
+const found_arguments   = [];
+let gathering = true;
+for (let i = 0; i < this.input_data.length; ) {
+    const match = this.input_data.slice(i).match(/do[(][)]|don[']t[(][)]|mul[(]([\d]{1,3})[,]([\d]{1,3})[)]/);
+    if (!match) {
+        break;  // nothing more to process
+    } else {
+        const start = i + match.index;
+        const end   = start + match[0].length;
+        i = end;
+        if (match[0] === "do()") {
+            gathering = true;
+        } else if (match[0] === "don't()") {
+            gathering = false;
+        } else {
+            if (gathering) {
+                found_expressions.push(this.input_data.slice(start, end));
+                found_arguments.push([ +match[1], +match[2] ]);
+            }
+        }
+    }
+}
+
+const sum_of_multiplying_arguments = found_arguments
+    .map(([ a, b ]) => a*b)
+    .reduce((total, m) => total+m);
+
+// display the answer
+await ocx.markdown(`**Honoring the conditional instructions, the sum of the results of the ${found_expressions.length} enabled mul() instruction${found_expressions.length === 1 ? '' : 's'} is ${sum_of_multiplying_arguments}.**`);
+
+// display found_expressions
+await ocx.println(`found expressions (${found_expressions.length}):`);
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-height': '20ch',
+        'max-width':  'fit-content',
+        padding:      '1em',
+        overflow:     'auto',
+        border:       '1px solid lightgrey',
+    },
+});
+await ccx.render_text(found_expressions.join('\n'));</bq-cell>
+</body>
+</html>
