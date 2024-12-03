@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-auto-eval>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
     <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
@@ -48,15 +48,13 @@ So, in this example, 2 reports are safe.
 Analyze the unusual data from the engineers. How many reports are safe?
 ~~~
 `;
-const ccx = ocx.create_child_ocx({
+await ocx.markdown(markdown, {
     style: {
         'max-width': '100ch',
         border:      '1px solid grey',
         padding:     '1em',
     },
-});
-await ccx.markdown(markdown);
-</bq-cell>
+});</bq-cell>
 <bq-cell id="id-129b3ada-89ee-4118-80a1-50f316e02a1a" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
 
 // input_data is a string containing sets of at least two numbers separated by whitespace,
@@ -72,7 +70,7 @@ this.input_data = input_data + '\n';  // newline to simplify loop termination la
 
 // display the input data
 await ocx.println('input data:');
-const ccx = ocx.create_child_ocx({
+await ocx.render_text(this.input_data.trim(), {
     style: {
         'max-height': '20ch',
         'max-width':  'fit-content',
@@ -80,9 +78,7 @@ const ccx = ocx.create_child_ocx({
         overflow:     'auto',
         border:       '1px solid lightgrey',
     },
-});
-await ccx.render_text(this.input_data.trim());
-</bq-cell>
+});</bq-cell>
 <bq-cell id="id-797fd632-ee58-4ffe-8dcc-b9dae00bae3e" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
 
 // parse input_data and gather into array reports containing arrays of levels from each line
@@ -167,9 +163,12 @@ const results = this.reports.map((report, report_index) => {
 
 // display the results
 const safe_count = results.filter(([ had_error ]) => !had_error).length;
-const answer_element = await ocx.markdown(`**There were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**`);
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+**There were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**
+`);
 await ocx.println('results:');
-const ccx = ocx.create_child_ocx({
+await ocx.render_text(results.map(([ _, comment ]) => comment).join('\n'), {
     style: {
         'font-family': 'monospace',
         'max-height':  '60ch',
@@ -179,7 +178,6 @@ const ccx = ocx.create_child_ocx({
         border:        '1px solid lightgrey',
     },
 });
-await ccx.render_text(results.map(([ _, comment ]) => comment).join('\n'));
 
 // scroll answer_element into view, but after a delay to let other rendering finish
 sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
@@ -210,14 +208,13 @@ Update your analysis by handling situations where the Problem Dampener can remov
 ~~~
 `;
 
-const ccx = ocx.create_child_ocx({
+await ocx.markdown(markdown, {
     style: {
         'max-width': '120ch',
         border:      '1px solid grey',
         padding:     '1em',
     },
-});
-await ccx.markdown(markdown);</bq-cell>
+});</bq-cell>
 <bq-cell id="id-9d15b57a-97cf-46eb-a2e3-e2c156069eb4" data-type="javascript" class="show-in-presentation">cell.show_in_presentation(true);
 
 // Get results array with one element for each report.
@@ -245,9 +242,12 @@ const results = this.reports.map((report, report_index) => {
 
 // display the results
 const safe_count = results.filter(([ had_error ]) => !had_error).length;
-const answer_element = await ocx.markdown(`**After "dampening" the reports, there were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**`);
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+**After "dampening" the reports, there were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**
+`);
 await ocx.println('results:');
-const ccx = ocx.create_child_ocx({
+await ocx.render_text(results.map(([ _, comment ]) => comment).join('\n'), {
     style: {
         'font-family': 'monospace',
         'max-height':  '60ch',
@@ -256,8 +256,6 @@ const ccx = ocx.create_child_ocx({
         overflow:      'auto',
         border:        '1px solid lightgrey',
     },
-});
-await ccx.render_text(results.map(([ _, comment ]) => comment).join('\n'));
-</bq-cell>
+});</bq-cell>
 </body>
 </html>
