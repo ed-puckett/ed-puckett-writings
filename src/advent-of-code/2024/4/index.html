@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-9719296c-83a8-4a7c-b202-7905cb3d9bcb" data-type="javascript">
+const markdown = `
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/4
+~~~ code
+--- Day 4: Ceres Search ---
+
+"Looks like the Chief's not here. Next!" One of The Historians pulls out a device and pushes the only
+button on it. After a brief flash, you recognize the interior of the Ceres monitoring station!
+
+As the search for the Chief continues, a small Elf who lives on the station tugs on your shirt; she'd
+like to know if you could help her with her word search (your puzzle input). She only has to find one
+word: XMAS.
+
+This word search allows words to be horizontal, vertical, diagonal, written backwards, or even
+overlapping other words. It's a little unusual, though, as you don't merely need to find one instance
+of XMAS - you need to find all of them. Here are a few ways XMAS might appear, where irrelevant
+characters have been replaced with .:
+
+..X...
+.SAMX.
+.A..A.
+XMAS.S
+.X....
+
+The actual word search will be full of letters instead. For example:
+
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+
+In this word search, XMAS occurs a total of 18 times; here's the same word search again, but where
+letters not involved in any XMAS have been replaced with .:
+
+....XXMAS.
+.SAMXMS...
+...S..A...
+..A.A.MS.X
+XMASAMX.MM
+X.....XA.A
+S.S.S.S.SS
+.A.A.A.A.A
+..M.M.M.MM
+.X.X.XMASX
+
+Take a look at the little Elf's word search. How many times does XMAS appear?
+~~~
+`;
+await ocx.markdown(markdown, {
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+</bq-cell>
+<bq-cell id="id-63ff093b-b992-42b8-9cc1-fa1e9ca2e4ed" data-type="javascript" class="show-full show-in-presentation">// This is the word we are searching for:
+this.search_word = 'XMAS';
+
+// input_data is a long string of characters separated into rows by newlines.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();
+
+this.grid = this.input_data.split('\n');
+this.rows = this.grid.length;
+this.cols = this.grid[0].length;  // we expect all rows to be the same length
+
+if (this.rows < this.search_word.length) {
+    throw new Error(`input_data expected to have at least ${this.search_word.length} rows`);
+}
+if (!this.grid.every(row => row.length === this.cols)) {
+    throw new Error('input_data does not have all rows the same length');
+}
+if (this.cols < this.search_word.length) {
+    throw new Error(`input_data expected to have at least ${this.search_word.length} columns`);
+}</bq-cell>
+<bq-cell id="id-29d2a46d-5093-4a0b-8796-959bc3f50c74" data-type="javascript" class="show-full show-in-presentation">// display the input data
+await ocx.println(`input data (${this.rows}x${this.cols}):`);
+await ocx.render_text(this.input_data, {
+    style: {
+        'font-family': 'monospace',
+        'max-height':  '20ch',
+        'max-width':   'fit-content',
+        padding:       '1em',
+        overflow:      'auto',
+        border:        '1px solid lightgrey',
+    },
+});</bq-cell>
+<bq-cell id="id-9e064f1c-0831-4d35-8962-af0940cc498b" data-type="javascript" class="show-full show-in-presentation">this.search_directions = [  // arrays of { label, offsets: [ row_offset, col_offset ] }
+    { offsets: [  0,  1 ],  label: 'E'  },
+    { offsets: [ -1,  1 ],  label: 'NE' },
+    { offsets: [ -1,  0 ],  label: 'N'  },
+    { offsets: [ -1, -1 ],  label: 'NW' },
+    { offsets: [  0, -1 ],  label: 'W'  },
+    { offsets: [  1, -1 ],  label: 'SW' },
+    { offsets: [  1,  0 ],  label: 'S'  },
+    { offsets: [  1,  1 ],  label: 'SE' },
+];
+
+this.test_at = (r, c, wrapping=false) => {
+    if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) {
+        throw new Error(`(r, c) = (${r}, ${c}) is out of bounds`);
+    }
+    const matches = [];  // array of { r, c, direction }
+    for (const direction of this.search_directions) {
+        const { offsets } = direction;
+        const [ dr, dc ] = offsets;
+
+        let mismatch = false;  // so far...
+        let ri = r, ci = c;
+        for (const letter of this.search_word) {
+            if (wrapping) {
+                if (ri <  0)         ri += this.rows;
+                if (ri >= this.rows) ri -= this.rows;
+                if (ci <  0)         ci += this.cols;
+                if (ci >= this.cols) ci -= this.cols;
+            } else {
+                if (ri <  0 || ri >= this.rows || ci <  0 || ci >= this.cols) {
+                    mismatch = true;
+                    break;
+                }
+            }
+            if (this.grid[ri][ci] !== letter) {
+                mismatch = true;
+                break;
+            }
+            ri += dr;
+            ci += dc;
+        }
+        if (!mismatch) {
+            matches.push({ r, c, direction });
+        }
+    }
+    return matches;
+}
+
+this.test = (wrapping=false) => {
+    const all_matches = [];
+    for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+            const matches = this.test_at(r, c, wrapping);
+            all_matches.push(...matches);
+        }
+    }
+    return all_matches;
+}
+
+const all_matches          = this.test();
+const all_matches_wrapping = this.test(true);
+
+console.log({ all_matches, all_matches_wrapping });
+
+// display the answer
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+**Found ${all_matches.length} occurrences of "${this.search_word}".**
+`);
+
+// display all_matches
+await ocx.println(`matches:`);
+await ocx.render_text(
+    all_matches
+        .map(match => `${match.direction.label} at (${match.r}, ${match.c})`)
+        .join('\n'),
+    {
+        style: {
+            'max-height': '20ch',
+            'max-width':  'fit-content',
+            padding:      '1em',
+            overflow:     'auto',
+            border:       '1px solid lightgrey',
+        },
+    }
+);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-12bcb3cb-2dea-4318-b8e8-c4a9a8500877" data-type="javascript">await print__();
+
+const markdown = `
+~~~ code
+--- Part Two ---
+
+The Elf looks quizzically at you. Did you misunderstand the assignment?
+
+Looking for the instructions, you flip over the word search to find that this isn't actually an
+XMAS puzzle; it's an X-MAS puzzle in which you're supposed to find two MAS in the shape of an X.
+One way to achieve that is like this:
+
+M.S
+.A.
+M.S
+
+Irrelevant characters have again been replaced with . in the above diagram. Within the X, each
+MAS can be written forwards or backwards.
+
+Here's the same example from before, but this time all of the X-MASes have been kept instead:
+
+.M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+..........
+
+In this example, an X-MAS appears 9 times.
+
+Flip the word search from the instructions back over to the word search side and try again.
+How many times does an X-MAS appear?
+--- Part Two ---
+~~~
+`;
+
+await ocx.markdown(markdown, {
+    style: {
+        'max-width': '120ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});</bq-cell>
+<bq-cell id="id-194bc8b4-b235-43ec-ac36-681fbb4a5d5b" data-type="javascript" class="show-full show-in-presentation">const x_locations = []; // array of [ r, c ] of middle 'A'
+for (let r = 1; r < this.rows-1; r++) {
+    for (let c = 1; c < this.cols-1; c++) {
+        if (this.grid[r][c] === 'A') {
+            // d1: diagonal from upper-left to lower-right
+            const d1_1 = this.grid[r-1][c-1];
+            const d1_2 = this.grid[r+1][c+1];
+            // d2: diagonal from upper-right to lower-left
+            const d2_1 = this.grid[r-1][c+1];
+            const d2_2 = this.grid[r+1][c-1];
+            if ( (d1_1 === 'M' && d1_2 === 'S') ||
+                 (d1_1 === 'S' && d1_2 === 'M')    ) {
+                if ( (d2_1 === 'M' && d2_2 === 'S') ||
+                     (d2_1 === 'S' && d2_2 === 'M')    ) {
+                    x_locations.push([ r, c ]);
+                }
+            }
+        }
+    }
+}
+
+// display the answer
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+**Found ${x_locations.length} Xs of the letters M-A-S.**
+`);
+
+// display x_locations
+await ocx.println(`Locations of the central A in the Xs:`);
+await ocx.render_text(
+    x_locations
+        .map(location => `(${location[0]}, ${location[1]})`)
+        .join('\n'),
+    {
+        style: {
+            'max-height': '20ch',
+            'max-width':  'fit-content',
+            padding:      '1em',
+            overflow:     'auto',
+            border:       '1px solid lightgrey',
+        },
+    }
+);</bq-cell>
+</body>
+</html>
