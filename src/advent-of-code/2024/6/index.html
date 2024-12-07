@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-16d714a0-b846-4651-9a42-9b4b255cc623" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/6
+`);
+const description = `
+--- Day 6: Guard Gallivant ---
+
+The Historians use their fancy device again, this time to whisk you all away to the North Pole prototype suit manufacturing lab... in the year 1518! It turns out that having direct access to history is very convenient for a group of historians.
+
+You still have to be careful of time paradoxes, and so it will be important to avoid anyone from 1518 while The Historians search for the Chief. Unfortunately, a single guard is patrolling this part of the lab.
+
+Maybe you can work out where the guard will go ahead of time so that The Historians can search safely?
+
+You start by making a map (your puzzle input) of the situation. For example:
+
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+
+The map shows the current position of the guard with ^ (to indicate the guard is currently facing up from the perspective of the map). Any obstructions - crates, desks, alchemical reactors, etc. - are shown as #.
+
+Lab guards in 1518 follow a very strict patrol protocol which involves repeatedly following these steps:
+
+    If there is something directly in front of you, turn right 90 degrees.
+    Otherwise, take a step forward.
+
+Following the above protocol, the guard moves up several times until she reaches an obstacle (in this case, a pile of failed suit prototypes):
+
+....#.....
+....^....#
+..........
+..#.......
+.......#..
+..........
+.#........
+........#.
+#.........
+......#...
+
+Because there is now an obstacle in front of the guard, she turns right before continuing straight in her new facing direction:
+
+....#.....
+........>#
+..........
+..#.......
+.......#..
+..........
+.#........
+........#.
+#.........
+......#...
+
+Reaching another obstacle (a spool of several very long polymers), she turns right again and continues downward:
+
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#......v.
+........#.
+#.........
+......#...
+
+This process continues for a while, but the guard eventually leaves the mapped area (after walking past a tank of universal solvent):
+
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#........
+........#.
+#.........
+......#v..
+
+By predicting the guard's route, you can determine which specific positions in the lab will be in the patrol path. Including the guard's starting position, the positions visited by the guard before leaving the area are marked with an X:
+
+....#.....
+....XXXXX#
+....X...X.
+..#.X...X.
+..XXXXX#X.
+..X.X.X.X.
+.#XXXXXXX.
+.XXXXXXX#.
+#XXXXXXX..
+......#X..
+
+In this example, the guard will visit 41 distinct positions on your map.
+
+Predict the path of the guard. How many distinct positions will the guard visit before leaving the mapped area?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell><output class="bq-cell-output" data-source-element="id-16d714a0-b846-4651-9a42-9b4b255cc623" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"><div style="max-width: 100ch; border: 1px solid grey; padding: 1em;"><div data-source-media-type="text/markdown"><h1 id="excerpt-of-problem">Excerpt of Problem</h1>
+<h2 id="from-httpsadventofcodecom2024day6">From: <a href="https://adventofcode.com/2024/day/6">https://adventofcode.com/2024/day/6</a></h2>
+</div><div data-source-media-type="text/plain" class="plain-text" style="font-family: monospace;"><br>--- Day 6: Guard Gallivant ---<br><br>The Historians use their fancy device again, this time to whisk you all away to the North Pole prototype suit manufacturing lab... in the year 1518! It turns out that having direct access to history is very convenient for a group of historians.<br><br>You still have to be careful of time paradoxes, and so it will be important to avoid anyone from 1518 while The Historians search for the Chief. Unfortunately, a single guard is patrolling this part of the lab.<br><br>Maybe you can work out where the guard will go ahead of time so that The Historians can search safely?<br><br>You start by making a map (your puzzle input) of the situation. For example:<br><br>....#.....<br>.........#<br>..........<br>..#.......<br>.......#..<br>..........<br>.#..^.....<br>........#.<br>#.........<br>......#...<br><br>The map shows the current position of the guard with ^ (to indicate the guard is currently facing up from the perspective of the map). Any obstructions - crates, desks, alchemical reactors, etc. - are shown as #.<br><br>Lab guards in 1518 follow a very strict patrol protocol which involves repeatedly following these steps:<br><br>    If there is something directly in front of you, turn right 90 degrees.<br>    Otherwise, take a step forward.<br><br>Following the above protocol, the guard moves up several times until she reaches an obstacle (in this case, a pile of failed suit prototypes):<br><br>....#.....<br>....^....#<br>..........<br>..#.......<br>.......#..<br>..........<br>.#........<br>........#.<br>#.........<br>......#...<br><br>Because there is now an obstacle in front of the guard, she turns right before continuing straight in her new facing direction:<br><br>....#.....<br>........&gt;#<br>..........<br>..#.......<br>.......#..<br>..........<br>.#........<br>........#.<br>#.........<br>......#...<br><br>Reaching another obstacle (a spool of several very long polymers), she turns right again and continues downward:<br><br>....#.....<br>.........#<br>..........<br>..#.......<br>.......#..<br>..........<br>.#......v.<br>........#.<br>#.........<br>......#...<br><br>This process continues for a while, but the guard eventually leaves the mapped area (after walking past a tank of universal solvent):<br><br>....#.....<br>.........#<br>..........<br>..#.......<br>.......#..<br>..........<br>.#........<br>........#.<br>#.........<br>......#v..<br><br>By predicting the guard's route, you can determine which specific positions in the lab will be in the patrol path. Including the guard's starting position, the positions visited by the guard before leaving the area are marked with an X:<br><br>....#.....<br>....XXXXX#<br>....X...X.<br>..#.X...X.<br>..XXXXX#X.<br>..X.X.X.X.<br>.#XXXXXXX.<br>.XXXXXXX#.<br>#XXXXXXX..<br>......#X..<br><br>In this example, the guard will visit 41 distinct positions on your map.<br><br>Predict the path of the guard. How many distinct positions will the guard visit before leaving the mapped area?<br></div></div></div></output>
+<bq-cell id="id-d7bd39c2-c847-4c78-b2ee-9675bd9af2ae" data-type="javascript" class="show-full show-in-presentation">
+// input_data is a long string of characters separated into rows by newlines.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();
+
+this.blank_char = '.';
+this.direction_chars = '>^&lt;v';  // corresponding to 0, 90, 180 and 270 degrees
+this.guard_prior_position_char = 'X';
+
+this.init_map = () => {
+    this.input_map = this.input_data.split('\n');
+    this.rows = this.input_map.length;
+    this.cols = this.input_map[0].length;  // we expect all rows to be the same length
+
+    if (!this.input_map.every(row => row.length === this.cols)) {
+        throw new Error('input_data does not have all rows the same length');
+    }
+
+    // create a mutable copy of input_map for a workspace
+    this.map = this.input_map.map(row => Array.from(row));
+
+    this.find_guard = () => {
+        const found_positions = [];
+        let found_r, found_c;
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                if (this.direction_chars.includes(this.map[r][c])) {
+                    found_positions.push([ r, c ]);
+                }
+            }
+        }
+        if (found_positions.length <= 0) {
+            throw new Error('guard not found');
+        }
+        if (found_positions.length > 1) {
+            throw new Error(`multiple guard positions found: ${found_positions.map(([fr, fc]) => `(${fr},${fc})`).join(', ')}`);
+        }
+        return [ ...found_positions[0] ];
+    }
+
+    this.guard_pos = this.find_guard();
+}
+this.init_map();</bq-cell><output class="bq-cell-output" data-source-element="id-d7bd39c2-c847-4c78-b2ee-9675bd9af2ae" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"></div></output>
+<bq-cell id="id-0843de37-f1e2-4d10-897d-7e1751fcb300" data-type="javascript" class="show-full show-in-presentation">// display the separated input data
+
+this.map_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+this.create_string_from_map = () => {
+    const lines = [];
+    const row_digit_count = (this.rows - 1).toString().length;
+    const col_digit_count = (this.cols - 1).toString().length;
+
+    const create_side_label = (r, left_side) => {
+        const row_number_string = r.toString().padStart(row_digit_count, ' ');
+        const border_string = (r%10 === 0) ? '+' : '|';
+        if (left_side) {
+            return `${row_number_string} ${border_string} `;
+        } else {
+            return ` ${border_string} ${row_number_string}`;
+        }
+    }
+    const left_label_length = row_digit_count + 1 + 1 + 1;
+
+    const create_upper_or_lower_label = (upper_side) => {
+        const indent = ' '.repeat(left_label_length);
+        const border_string = `${indent}${'+---------'.repeat(Math.ceil(this.cols/10)).slice(0, this.cols)}`;
+        const col_number_label_string_lines = [];
+        for (let i = 0; i < col_digit_count; i++) {
+            const col_number_label_string_chars = [];
+            col_number_label_string_chars.push(indent);
+            for (let c = 0; c < this.cols; c++) {
+                if (c%10 === 0) {
+                    const col_number_string = c.toString().padStart(col_digit_count, ' ');
+                    col_number_label_string_chars.push(col_number_string[i]);
+                } else {
+                    col_number_label_string_chars.push(' ');
+                }
+            }
+            col_number_label_string_lines.push(col_number_label_string_chars.join(''));
+        }
+        const col_number_label_string = col_number_label_string_lines.join('\n');
+        const label_lines = [];
+        if (upper_side) {
+            label_lines.push(col_number_label_string);
+            label_lines.push(border_string);
+        } else {
+            label_lines.push(border_string);
+            label_lines.push(col_number_label_string);
+        }
+        return label_lines.join('\n');
+    }
+
+    lines.push(create_upper_or_lower_label(true));
+    for (let r = 0; r < this.rows; r++) {
+        const row = this.map[r];
+        lines.push(`${create_side_label(r, true)}${row.join('')}${create_side_label(r, false)}`);
+    }
+    lines.push(create_upper_or_lower_label(false));
+    return lines.join('\n');
+}
+
+await ocx.println(`The initial map (${this.rows}x${this.cols}):`);
+await ocx.render_text(this.create_string_from_map(), this.map_output_options);</bq-cell><output class="bq-cell-output" data-source-element="id-0843de37-f1e2-4d10-897d-7e1751fcb300" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"><div data-source-media-type="text/plain" class="plain-text">The initial map (130x130):<br></div><div data-source-media-type="text/plain" class="plain-text" style="font-family: monospace; white-space: pre; max-width: fit-content; padding: 1em; overflow: auto; border: 1px solid lightgrey;">                                                                                                          1         1         1         <br>                1         2         3         4         5         6         7         8         9         0         1         2         <br>      0         0         0         0         0         0         0         0         0         0         0         0         0         <br>      +---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------<br>  0 + .........#...................................................................................................#.................#.. +   0<br>  1 | ...........................#.......................................#.............................................................. |   1<br>  2 | .............#.................................................................................#............................#..... |   2<br>  3 | ...#.....................#.......#....................................#..............#.............................#...........#.# |   3<br>  4 | ..........#.....#..#.....#.............#..................#............#.....#........#.#.......#............................#.... |   4<br>  5 | ...#...................#..........#...................#.........#..#..............##.......................................#...... |   5<br>  6 | ..................................................................................................#............................... |   6<br>  7 | ...............#.........#....#.#..#.........#...........#...#....................#.........#.......#....#........................ |   7<br>  8 | ..........................................#......#.#...................................................#.............#............ |   8<br>  9 | ....................#............................#..........................................#.....................#.........#..... |   9<br> 10 + ..............#..................................#................#..#...........................................#................ +  10<br> 11 | .........#....###.......#........................................................................................#.#.....#...#..#. |  11<br> 12 | .#....................................#.....................................#.................................#..................# |  12<br> 13 | ........................#...................................#.#....................#......##.#.........#.......................... |  13<br> 14 | ............#.......#..................#.......................................................................................... |  14<br> 15 | ....#.............#.#.....#...#.....#......................#...............#............##...#.................................... |  15<br> 16 | ...#....#.....................................##........#........#....##.....................................#.................... |  16<br> 17 | ...........................................................................#........#..........##................................# |  17<br> 18 | ..............................#.#......................#..........................#..#........#...............................#... |  18<br> 19 | ..............#.........###.......................................#...........#...............#......#.........#........#.....#... |  19<br> 20 + ............#............................#....................#........................#............#............................. +  20<br> 21 | .........................................#.....................................................#.....#...............#............ |  21<br> 22 | .#...##.......................#.......#..........................................................................#...#...........# |  22<br> 23 | ....#..............#............#......#........................#.......................#...#.......................#............. |  23<br> 24 | .......#...............#......#......#..........................................#..................#....................#...#..... |  24<br> 25 | .......................................................................#.........#................................................ |  25<br> 26 | .#.......#........................................................##.............................................................. |  26<br> 27 | .........................#...................#..#......##..................................#......#......#........................ |  27<br> 28 | ......................................#..............................................#......#..........#.#.........#.............. |  28<br> 29 | .....#..............#..#........#..............................#...##............................................................. |  29<br> 30 + ..##............................#.......................................................#..........#.............................. +  30<br> 31 | ...........................................................##................................................#.................... |  31<br> 32 | #...............#.........#.....................................................#......................###........................ |  32<br> 33 | #.#.......................#........................#..#.....................#....#........#........................#...#.........# |  33<br> 34 | ............#.............#.#............#........................#..........#.................................................... |  34<br> 35 | ............#...................#.....................................................................................#.......#... |  35<br> 36 | .............................#...#..#...........................#...#.........................................................#... |  36<br> 37 | ........#.......................##..........................................................#.........#.....................#..... |  37<br> 38 | ............##............#..........................................................#.#.....#......#.#.......#................... |  38<br> 39 | ...........#.....#......#.................#.............#......................................#.....#...#........................ |  39<br> 40 + #............#.........#.......##.....#......#...........#...........#.......#................#................................... +  40<br> 41 | ......#..#...#.....#................................................#............#...#..........^................................. |  41<br> 42 | ............................................................................................................#....#................ |  42<br> 43 | ......................................#.............................#........................#...............#.....#...#.......... |  43<br> 44 | ...#.........................................................................#.................................................... |  44<br> 45 | .....................................#.........................................................#.............#.........#.......... |  45<br> 46 | #..............................#...#.................................#............................................................ |  46<br> 47 | ..........#..................#............#.......#...........................#...................#.....#......................... |  47<br> 48 | ............................#...##.............................................................#............#..................... |  48<br> 49 | .................#..................................................................#..#..............#........................... |  49<br> 50 + ..................#...............................#................#............#...........#......#............#................. +  50<br> 51 | .....#......................#..............#.......................#......................#....................................... |  51<br> 52 | ...............................#.....#.......................#.......#......................#......#............#...........#..... |  52<br> 53 | ......#.............##....#.....#...............#.....#............................#....................................#......... |  53<br> 54 | ...#.#.......#..#...##.............................................................#.#.#...........#.....#................#....... |  54<br> 55 | ...........................................#...#......#........................................................................... |  55<br> 56 | .........#.................................#........................................................................#........#.#.. |  56<br> 57 | ........................#..........................................#.......#..............#....................................... |  57<br> 58 | ....................................................#...............#..........................#.................................. |  58<br> 59 | ............................#................#......#...............#.....................#....................................... |  59<br> 60 + #.#............#......................................................................................#.....#..................... +  60<br> 61 | ................................................................#....#..........................................#........#......#. |  61<br> 62 | .......#........#......................................................................#.................#..................#.#... |  62<br> 63 | ...............................#...#......................................................................#.........#.........#... |  63<br> 64 | ...........#..#..................##..#.........................................#..............##............................#..... |  64<br> 65 | #........#...............#.....#.....#.................#............#....#.............................#.......#.................# |  65<br> 66 | ...............#...................................................#.......#.......................#......#.............#......... |  66<br> 67 | ...#............................................................................................................................#. |  67<br> 68 | #.....................#......................................................#...........................................#........ |  68<br> 69 | ...........#..........................................#.......................................#.....................#............. |  69<br> 70 + ....#.##.......#..............#.....#..............................#....................................#.....................#... +  70<br> 71 | ...............................................................................................................#...............#.. |  71<br> 72 | .#...........................#...#.....#...#...................#....#........#.........#................................#......... |  72<br> 73 | .................#............................................................................#........................#..#....... |  73<br> 74 | .............#....#.....................................................#............#.........................#.......#.......... |  74<br> 75 | #....#........................#....................................................................##............................. |  75<br> 76 | ...#.#.....................................#...............................................#.....................#....#.........#. |  76<br> 77 | .........#..............................#....................................#.................#............#..................... |  77<br> 78 | ................................................................#................................................................. |  78<br> 79 | #.......#..............................................#.............................#...........#................................ |  79<br> 80 + .#......#.........#.............................#...............................................................#................. +  80<br> 81 | .........#.....#......#.......................................................................................................#... |  81<br> 82 | #..............................#........#............................#.................................#.....#.....#.............. |  82<br> 83 | ......#.....................................#.......#........#.................................................................... |  83<br> 84 | #.......#.....................................#......................................................................#............ |  84<br> 85 | .....................................#......................................#......#.##..................#.....#.#................ |  85<br> 86 | .......................#.........#......#...........................................................................##............ |  86<br> 87 | .....#......#.#.................................................#.............................#............#.#.......#............ |  87<br> 88 | ..................#.......................................#.#.............................#..................................#.... |  88<br> 89 | ......................#.......#.....................#...................#......#.........................................#........ |  89<br> 90 + .........#...................................................................................................#....#............... +  90<br> 91 | .........................#...........#..........#...............#.....#...................................................##...... |  91<br> 92 | #...#......#.#.....................#..................#.................#..................#...................................... |  92<br> 93 | ..............................#.....#................#.....................#............#...#....#............#...#............... |  93<br> 94 | .........................#..................#.............................................................................#....... |  94<br> 95 | .......#....................#.......................#.....................#..........#...........#..........#...................#. |  95<br> 96 | ....#..........#..#................#.....#..........#........#..................#.....................##...............#.........# |  96<br> 97 | .....................................................................................#......................................#..... |  97<br> 98 | .......................................#...................................#.......................#..........................#... |  98<br> 99 | .......#...............................#............#.....#..............................................#.................#...... |  99<br>100 + .#..........................#..................................................................#...#.#.......#.#..........#....... + 100<br>101 | #...............................................................#.#............................#...............#......#........... | 101<br>102 | ...#..........................#.#..#.#.............................................................#......#....................... | 102<br>103 | ..................#........#.....................................................#...............................................# | 103<br>104 | ....................#.............#.........#........##................#.............#............#..#............................ | 104<br>105 | .........................#.................................#...........................................#.....#.................... | 105<br>106 | ..........................................##..........#................................#........................................#. | 106<br>107 | .................................................................................#..........#....................##........##..... | 107<br>108 | .....###......#.....#...................................................................................#..#...................#.. | 108<br>109 | ........#.....#.....#.....#..........#.................................................#.#......................#................. | 109<br>110 + ...........................................#....#..............#..#..............#................................................ + 110<br>111 | ....#.............#...................................#.....#........................................................#............ | 111<br>112 | .........#........#.............#..................#..........#..........................###.......#....#.#.#..................... | 112<br>113 | ..................#....................#...................#...#.................................................................. | 113<br>114 | .......#...............#................................................................................#................#........ | 114<br>115 | ....#..........................#......#....................................#.............#...#......................#...#......... | 115<br>116 | .#..#....................#.....................#.............#...............................#....................#....##......... | 116<br>117 | ..#..#........#......#.................##..#.......#....................#.............................................#........... | 117<br>118 | ..................#......#.............#.##.................................##.....................................#...#.......... | 118<br>119 | .#...##........#........................................................................................#.....#...#....#.......... | 119<br>120 + ............#........................#............................................#.........#.............#....................... + 120<br>121 | ................#......#........#...........................................................#............#........................ | 121<br>122 | ..............................#.#......#................................#...........#......................................#...... | 122<br>123 | ...................#...................#.............#............#.............#................................................. | 123<br>124 | .........#.......#....#........#.........#.....................#..#.......#..#...#.............................#.................. | 124<br>125 | .........#...#.........................................................................#.....#.......#............................ | 125<br>126 | .........................#..........#...............................................#.....................................#....#.. | 126<br>127 | ....#..................##..##...........#.........#..................................................#...#...........#...........# | 127<br>128 | .......#.......#.....#...............#.#.....#.............#........................#..............................#..#.........#. | 128<br>129 | ........................#........................................#.............................##................................. | 129<br>      +---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------<br>                                                                                                          1         1         1         <br>                1         2         3         4         5         6         7         8         9         0         1         2         <br>      0         0         0         0         0         0         0         0         0         0         0         0         0         </div></div></output>
+<bq-cell id="id-c6894a4e-d060-4a6d-89db-b5f9d12755d7" data-type="javascript" class="show-full show-in-presentation">// set up some utility functions
+
+if (this.map.some(row => row.some(ch => ch === this.guard_prior_position_char))) {
+    throw new Error("the character used to mark the guard's prior positions already exists in the map");
+}
+
+this.change_direction = (dir_ch, counterclockwise=false) => {
+    const index = this.direction_chars.indexOf(dir_ch);
+    if (index === -1) {
+        throw new Error(`dir_ch "${dir_ch}" not found in direction_chars "${this.direction_chars}"`);
+    }
+    const new_index = counterclockwise
+          ? (index >= this.direction_chars.length-1) ? 0 : (index + 1)
+          : (index <= 0) ? this.direction_chars.length-1 : (index - 1);
+    return this.direction_chars[new_index];
+};
+this.direction_info = {
+    '>': { dr:  0, dc:  1, label: 'E' },
+    '^': { dr: -1, dc:  0, label: 'N' },
+    '<': { dr:  0, dc: -1, label: 'W' },
+    'v': { dr:  1, dc:  0, label: 'S' },
+};
+this.map_at = (r, c) => {  // returns undefined if r, c out of bounds, otherwise character stored at map
+    if (typeof r !== 'number' || !Number.isInteger(r)) {
+        throw new Error('r must be an integer');
+    }
+    if (typeof c !== 'number' || !Number.isInteger(c)) {
+        throw new Error('c must be an integer');
+    }
+    if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) {
+        return undefined
+    } else {
+        return this.map[r][c];
+    }
+};
+this.updated_location = (r, c, dir_ch) => {  // returns new { r, c, map_ch }; map_ch will be undefined if (r, c) off the map
+    const dir_info = this.direction_info[dir_ch];
+    if (!dir_info) {
+        throw new Error(`invalid dir_ch "${dir_ch}"`);
+    }
+    const { dr, dc } = dir_info;
+    r += dr;
+    c += dc;
+    return { r, c, map_ch: this.map_at(r, c) };
+};
+this.turn_guard = (counterclockwise=false) => {  // returns { new_direction, old_direction, r, c }
+    const [ r, c ] = this.guard_pos;
+    const old_direction = this.map[r][c];
+    const new_direction = this.change_direction(old_direction, counterclockwise);
+    this.map[r][c] = new_direction;
+    return { new_direction, old_direction, r, c };
+};
+this.move_guard = () => {  // returns undefined if guard cannot move that way, otherwise { r, c, map_ch } of new position; map_ch will be undefined if (r, c) off the map
+    const [ r, c ] = this.guard_pos;
+    const dir_ch = this.map[r][c];
+    const { r: new_r, c: new_c, map_ch: new_map_ch }  = this.updated_location(r, c, dir_ch);
+    if (new_map_ch === this.blank_char || new_map_ch === this.guard_prior_position_char) {
+        // can move
+        this.map[r][c] = this.guard_prior_position_char;  // remove guard (but leave indication of prior occupation)
+        this.map[new_r][new_c] = dir_ch;  // move guard to new position
+        this.guard_pos[0] = new_r;
+        this.guard_pos[1] = new_c;
+        return { r: new_r, c: new_c, map_ch: dir_ch };
+    } else if (!new_map_ch) {
+        // moving quard off map
+        this.map[r][c] = this.guard_prior_position_char;  // remove guard (but leave indication of prior occupation)
+        this.guard_pos[0] = new_r;
+        this.guard_pos[1] = new_c;
+        return { r: new_r, c: new_c, map_ch: undefined };
+    } else {
+        return undefined;  // indicate: cannot move that way
+    }
+}
+
+globalThis.t = this;  // for testing...</bq-cell><output class="bq-cell-output" data-source-element="id-c6894a4e-d060-4a6d-89db-b5f9d12755d7" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"></div></output>
+<bq-cell id="id-5d16d7cd-45b1-41d5-9e18-46d4490f1362" data-type="javascript" class="show-full show-in-presentation">await print__();// calculate and display the answer
+
+this.walk_guard = (recorder=[]) => {  // recorder entries: { type, r, c, dir_ch } where type is one of 'move', 'turn', 'exit' or 'loop'
+    if (!Array.isArray(recorder)) {
+        throw new Error('recorder must be an array');
+    }
+    recorder.splice(0);  // clear recorder
+    move_actions_set = new Set();
+
+    const hash_recorder_element = (recorder_element) => {
+        const { type, r, c, dir_ch } = recorder_element;
+        return [ type, r, c, dir_ch ].join('|');
+    }
+
+    const record = (type, r, c, dir_ch) => {  // returns false iff loop detected
+        const recorder_element = { type, r, c, dir_ch };
+        recorder.push(recorder_element);
+        if (type === 'move') {
+            const hash = hash_recorder_element(recorder_element);
+            if (move_actions_set.has(hash)) {
+                recorder.push({ type: 'loop', r, c, dir_ch });
+                return false;  // indicate: loop detected
+            } else {
+                move_actions_set.add(hash);
+            }
+        }
+        return true;  // indicate: no loop detected
+    }
+
+    let times_turned_without_moving = 0;
+    for (;;) {
+        const [ r, c ] = this.guard_pos;
+        const dir_ch = this.map[r][c];
+        let move_result = this.move_guard();
+        if (!move_result) {
+            // can't move that way
+            if (times_turned_without_moving++ >= 4) {
+                throw new Error('guard is trapped!');
+            }
+            this.turn_guard();
+            if (!record('turn', r, c, this.map[r][c])) {
+                break;  // loop detected
+            }
+        } else {
+            times_turned_without_moving = 0;
+            if (!record('move', r, c, dir_ch)) {
+                break;  // loop detected
+            }
+            const { r: exit_r, c: exit_c, map_ch } = move_result;
+            if (!map_ch) {
+                // guard left map
+                record('exit', exit_r, exit_c, dir_ch);  // ignoring return value because we are stopping anyway
+                break;
+            }
+        }
+    }
+
+    const looped = (recorder[recorder.length-1]?.type === 'loop');
+    let loop_size;
+    if (looped) {
+        const moves_only = recorder.filter(({ type }) => (type === 'move'));
+        const { type: loop_type, r: loop_r, c: loop_c, dir_ch: loop_dir_ch } = moves_only[moves_only.length-1];
+        const search_fn = ({ type, r, c, dir_ch }) => (type === loop_type && r === loop_r && c === loop_c && dir_ch === loop_dir_ch);
+        loop_size = moves_only.findLastIndex(search_fn) - moves_only.findIndex(search_fn);
+    }
+    return loop_size;
+}
+
+this.init_map();
+//this.map[41][95] = 'O';
+//this.map[38][96] = 'O';
+//this.map[42][100] = 'O';
+
+const [ guard_start_r, guard_start_c ] = this.guard_pos;
+this.recorder = [];
+const loop_size = this.walk_guard(this.recorder);
+const looped = (typeof loop_size === 'number');
+
+const visited_positions = this.map.reduce((total, row) => total + row.reduce((total, ch) => (ch === this.guard_prior_position_char) ? total+1 : total, 0), 0);
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+* **The guard visited ${visited_positions} map position${visited_positions === 1 ? '' : 's'}${looped ? ' and finally looped' : ''}, starting at (${guard_start_r},${guard_start_c}) and ${looped ? 'ending' : 'leaving'} at (${this.guard_pos[0]},${this.guard_pos[1]}).**
+${looped ? `* **(loop size = ${loop_size})**` : ''}
+`);
+
+await ocx.println(`The final map (${this.rows}x${this.cols}):`);
+await ocx.render_text(this.create_string_from_map(), this.map_output_options);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell><output class="bq-cell-output" data-source-element="id-5d16d7cd-45b1-41d5-9e18-46d4490f1362" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"><hr><div data-source-media-type="text/markdown"><h1 id="answer-to-part-one">Answer to Part One</h1>
+<ul>
+<li><strong>The guard visited 5067 map positions, starting at (41,96) and leaving at (46,130).</strong></li>
+</ul>
+</div><div data-source-media-type="text/plain" class="plain-text">The final map (130x130):<br></div><div data-source-media-type="text/plain" class="plain-text" style="font-family: monospace; white-space: pre; max-width: fit-content; padding: 1em; overflow: auto; border: 1px solid lightgrey;">                                                                                                          1         1         1         <br>                1         2         3         4         5         6         7         8         9         0         1         2         <br>      0         0         0         0         0         0         0         0         0         0         0         0         0         <br>      +---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------<br>  0 + .........#...................................................................................................#.................#.. +   0<br>  1 | ...........................#.......................................#.............................................................. |   1<br>  2 | .............#.................................................................................#............................#..... |   2<br>  3 | ...#.....................#.......#....................................#..............#.............................#...........#.# |   3<br>  4 | ..........#.....#..#.....#.............#..................#............#.....#........#.#.......#............................#.... |   4<br>  5 | ...#......XXXXXXXXXXXXX#..........#...................#.........#..#..............##..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#...... |   5<br>  6 | ..........X...........X...........XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.......................X....... |   6<br>  7 | ..........X....#......X..#....#.#.X#.........#...........#...#....................#...X.....#....X..#....#................X....... |   7<br>  8 | ..........X...........X...........X.......#......#.#.....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.............#....X....... |   8<br>  9 | ..........X.........#.X...........X..............#.......X............................X.....#....X....X...........#.......X.#..... |   9<br> 10 + ..........X...#.......X...........X..............#.......X........#..#................X..........X....X..........#........X....... +  10<br> 11 | .........#X...###.....X.#.........X......................X...........XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.#.....#X..#..#. |  11<br> 12 | .#........X...........X...........X...#..................X...........X......#.........X..........X....X.......#.X........XXXXXXXX# |  12<br> 13 | ..........X...........X.#.........X......................X..#.#......X.............#..X...##.#...X....X#........X........XX.....X. |  13<br> 14 | ..........X.#.......#.X...........X....#.................X...........X................X..........X....X.........X........XX.....X. |  14<br> 15 | ....#.....X.......#.#.X...#...#...X.#....................X.#.........X.....#..........X.##...#...X....X.........X........XX.....X. |  15<br> 16 | ...#....#.X.......XXXXXXXXXXXXXXXXXXXXXXXXXXXX##........#X.......#...X##..............X..........X....X......#..X........XX.....X. |  16<br> 17 | ..........X.......X...X...........X..........X...........X.......XXXXXXXXXX#........#.X........##X....X.........X........XX.....X# |  17<br> 18 | ..........X.......X...X.......#.#.X..........X.........#.X.......X...X....X.......#..#X.......#.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X. |  18<br> 19 | ..........X...#...X...X.###.......X..........X...........X.......X#..X....X...#.......X.......#.XX...#X........#X.......#XX..X#.X. |  19<br> 20 + ..........X.#.XXXXXXXXXXXXXXXXXXXXXXXXXXX#...X...........X....#..X...X....X...........X#........XX..#.X.........X........XX..X..X. +  20<br> 21 | ..........X...X...X...X...........X.....X#...X...........X....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#XX...#X.........X....#...XX..X..X. |  21<br> 22 | .#...##...X...X...X...X.......#...X...#.X....X...........X....X..X...X....X...........X.......X.XX....X.........X#...#...XX..X..X# |  22<br> 23 | ....#.....X...X...X#..X.........#.X....#X....X...........X....X.#X...X....X...........X.#...#.X.XX....X.........X...#....XX..X..X. |  23<br> 24 | ....XXX#..X...X...X...X#......#...X..#..X....X...........X....X..X...X....X.....#.....X.......X.XX.#..X.........X.......#XX.#X..X. |  24<br> 25 | ....X.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#..X......#....X.......X.XX....X.........X........XX..X..X. |  25<br> 26 | .#..X.XX.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...........X....X..X##.XX...X...........X.......X.XX....X.........X........XX..X..X. |  26<br> 27 | .XXXXXXXXXXXXXXXXXXXXXXXX#........X.....X....#..#......##X....X..X...XX...X...........X....#..X.XX#...X..#......X........XX..X..X. |  27<br> 28 | .X..X.XX......X...X...X.X.........X...#.X..............XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#X.....#.X.XX....X#.#......X..#.....XX..X..X. |  28<br> 29 | .X..X#XX......X...X.#.X#X.......#.X.....X..............X.X....X#.X.##XX...X.........X.X.......X.XX....X.........X........XX..X..X. |  29<br> 30 + .X##X.XX......X...X...X.X.......#.X.....X..............X.X....X..X...XX...X.........X.X.#.....X.XX.#..X.........X........XX..X..X. +  30<br> 31 | .X..X.XX......X...X...X.X.........X.....X..............X.X.##.X..X...XX...X.........X.X.XXXXXXXXXXXXXXXXXXXXX#..X........XX..X..X. |  31<br> 32 | #X..X.XX......X.#.X...X.X.#.......X.....X..............X.X.XXXXXXXXXXXXXXXXXXXXX#...X.X.X.....X.XX....X###..X...X........XX..X..X. |  32<br> 33 | #X#.X.XX......X...X...X.X.#.......X.....X..........#..#X.X.X..X..X...XX...X.#..X.#..X.X.X.#...X.XX....XXXXXXXXXXXXX#...#.XX..X..X# |  33<br> 34 | .X..X.XX....#.X...X...X.X.#.#.....X.....X#.............X.X.X..X..X#..XX...X..#.X....X.X.X.....X.XX....XX....X...X.X......XX..X..X. |  34<br> 35 | .X..X.XX....#.X...X...X.X.......#.X.....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#..XX..X#.X. |  35<br> 36 | .X..X.XX......X...X...X.X....#...#X.#...XX.............X.X.X..X.#X..#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX....X...X.X..X...XX..X#.X. |  36<br> 37 | .X..X.XX#.....X...X...X.X.......##X.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X.XX....#X....X...X.X..X...XX.#X..X. |  37<br> 38 | .X..X.XX....##XXXXXXXXXXX.#.......X.X...XX.............X.X.X..X..X....X...X....X....X#X#X..X.#X.XX..#.#X....X.#.X.X..X...XX..X..X. |  38<br> 39 | .X..X.XX...#XXXXX#X...X.#.........X.X...XX#............X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#XX...#.X.#..X...X.X..X...XX..X..X. |  39<br> 40 + #XXXXXXX....X#..X.X...X#.......##.X.X.#.XX...#.........X.#.X..X..X...#X...X..#.X....X.X.X..X..#.XX.....X....X...X.X..X...XX..X..X. +  40<br> 41 | ....X.#X.#..X#..X.X#..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X...X....X.#..X#XXXXXXXXXXXXXXXXXXXXXXX...X.X..X...XX..X..X. |  41<br> 42 | ....X..X....X...X.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#...X#X..X...XX..X..X. |  42<br> 43 | ....X..X....X...X.XX..XX..........X.X.#.XX.............X...X..X..X.X#.X...X....X....X...X..X.#...X.....X...X.#..X.X#.X.#.XX..X..X. |  43<br> 44 | ...#X..X....X...X.XX..XX..........X.X.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X....X...X..X.....X.....X...X....X.X..X...XX..X..X. |  44<br> 45 | ....X..X....X...X.XX..XX..........X.X#X.XX.............X...X..X..X.X..X...X.X..X....X...X..X...#.X.....X...X.#..X.X..X.#.XX..X..X. |  45<br> 46 | #...X..X....X...X.XX..XX.......#..X#X.X.XX.............X...X..X..X.X.#X...X.X..X....X...X..X.....X.....X...X.XXXXXXXXXXXXXXXXXXXXX |  46<br> 47 | ....X..X..#.X...X.XX..XX.....#....X.X.X.XX#.......#....X...X..X..X.X..X...X.X.#X....X...X..X.....X#....X#..X.X..X.X..X...XX..X..X. |  47<br> 48 | ....X..X..XXXXXXXXXXXXXXXXXX#...##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X..X...#.X.....X...X#X..X.X..X...XX..X..X. |  48<br> 49 | ....X..X..X.X...X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..X...X.X..X....#..#X..X.....X....#XXXXXXXXXX.X..X...XX..X..X. |  49<br> 50 + ....X..X..X.X...X.#X..XX...X........X.X.XX........#....X...X..X..X.#..X...X.X..X#.......X..X#....X.#.......X.X..#.X..X...XX..X..X. +  50<br> 51 | ....X#.X..X.X...X..X..XX...X#.......X.X.XX.#...........X...X..X..X.#..X...X.X..XXXXXXXXXXX#X.....X.........X.X....X..X...XX..X..X. |  51<br> 52 | ....X..X..X.X...X..X..XX...X...#....X#X.XX.............X...X.#X..X...#X...X.X..XX.......XX.X#....X.#.......X.X..#.X..X...XX.#X..X. |  52<br> 53 | ....X.#XXXXXXXXXX..X##XX..#X....#...X.X.XX......#.....#X...X..X..X....X...X.X..XX..#....XX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX#XX..X..X. |  53<br> 54 | ...#X#....X.X#..#..X##XX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.#.#XX.XX....X.#.....#.X.X....X..X.X..#..X..X. |  54<br> 55 | ....X.....X.X......X.XXXXXXXXXXXXXXXXXXXXXX#...#......#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..X. |  55<br> 56 | ....X....#X.X......X.XXX..XX........X.X.XXX#...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#X.X.....#.#X. |  56<br> 57 | ....X.....X.X......X.XXX#.XX........X.X.XXX....X...........X..X..X.#..X...X#X..XX.X.....XX#XX....X.........X.X....XX.X.X........X. |  57<br> 58 | ....X.....X.X......X.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#......X..X..X..#.X...X.X..XX.X.....XX.XX..#.X.........X.X....XX.X.X........X. |  58<br> 59 | ....X.....X.X......X.XXXX.XX#.......X.X.XXX..#.X...X#......X..X..X..#.X...X.X..XX.X.....XX#XX....X.........X.X....XX.X.X........X. |  59<br> 60 + #.#.X.....X.X..#...X.XXXX.XX........X.X.XXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#....X#XXXXXXXXXXXXXXXXXXXX. +  60<br> 61 | ....X.....X.X......X.XXXX.XX........X.X.XXX..X.X...X.......X..X.#X...#X...X.X..XX.X.....XX.XX....X...X.....X....#.XX.X.X.#......#. |  61<br> 62 | ....X..#..X.X...#..X.XXXX.XX........X.X.XXX..X.X...X.......X..X..X....X...X.X..XX.X....#XX.XX....X...X...#.X......XX.X.X....#.#... |  62<br> 63 | ....X.....X.X...XXXXXXXXXXXXXXX#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.X.....XX.XX....X...X....#X......XX#X.X......#... |  63<br> 64 | ....X.....X#X.#.X..X.XXXX.XX..X..##..#X.XXX..X.X...X.......X..X..X....X...X.X..#X.X.....XX.XX.##.X...X.....X......XX.X.X....#..... |  64<br> 65 | #...X....#X.X...X..X.XXXX#XX..X#.....#X.XXX..X.X...X...#...X..X..X..#.X..#X.X...X.X.....XX.XX....X...X.#...X...#..XX.X.X.........# |  65<br> 66 | ....X.....X.X..#X..X.XXXX.XX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#..X...X#X...X.X.....XX.XX....X.#.X....#X......XX.X.X#......... |  66<br> 67 | ...#XXXXXXXXXXXXXXXXXXXXX.XX..XX......X.XXX..X.X...X.......X..X..XX...X...X.X...X.X.....XX.XX....X...X.....X......XX.X.X........#. |  67<br> 68 | #.........X.X...X..X.X#XX.XX..XX......X.XXX..X.X...X.......X..X..XX...X...X.X#..X.X.....XX.XX....X...X.....X......XX.X.X.#........ |  68<br> 69 | ..........X#XXXXXXXXXXXXXXXXXXXX......X.XXX..X.X...X..#....X..X..XX...X...X.X...X.X.....XX.XX.#..X...X.....X......XX#X.X.......... |  69<br> 70 + ....#.##..X....#X..X.X.XX.XX..#X....#.X.XXX..X.X...X.......X..X..XX#..X...X.X...X.X.....XX.XX....X...X..#..X......XX.X.X......#... +  70<br> 71 | ......XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#..XX.X.X.......#.. |  71<br> 72 | .#....X...X.....X..X.X.XX.XX.#.X.#....X#XXX#.X.X...X.......X..X#.XX.#.X...X.X#..X.X....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#......... |  72<br> 73 | ......X...X.....X#.X.X.XX.XX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#..X...X.....X..X...XX.X.#..#....... |  73<br> 74 | ......X...X..#..X.#X.X.XX.XX.X.X......X.XXX..X.X...X.......X..X..XX...X.#.X.X...X.X..#...X.XXX...X...X.....X..X#..XX.X.#.......... |  74<br> 75 | #....#X...X.....X..X.X.XX.XX.X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X.##X.....X..X...XX.X............ |  75<br> 76 | ...#.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X.X...X.......X..X..XX...X...X.X...X.X......X.#XX...X...X.....X..X..#XX.X#.........#. |  76<br> 77 | .........#X.....X..X.X.XX.XX.X........X.#XX..X.X...X.......X..X..XX...X...X.X#..X.X......X..XX.#.X...X.....X#.X...XX.X............ |  77<br> 78 | ..........X.....X..X.X.XX.XX.X........X..XX..X.X...X.......X..X.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X.....X..X...XX.X............ |  78<br> 79 | #.......#.X.....X..X.X.XX.XX.X........X..XX..X.X...X...#...X..X...X...X...X.X...X.X..#...X..XX...#...X.....X..X...XX.X............ |  79<br> 80 + .#......#.X.....X.#X.X.XX.XX.X........X..XX..X.X#..X.......X..X...X...X...X.X...X.X......X..XX.......X.....X..X.#.XX.X............ +  80<br> 81 | .........#X....#X..X.X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.X........#... |  81<br> 82 | #.........X.....X..X.X..X.XX.X.#......X.#XX..X.X...X.......X..X...X..#X...X.X...X.X......X..XX.......X.#...X.#X...X#.X............ |  82<br> 83 | ......#...X.....X..X.X..X.XX.X........X..XX.#X.X...X#......X.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX............ |  83<br> 84 | #.......#.X.....X..X.X..X.XX.X........X..XX..X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X.X......X..XX.......X.....X..X...X..#............ |  84<br> 85 | ..........X.....X..X.X..X.XX.X.......#X..XX..X.....X.......X......X...X...X.#...X.X#.##..X..XX.......X...#.X..X#.#X............... |  85<br> 86 | ..........X.....X..X.X.#X.XX.X...#....X.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..X...X.##............ |  86<br> 87 | .....#....X.#.#.X..X.X..X.XX.X...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#.X...X...X.....X.X......X..XX#......X.....#.#X...X..#............ |  87<br> 88 | ..........X.....X.#X.X..X.XX.X...X....X...X..X.....X......#X#..X..X...X...X.....X.X......X#.XX.......X........X...X..........#.... |  88<br> 89 | ..........X.....X..X.X#.X.XX.X#..X....X...X..X.....X#......X...X..X...X.#.X....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX......#........ |  89<br> 90 + .........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X.......X......X..XX.......X.......#X...#............... +  90<br> 91 | ................X..X.X..X#XX.X...X...#X...X..X..#..X.......X...X#.X...#...X.......X......X..XX.......X........X...........##...... |  91<br> 92 | #...#......#.#..X..X.X..X.XX.X...X.#..X...X..X.....X..#....X...X..X.....#.X.......X......X.#XXXXXXXXXXXXXXXXXXX................... |  92<br> 93 | ................X..X.X..X.XX.X#..X..#.X...X..X.....X.#.....X...X..X.......X#......X.....#X..#X...#...X........#...#............... |  93<br> 94 | ................X..X.X..X#XX.X...X....X...X.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.......X......X...X.......X....................#....... |  94<br> 95 | .......#........X..X.X..X.XX#X...X....X...X........X#......X...X..X.......#.......X..#...X...X...#...X......#...................#. |  95<br> 96 | ....#..........#X.#X.X..X.XX.X...X.#..X..#X........X#......X.#.X..X.............#.X......X...X.......X##...............#.........# |  96<br> 97 | ....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#...X...X.......X......................#..... |  97<br> 98 | ....X...........X..X.X..X.XX.X...X....X#..X........X.......X...X..X........#......X.X....X...X.....#.X........................#... |  98<br> 99 | ....X..#........X..X.X..X.XX.X...X....X#..X........X#.....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...#.................#...... |  99<br>100 + .#..X...........X..X.X..X.XX#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...............X.X....X...X.#...#.#.......#.#..........#....... + 100<br>101 | #...X...........X..X.X..X.XX.....X....X...X........X...........X#.#...............X.X....X...X.#...............#......#........... | 101<br>102 | ...#XXXXXXXXXXXXXXXXXXXXXXXX..#.#X.#.#X...X........X...........X..................X.X....X...X.....#......#....................... | 102<br>103 | ................X.#X.X..X.X#.....X....X...X........X...........X.................#X.X....X...X...................................# | 103<br>104 | ................X..X#X..X.X......X#...X...X.#......X.##........X.......#..........X.X#...X...X....#..#............................ | 104<br>105 | ................X..X.X..X#XXXXXXXXXXXXXXXXX........X.......#...X..................X.X....X...X.........#.....#.................... | 105<br>106 | ................X..X.X..X........X....X...##.......X..#........X..................X.X..#.X...X..................................#. | 106<br>107 | ................X..X.X..X........X....X............X...........X.................#X.X....X..#X...................##........##..... | 107<br>108 | .....###......#.X..X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...X..........#..#...................#.. | 108<br>109 | ........#.....#.X..X#...X.#......X...#XXXXXXXXXXXXXXXXXXXXXXXXXX..................X.X..#.#...X..................#................. | 109<br>110 + ................X..X....X........X.........#....#..X...........#..#..............#X.X........X.................................... + 110<br>111 | ....#...........X.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..#.....#.....................X.X........X.......................#............ | 111<br>112 | .........#......X.#.....X.......#X.................#..........#...................X.X....###.X.....#....#.#.#..................... | 112<br>113 | ................X.#.....X........X.....#...................#...#..................X.X........X.................................... | 113<br>114 | .......#........X......#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..........#................#........ | 114<br>115 | ....#...........X..............#.X....#....................................#......X.X....#...#......................#...#......... | 115<br>116 | .#..#...........X........#.......X.............#.............#....................X.X........#....................#....##......... | 116<br>117 | ..#..#........#.X....#...........X.....##..#.......#....................#.........X.X.................................#........... | 117<br>118 | ................X.#......#.......X.....#.##.................................##....X.X..............................#...#.......... | 118<br>119 | .#...##........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.X...................#.....#...#....#.......... | 119<br>120 + ............#....................X...#............................................#.X.......#.............#....................... + 120<br>121 | ................#......#........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.......#............#........................ | 121<br>122 | ..............................#.#......#................................#...........#......................................#...... | 122<br>123 | ...................#...................#.............#............#.............#................................................. | 123<br>124 | .........#.......#....#........#.........#.....................#..#.......#..#...#.............................#.................. | 124<br>125 | .........#...#.........................................................................#.....#.......#............................ | 125<br>126 | .........................#..........#...............................................#.....................................#....#.. | 126<br>127 | ....#..................##..##...........#.........#..................................................#...#...........#...........# | 127<br>128 | .......#.......#.....#...............#.#.....#.............#........................#..............................#..#.........#. | 128<br>129 | ........................#........................................#.............................##................................. | 129<br>      +---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------+---------<br>                                                                                                          1         1         1         <br>                1         2         3         4         5         6         7         8         9         0         1         2         <br>      0         0         0         0         0         0         0         0         0         0         0         0         0         </div></div></output>
+<bq-cell id="id-5cb264dc-b839-451f-9567-f7849484cb0c" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+While The Historians begin working around the guard's patrol route, you borrow their fancy device and step outside the lab. From the safety of a supply closet, you time travel through the last few months and record the nightly status of the lab's guard post on the walls of the closet.
+
+Returning after what seems like only a few seconds to The Historians, they explain that the guard's patrol area is simply too large for them to safely search the lab without getting caught.
+
+Fortunately, they are pretty sure that adding a single new obstruction won't cause a time paradox. They'd like to place the new obstruction in such a way that the guard will get stuck in a loop, making the rest of the lab safe to search.
+
+To have the lowest chance of creating a time paradox, The Historians would like to know all of the possible positions for such an obstruction. The new obstruction can't be placed at the guard's starting position - the guard is there right now and would notice.
+
+In the above example, there are only 6 different positions where a new obstruction would cause the guard to get stuck in a loop. The diagrams of these six situations use O to mark the new obstruction, | to show a position where the guard moves up/down, - to show a position where the guard moves left/right, and + to show a position where the guard moves both up/down and left/right.
+
+Option one, put a printing press next to the guard's starting position:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+....|..#|.
+....|...|.
+.#.O^---+.
+........#.
+#.........
+......#...
+
+Option two, put a stack of failed suit prototypes in the bottom right quadrant of the mapped area:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+......O.#.
+#.........
+......#...
+
+Option three, put a crate of chimney-squeeze prototype fabric next to the standing desk in the bottom right quadrant:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+.+----+O#.
+#+----+...
+......#...
+
+Option four, put an alchemical retroencabulator near the bottom left corner:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+..|...|.#.
+#O+---+...
+......#...
+
+Option five, put the alchemical retroencabulator a bit to the right instead:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+....|.|.#.
+#..O+-+...
+......#...
+
+Option six, put a tank of sovereign glue right next to the tank of universal solvent:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+.+----++#.
+#+----++..
+......#O..
+
+It doesn't really matter what you choose to use as an obstacle so long as you and The Historians can put it into position without the guard noticing. The important thing is having enough options that you can find one that minimizes time paradoxes, and in this example, there are 6 different positions you could choose.
+
+You need to get the guard stuck in a loop by adding a single new obstruction. How many different positions could you choose for this obstruction?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell><output class="bq-cell-output" data-source-element="id-5cb264dc-b839-451f-9567-f7849484cb0c" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"><hr><div style="max-width: 100ch; border: 1px solid grey; padding: 1em;"><div data-source-media-type="text/plain" class="plain-text" style="font-family: monospace;"><br>--- Part Two ---<br><br>While The Historians begin working around the guard's patrol route, you borrow their fancy device and step outside the lab. From the safety of a supply closet, you time travel through the last few months and record the nightly status of the lab's guard post on the walls of the closet.<br><br>Returning after what seems like only a few seconds to The Historians, they explain that the guard's patrol area is simply too large for them to safely search the lab without getting caught.<br><br>Fortunately, they are pretty sure that adding a single new obstruction won't cause a time paradox. They'd like to place the new obstruction in such a way that the guard will get stuck in a loop, making the rest of the lab safe to search.<br><br>To have the lowest chance of creating a time paradox, The Historians would like to know all of the possible positions for such an obstruction. The new obstruction can't be placed at the guard's starting position - the guard is there right now and would notice.<br><br>In the above example, there are only 6 different positions where a new obstruction would cause the guard to get stuck in a loop. The diagrams of these six situations use O to mark the new obstruction, | to show a position where the guard moves up/down, - to show a position where the guard moves left/right, and + to show a position where the guard moves both up/down and left/right.<br><br>Option one, put a printing press next to the guard's starting position:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>....|..#|.<br>....|...|.<br>.#.O^---+.<br>........#.<br>#.........<br>......#...<br><br>Option two, put a stack of failed suit prototypes in the bottom right quadrant of the mapped area:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>..+-+-+#|.<br>..|.|.|.|.<br>.#+-^-+-+.<br>......O.#.<br>#.........<br>......#...<br><br>Option three, put a crate of chimney-squeeze prototype fabric next to the standing desk in the bottom right quadrant:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>..+-+-+#|.<br>..|.|.|.|.<br>.#+-^-+-+.<br>.+----+O#.<br>#+----+...<br>......#...<br><br>Option four, put an alchemical retroencabulator near the bottom left corner:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>..+-+-+#|.<br>..|.|.|.|.<br>.#+-^-+-+.<br>..|...|.#.<br>#O+---+...<br>......#...<br><br>Option five, put the alchemical retroencabulator a bit to the right instead:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>..+-+-+#|.<br>..|.|.|.|.<br>.#+-^-+-+.<br>....|.|.#.<br>#..O+-+...<br>......#...<br><br>Option six, put a tank of sovereign glue right next to the tank of universal solvent:<br><br>....#.....<br>....+---+#<br>....|...|.<br>..#.|...|.<br>..+-+-+#|.<br>..|.|.|.|.<br>.#+-^-+-+.<br>.+----++#.<br>#+----++..<br>......#O..<br><br>It doesn't really matter what you choose to use as an obstacle so long as you and The Historians can put it into position without the guard noticing. The important thing is having enough options that you can find one that minimizes time paradoxes, and in this example, there are 6 different positions you could choose.<br><br>You need to get the guard stuck in a loop by adding a single new obstruction. How many different positions could you choose for this obstruction?<br></div></div></div></output>
+<bq-cell id="id-e572b9b6-9086-4888-9345-e8e631150efd" data-type="javascript" class="show-full show-in-presentation">// find loops created with a single obstruction
+
+const wait_ocx = ocx.create_child_ocx({
+    style: {
+        'line-break': 'anywhere',
+        'max-width':  '100ch',
+        border:       '1px solid grey',
+        padding:      '1em',
+    }
+});
+const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
+
+this.init_map();
+this.obstruction_tries = 0;
+this.loops_with_obstruction = [];
+for (let r = 0; r < this.rows; r++) {
+    for (let c = 0; c < this.cols; c++) {
+        if (this.map[r][c] === this.blank_char) {
+            this.obstruction_tries++;
+
+            if (this.obstruction_tries % 20 === 0) {
+                await next_tick();
+                waiting_element.innerText = waiting_element.innerText + '.';
+                if (waiting_element.getBoundingClientRect().y <= window.innerHeight) {
+                    // only scroll back into view if already at least partially showing
+                    waiting_element.scrollIntoView(false);
+                }
+            }
+
+            this.map[r][c] = 'O';
+            const loop_size = this.walk_guard();
+            if (typeof loop_size === 'number') {
+                this.loops_with_obstruction.push({ r, c, loop_size });
+            }
+            this.init_map();  // for next attempt
+        }
+    }
+}
+
+// display the answer
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+**After ${this.obstruction_tries} attempts with a single obstruction, ${this.loops_with_obstruction.length} loop${this.loops_with_obstruction.length === 1 ? '' : 's'} were created.**
+`);
+answer_element.scrollIntoView();</bq-cell><output class="bq-cell-output" data-source-element="id-e572b9b6-9086-4888-9345-e8e631150efd" data-source-media-type="text/javascript"><div data-source-media-type="text/javascript"><div style="line-break: anywhere; max-width: 100ch; border: 1px solid grey; padding: 1em;"><span data-source-media-type="text/plain" class="plain-text">Part Two: working ....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................</span></div><div data-source-media-type="text/markdown"><h1 id="answer-to-part-two">Answer to Part Two</h1>
+<p><strong>After 16091 attempts with a single obstruction, 1793 loops were created.</strong></p>
+</div></div></output>
+</body>
+</html>
