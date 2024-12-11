@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-0c881870-9317-4460-8d18-d73f11a47923" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/11
+`);
+const description = `
+--- Day 11: Plutonian Pebbles ---
+
+The ancient civilization on Pluto was known for its ability to manipulate spacetime, and while The Historians explore their infinite corridors, you've noticed a strange set of physics-defying stones.
+
+At first glance, they seem like normal stones: they're arranged in a perfectly straight line, and each stone has a number engraved on it.
+
+The strange part is that every time you blink, the stones change.
+
+Sometimes, the number engraved on a stone changes. Other times, a stone might split in two, causing all the other stones to shift over a bit to make room in their perfectly straight line.
+
+As you observe them for a while, you find that the stones have a consistent behavior. Every time you blink, the stones each simultaneously change according to the first applicable rule in this list:
+
+    If the stone is engraved with the number 0, it is replaced by a stone engraved with the number 1.
+    If the stone is engraved with a number that has an even number of digits, it is replaced by two stones. The left half of the digits are engraved on the new left stone, and the right half of the digits are engraved on the new right stone. (The new numbers don't keep extra leading zeroes: 1000 would become stones 10 and 0.)
+    If none of the other rules apply, the stone is replaced by a new stone; the old stone's number multiplied by 2024 is engraved on the new stone.
+
+No matter how the stones change, their order is preserved, and they stay on their perfectly straight line.
+
+How will the stones evolve if you keep blinking at them? You take a note of the number engraved on each stone in the line (your puzzle input).
+
+If you have an arrangement of five stones engraved with the numbers 0 1 10 99 999 and you blink once, the stones transform as follows:
+
+    The first stone, 0, becomes a stone marked 1.
+    The second stone, 1, is multiplied by 2024 to become 2024.
+    The third stone, 10, is split into a stone marked 1 followed by a stone marked 0.
+    The fourth stone, 99, is split into two stones marked 9.
+    The fifth stone, 999, is replaced by a stone marked 2021976.
+
+So, after blinking once, your five stones would become an arrangement of seven stones engraved with the numbers 1 2024 1 0 9 9 2021976.
+
+Here is a longer example:
+
+Initial arrangement:
+125 17
+
+After 1 blink:
+253000 1 7
+
+After 2 blinks:
+253 0 2024 14168
+
+After 3 blinks:
+512072 1 20 24 28676032
+
+After 4 blinks:
+512 72 2024 2 0 2 4 2867 6032
+
+After 5 blinks:
+1036288 7 2 20 24 4048 1 4048 8096 28 67 60 32
+
+After 6 blinks:
+2097446912 14168 4048 2 0 2 4 40 48 2024 40 48 80 96 2 8 6 7 6 0 3 2
+
+In this example, after blinking six times, you would have 22 stones. After blinking 25 times, you would have 55312 stones!
+
+Consider the arrangement of stones in front of you. How many stones will you have after blinking 25 times?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-13b3adc0-27e0-490d-8d31-7530b7e31145" data-type="javascript" class="show-full show-in-presentation">// input_data is a string of groups of decimal digits separated by whitespace.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();
+
+if (!this.input_data.match(/^[\d]+(?:[\s]+[\d]+)*$/)) {
+    throw new Error(`input contains nondigit/non-whitespace character(s): ${this.input_data}`);
+}
+</bq-cell>
+<bq-cell id="id-d8097f0f-387e-4443-859b-34c64e51de17" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+this.stone_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const TOO_LARGE_INTEGER = 2**53;
+
+this.init_stones = () => {
+console.log(this.input_data);
+    //==============================================================================================
+    // TRANSITION RULES:
+    //
+    // * If the stone is engraved with the number 0, it is replaced by a stone engraved with the
+    //   number 1.
+    //
+    // * If the stone is engraved with a number that has an even number of digits, it is replaced
+    //   by two stones.  The left half of the digits are engraved on the new left stone, and the
+    //   right half of the digits are engraved on the new right stone. (The new numbers don't keep
+    //   extra leading zeroes: 1000 would become stones 10 and 0.)
+    //
+    // * If none of the other rules apply, the stone is replaced by a new stone; the old stone's
+    //   number multiplied by 2024 is engraved on the new stone.
+    //
+    //==============================================================================================
+    // Argument for why arbitrary-precision arithmetic is not necessary when using these rules
+    //
+    // (In the following, "number of digits" refers to the number of decimal digits.)
+    //
+    // * numbers with an even number of digits are decreased drastically by the rules.
+    // * the concern would be that, for some positive integer n with an odd number of digits,
+    //   repeated multiplications would continue to give values with an odd number of digits.
+    // * Given a positive integer n, floor(log10(n)) is odd iff n has an even number of
+    //   digits.
+    // * log10(2024) is approximately 3.3062105081677613.  Note that floor(log10(2024)) is odd.
+    // * therefore, multiplying positive integer n with an odd number of digits (and therefore
+    //   floor(log10(n)) is even) by 2024 will:
+    //     (1) produce a result with an odd number of digits if frac(log10(n)) >= 1-frac(log10(2024)
+    //         (which is approximately 0.6937894918322387) because [even]+[odd]+1 = [even]
+    //     (2) produce a result with an even number of digits if frac(log10(n)) < 1-frac(log10(2024)
+    //   In case (2), we are out of trouble because the rules will reduce the number.  However, in
+    //   case (1) frac(log10(result)) will be less than floor(log10(2024)) and therefore another
+    //   multiplication by 2024 will produce a number with an even number of digits and again
+    //   we are out of trouble.  (reason: frac(log10(2024)) < 0.5)
+    //
+    // Therefore, it is only necessary to limit the input numbers to be less than
+    // TOO_LARGE_INTEGER/2024/2024 to ensure that we will not overflow.
+    //==============================================================================================
+
+    // these values are fairly conservative...
+    this.MAX_INPUT_NUMBER = Math.floor(TOO_LARGE_INTEGER/2024/2024);
+    this.MAX_INPUT_DIGITS = Math.floor(Math.log10(this.MAX_INPUT_NUMBER));
+    
+    this.stones = this.input_data.split(/[\s]+/)
+        .map(number_string => {
+            if (number_string.length > this.MAX_INPUT_DIGITS) {
+                // this is to ensure we don't need arbitrary-preciscion arithmetic...
+                throw new Error(`rejecting input number ${number_string} because it has more than ${this.MAX_INPUT_DIGITS} digits`);
+            }
+            return +number_string;
+        });
+
+    this.stone_blink_transition = (stone) => {  // returns an array of new stones that will replace the input stone
+        if (!Number.isInteger(stone) || stone < 0) {
+            throw new Error(`stone is not a positive integer: ${stone}`);
+        }
+
+        if (stone === 0) {
+            return [ 1 ];
+        } else {
+            const stone_digits = stone.toString();
+            if (stone_digits.length % 2 === 0) {
+                const mid = stone_digits.length / 2;
+                return [ stone_digits.slice(0, mid), stone_digits.slice(mid) ].map(digits => +digits);
+            } else {
+                return [ (stone * 2024) ];
+            }
+        }
+    };
+
+    this.blink_transition = () => {
+        return this.stones = this.stones.flatMap(this.stone_blink_transition);
+    };
+
+    this.output_stones = async (ocx) => {
+        return ocx.render_text(this.stones.join(' '), this.stone_output_options);
+    };
+};</bq-cell>
+<bq-cell id="id-695807ce-e481-4c7d-8d92-83c767acf649" data-type="javascript" class="show-full show-in-presentation">// show initial input data and calculate results
+
+await ocx.markdown(`
+# The initial input data:
+## ${this.input_data}
+`);
+
+</bq-cell>
+<bq-cell id="id-52d90867-8031-4529-9d7b-2c61d65249bb" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+const blink_count = 25;
+
+this.init_stones();
+
+await ocx.println(`The initial stones (${this.stones.length}):`);
+await this.output_stones(ocx);
+
+for (let i = 0; i < blink_count; i++) {
+    this.blink_transition();
+}
+
+await println();
+await ocx.println(`The stones after ${blink_count} blink${blink_count === 1 ? '' : 's'}:`);
+await this.output_stones(ocx);
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+The number of stones after ${blink_count} blink${blink_count === 1 ? '' : 's'} is **${this.stones.length}**.
+`);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-10b0564f-3a85-45be-ace3-5ce42b1775e3" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+The Historians sure are taking a long time. To be fair, the infinite corridors are very large.
+
+How many stones would you have after blinking a total of 75 times?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-5f14ae05-75a0-472c-ad94-2d2b7759c4c4" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+
+console.log(this.stones.reduce((max, n) => max < n ? n : max));//!!!  3951_0656_2048n
+
+return;//!!!
+const blink_count = 25;
+
+this.init_stones();
+
+await ocx.println(`The initial stones (${this.stones.length}):`);
+await this.output_stones(ocx);
+
+// This gets REALLY slow REALLY quickly as the blink count increases.
+// Try to make things more efficient:
+
+const blink_transition2 = () => {
+      // instead of using the simpler, more abstract method:
+      //
+      //     this.stones = this.stones.flatMap(this.stone_blink_transition);
+      //
+      // try to make things more efficient:
+
+      // NOTE: THIS IS WAY WORSE!!!
+
+      for (let i = 0; i < this.stones.length; ) {
+          const stone = this.stones[i];
+          if (stone === 0) {
+              this.stones[i++] = 1;
+          } else {
+              const stone_digits = stone.toString();
+              if (stone_digits.length % 2 === 0) {
+                  const mid = stone_digits.length / 2;
+                  this.stones.splice(i, 1, +stone_digits.slice(0, mid), +stone_digits.slice(mid));
+                  i += 2;
+              } else {
+                  this.stones[i++] = (stone * 2024);
+              }
+          }
+      }
+};
+
+// SO, blink_transition2 was not successful....  It was acutally way worse!
+// This is probably because the array splice downgrades the array to
+// a less efficient data structure....
+//
+// Note that the transistion rules are such that the calculation can be viewed
+// as a tree in the sense that each stone generates a set of other stones but
+// the evolution does not affect adjacent stones.
+//
+// Therefore, let's try to do a depth-first traversal of that tree, but not
+// ever generate the full tree, just create and walk through each part of
+// the structure ephemerally.
+
+// OLD:
+
+// for (let i = 0; i < blink_count; i++) {
+//    // this.blink_transition();
+//    blink_transition2();
+// }
+
+// NEW:
+
+const perform_blinks = (blink_count) => {
+    let total = 0;
+
+    const walk = (stone, level=0) => {
+        if (level >= blink_count) {
+            total++;
+        } else {
+            for (const new_stone of this.stone_blink_transition(stone)) {
+                walk(new_stone, level+1);
+            }
+        }
+    };
+
+    for (const stone of this.stones) {
+        walk(stone);
+    }
+
+    return total;
+};
+
+// // for (let bc = 1; bc <= 75; bc++) {
+// //     await println(`The number of stones after ${bc} blink${bc === 1 ? '' : 's'} is ${perform_blinks(bc)}.`);
+// //     await next_tick();
+// // }
+// //
+// const stone_count_after_blinks = perform_blinks(blink_count);
+
+// THIS ALSO FAILS BY BEING WAY TOO SLOW!
+//
+// This is starting to feel like the classic brute force non-memoized Fibonacci Number implementation.
+//
+// Let's try some memoization next.
+</bq-cell>
+<bq-cell id="id-cba5a210-e422-40cd-b6da-a6c04b0c0172" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two with memoization
+
+const answers = {};  // stone -> array (indexed by blinks) of { stone, blinks, stones }  // stones is an array of stones resulting from stone after blinks blinks
+// note that if answers[stone][blinks] exists then all the answers[stone][0...blinks-1] will also exist
+
+const get_answer = (stone, blinks) => {
+    const stone_answers = (answers[stone] ??= new Array(blink_count).fill());
+    const largest_partial_answer = stone_answers.findLast(answer => answer && (answer.blinks <= blinks));
+    if (largest_partial_answer.blinks === blinks) {
+        return largest_partial_answer.stones.length;  // found memoized answer
+    } else {
+        if (!largest_partial_answer) {
+            stone_answers[0] = { stone, blinks: 0, stones: [ stone ] };  // fill in the trivial base case
+        }
+        const calc_blinks_start = (largest_partial_answer?.blinks ?? 0) + 1;
+        for (let calc_blinks = calc_blinks_start; calc_blinks < blinks; calc_blinks++) {
+            const prior = stone_answers[calc_blinks - 1];  // will be there
+            const stones = prior.stones
+                  .flatMap(calc_stone => {
+                      if (calc_stone === 0) {
+                          return [ 1 ];
+                      } else {
+                          const calc_stone_digits = calc_stone.toString();
+                          if (calc_stone_digits.length % 2 === 0) {
+                              const mid = calc_stone_digits.length / 2;
+                              return [
+                                  +calc_stone_digits.slice(0, mid),
+                                  +calc_stone_digits.slice(mid),
+                              ];
+                          } else {
+                              return [ (calc_stone * 2024) ];
+                          }
+                      }
+                  });
+            stone_answers[calc_blinks] = { stone, blinks: calc_blinks, stones };
+        }
+    }
+};
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+The number of stones after ${blink_count} blink${blink_count === 1 ? '' : 's'} is **${stone_count_after_blinks}**.
+`);</bq-cell>
+</body>
+</html>
