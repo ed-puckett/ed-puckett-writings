@@ -114,7 +114,7 @@ this.stone_output_options = {
 const TOO_LARGE_INTEGER = 2**53;
 
 this.init_stones = () => {
-console.log(this.input_data);
+
     //==============================================================================================
     // TRANSITION RULES:
     //
@@ -346,8 +346,6 @@ const perform_blinks = (blink_count) => {
 </bq-cell>
 <bq-cell id="id-cba5a210-e422-40cd-b6da-a6c04b0c0172" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two with memoization
 
-const blink_count = 25;
-
 const perform_blink_on_stone = (on_stone) => {  // returns array of stones
     if (on_stone === 0) {
         return [ 1 ];
@@ -365,21 +363,23 @@ const perform_blink_on_stone = (on_stone) => {  // returns array of stones
     }
 };
 
-const perform_blink_on_stones = (on_stones) => {  // returns array of stones
-    return on_stones.flatMap(perform_blink_on_stone);
-};
-
-const answers = {};  // stone -> array (indexed by blinks) of { stone, blinks, stones }  // stones is an array of stones resulting from stone after blinks blinks
+const answers = {};  // stone -> array (indexed by blinks) of { stone, blinks, stones }  // stones is an object mapping stone -> count
 // note that if answers[stone][blinks] exists then all the answers[stone][0...blinks-1] will also exist
+const reset_answers = () => { answers = {}; }
 
-const get_largest_partial_answer = (for_stone, desired_blinks) => {  // returns largest answer with blinks <= desired_blinks, blinks will be at least min(1, desired_blinks)
-    const answers_for_stone = (answers[for_stone] ??= new Array(blink_count).fill());
+const get_largest_partial_answer = (for_stone, desired_blinks, max_blinks) => {  // returns largest answer with blinks <= desired_blinks, blinks will be at least min(1, desired_blinks)
+    const answers_for_stone = (answers[for_stone] ??= new Array(max_blinks).fill());
     let largest_partial_answer = answers_for_stone.findLast(answer => answer && (answer.blinks <= desired_blinks));
     if (!largest_partial_answer) {
         // fill in the trivial base case
-        largest_partial_answer = answers_for_stone[0] = { stone: for_stone, blinks: 0, stones: [ for_stone ] };
+        largest_partial_answer = answers_for_stone[0] = { stone: for_stone, blinks: 0, stones: { [for_stone]: 1 } };
         // also fill in first iteration
-        answers_for_stone[1] = { stone: for_stone, blinks: 1, stones: perform_blink_on_stone(for_stone) };
+        const stones = {};
+        for (const b_stone of perform_blink_on_stone(for_stone)) {
+            stones[b_stone] ??= 0;
+            stones[b_stone] += 1;
+        }
+        answers_for_stone[1] = { stone: for_stone, blinks: 1, stones };
         if (desired_blinks >= 1) {
             largest_partial_answer = answers_for_stone[1];
         }
@@ -387,50 +387,92 @@ const get_largest_partial_answer = (for_stone, desired_blinks) => {  // returns 
     return largest_partial_answer;
 };
 
-const get_answer = (stone, blinks) => {  // returns { stone, blinks, stones }  // blinks is clamped to [0, blink_count]
+const multiply_stone_counts_object = (factor, stone_counts_object) => {
+    const result = {};
+    for (stone_string in stone_counts_object) {
+        result[stone_string] = factor * stone_counts_object[stone_string];
+    }
+    return result;
+};
+
+const combine_stone_counts_objects = (stone_counts_objects) => {
+    const combined = {};
+    for (const stone_counts_object of stone_counts_objects) {
+        for (const stone_string in stone_counts_object) {
+            combined[stone_string] ??= 0;
+            combined[stone_string] += stone_counts_object[stone_string];
+        }
+    }
+    return combined;
+};
+
+const get_answer = (stone, blinks, max_blinks=null) => {  // returns { stone, blinks, stones }  // blinks is clamped to [0, max_blinks]  // if max_blinks not given, max_blinks = blinks
     if (blinks < 0) {
         blinks = 0;
-    } else if (blinks > blink_count) {
-        blinks = blink_count;
     }
-    for (let iteration = 0; iteration < 10000 ; iteration++) {
-        const largest_partial_answer = get_largest_partial_answer(stone, blinks);  // always returns something
-        if (iteration) {
-//            console.log({ iteration, largest_partial_answer });//!!!
-        }
+    max_blinks ??= blinks
+    if (blinks > max_blinks) {
+        blinks = max_blinks;
+    }
+    for (let iteration = 0; iteration < 10000 ; iteration++) {//!!! iteration...
+        const largest_partial_answer = get_largest_partial_answer(stone, blinks, max_blinks);  // always returns something
         if (largest_partial_answer.blinks === blinks) {
             return largest_partial_answer;  // done
         } else {
             const stone_answers = answers[stone];  // this is guaranteed to exist after calling get_largest_partial_answer(stone, ...)
-            // extend largest_partial_answer
+            // extend largest_partial_answer to have more blinks
+            // note: largest_partial_answer.stone === stone
             const remaining_blinks = blinks - largest_partial_answer.blinks;
-            const least_common_blinks = largest_partial_answer.stones
-                  .map(ext_stone => get_largest_partial_answer(ext_stone, remaining_blinks))
+            const least_common_blinks = Object.keys(largest_partial_answer.stones)
+                  .map(lpa_stone_string => get_answer(+lpa_stone_string, remaining_blinks, max_blinks))
                   .reduce((lcb, { blinks }) => (blinks < lcb ? blinks : lcb), Infinity);
-console.log({ remaining_blinks, least_common_blinks });//!!!
-            for (let b = 1; b <= least_common_blinks; b++) {
-                const inc_blinks = largest_partial_answer.blinks + b;
+            const prior_stone_counts = largest_partial_answer.stones;
+            const prior_stone_counts_entries = Object.entries(prior_stone_counts);
+            // there are least_common_blinks-sized trees available for each stone in largest_partial_answer.stones,
+            // use them to extend the blinks arrays for stone in answers starting from largest_partial_answer
+            for (let b = 1; b <= least_common_blinks; b++) {  // b is the blink count in each lower tree
+                const inc_blinks = largest_partial_answer.blinks + b;  // inc_blinks is the new blink count in largest_partial_answer
+                const inc_stone_counts = combine_stone_counts_objects(
+                    prior_stone_counts_entries
+                        .map(([ prior_stone_string, prior_stone_count ]) => {
+                            const stone_counts_for_prior_stone = get_answer(+prior_stone_string, b, max_blinks).stones;  // stone counts at level b for prior_stone
+                            return multiply_stone_counts_object(prior_stone_count, stone_counts_for_prior_stone);
+                        })
+                );
+//console.log({ stone, b, inc_blinks, remaining_blinks, least_common_blinks, largest_partial_answer, prior_stone_counts, inc_stone_counts });//!!!
                 stone_answers[inc_blinks] = {
                     stone,
                     blinks: inc_blinks,
-                    stones: stone_answers[inc_blinks - 1].stones
-                        .flatMap(inc_stone => answers[inc_stone][b].stones),
+                    stones: inc_stone_counts,
                 };
             }
         }
     }
+    console.warn('unexpected exit (after exceeding max iterations)');//!!!
 };
 
-globalThis.answers = answers;
-console.log(answers);
-console.log(get_answer(12345, blink_count));
-return//!!!
-const stones_after_blinks = await Array.fromAsync(this.stones, async (stone) => get_answer(stone, blink_count).stones).flat(1);
-//      .flatMap(stone => get_answer(stone, blink_count).stones);
+
+const blink_count = 75;
+
+this.init_stones();
+
+globalThis.answers = answers;//!!!
+//console.log(get_answer(12345, blink_count));//!!!
+//console.log(get_answer(0, blink_count));//!!!
+//return//!!!
+const stones_after_blinks = combine_stone_counts_objects(
+    this.stones.map((stone) => {
+        const stone_answer_stones = get_answer(stone, blink_count).stones;
+        return stone_answer_stones;
+    })
+);
+const stone_count_after_blinks = Object.values(stones_after_blinks).reduce((total, v) => total+v);
+console.log({ stone_count_after_blinks, stones_after_blinks });//!!!
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
-The number of stones after ${blink_count} blink${stones_after_blinks.length === 1 ? '' : 's'} is **${stones_after_blinks.length}**.
+* Starting stones: ${this.stones.join(' ')}
+* The number of stones after ${blink_count} blink${blink_count === 1 ? '' : 's'} is **${stone_count_after_blinks}**.
 `);</bq-cell>
 </body>
 </html>
