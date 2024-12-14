@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-d81a20da-7b37-4048-8e0e-bd9ff5ef3119" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/14
+`);
+const description = `
+--- Day 14: Restroom Redoubt ---
+
+One of The Historians needs to use the bathroom; fortunately, you know there's a bathroom near an unvisited location on their list, and so you're all quickly teleported directly to the lobby of Easter Bunny Headquarters.
+
+Unfortunately, EBHQ seems to have "improved" bathroom security again after your last visit. The area outside the bathroom is swarming with robots!
+
+To get The Historian safely to the bathroom, you'll need a way to predict where the robots will be in the future. Fortunately, they all seem to be moving on the tile floor in predictable straight lines.
+
+You make a list (your puzzle input) of all of the robots' current positions (p) and velocities (v), one robot per line. For example:
+
+p=0,4 v=3,-3
+p=6,3 v=-1,-3
+p=10,3 v=-1,2
+p=2,0 v=2,-1
+p=0,0 v=1,3
+p=3,0 v=-2,-2
+p=7,6 v=-1,-3
+p=3,0 v=-1,-2
+p=9,3 v=2,3
+p=7,3 v=-1,2
+p=2,4 v=2,-3
+p=9,5 v=-3,-3
+
+Each robot's position is given as p=x,y where x represents the number of tiles the robot is from the left wall and y represents the number of tiles from the top wall (when viewed from above). So, a position of p=0,0 means the robot is all the way in the top-left corner.
+
+Each robot's velocity is given as v=x,y where x and y are given in tiles per second. Positive x means the robot is moving to the right, and positive y means the robot is moving down. So, a velocity of v=1,-2 means that each second, the robot moves 1 tile to the right and 2 tiles up.
+
+The robots outside the actual bathroom are in a space which is 101 tiles wide and 103 tiles tall (when viewed from above). However, in this example, the robots are in a space which is only 11 tiles wide and 7 tiles tall.
+
+The robots are good at navigating over/under each other (due to a combination of springs, extendable legs, and quadcopters), so they can share the same tile and don't interact with each other. Visually, the number of robots on each tile in this example looks like this:
+
+1.12.......
+...........
+...........
+......11.11
+1.1........
+.........1.
+.......1...
+
+These robots have a unique feature for maximum bathroom security: they can teleport. When a robot would run into an edge of the space they're in, they instead teleport to the other side, effectively wrapping around the edges. Here is what robot p=2,4 v=2,-3 does for the first few seconds:
+
+Initial state:
+...........
+...........
+...........
+...........
+..1........
+...........
+...........
+
+After 1 second:
+...........
+....1......
+...........
+...........
+...........
+...........
+...........
+
+After 2 seconds:
+...........
+...........
+...........
+...........
+...........
+......1....
+...........
+
+After 3 seconds:
+...........
+...........
+........1..
+...........
+...........
+...........
+...........
+
+After 4 seconds:
+...........
+...........
+...........
+...........
+...........
+...........
+..........1
+
+After 5 seconds:
+...........
+...........
+...........
+.1.........
+...........
+...........
+...........
+
+The Historian can't wait much longer, so you don't have to simulate the robots for very long. Where will the robots be after 100 seconds?
+
+In the above example, the number of robots on each tile after 100 seconds has elapsed looks like this:
+
+......2..1.
+...........
+1..........
+.11........
+.....1.....
+...12......
+.1....1....
+
+To determine the safest area, count the number of robots in each quadrant after 100 seconds. Robots that are exactly in the middle (horizontally or vertically) don't count as being in any quadrant, so the only relevant robots are:
+
+..... 2..1.
+..... .....
+1.... .....
+           
+..... .....
+...12 .....
+.1... 1....
+
+In this example, the quadrants contain 1, 3, 4, and 1 robot. Multiplying these together gives a total safety factor of 12.
+
+Predict the motion of the robots in your list within a space which is 101 tiles wide and 103 tiles tall. What will the safety factor be after exactly 100 seconds have elapsed?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-86905513-32a2-45fa-a99f-f6dff01c2335" data-type="javascript" class="show-full show-in-presentation">// input_data is a sequence of lines each of the form: p={x},{y} v={dx},{dy}
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();
+</bq-cell>
+<bq-cell id="id-5e309c4e-d350-47d2-847f-8250b2426ba0" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+this.map_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+// given: "a space which is 101 tiles wide and 103 tiles tall"
+
+this.init_data = (rows=103, cols=101) => {
+
+    if (!Number.isInteger(rows) || rows <= 0 || rows % 2 !== 1) {
+        throw new Error(`rows value must be a positive odd integer`);
+    }
+    if (!Number.isInteger(cols) || cols <= 0 || cols % 2 !== 1) {
+        throw new Error(`cols value must be a positive odd integer`);
+    }
+
+    this.rows = rows;
+    this.cols = cols;
+
+    // create the initial empty map
+    // each map cell contains a count of robots currently in that cell
+    this.map = new Array(this.rows).fill().map((_, r, arr) => new Array(this.cols).fill(0));
+
+    this.robots = [];  // array of { r, c, dr, dc }, one for each robot
+
+    const robot_data_re = /^p=([\d]+)[,]([\d]+)[ ]v=([-]?[\d]+)[,]([-]?[\d]+)$/;
+
+    // initialize this.robots and this.map from the input data
+    this.input_lines = this.input_data.split('\n');
+    for (let line_index = 0; line_index < this.input_lines.length; line_index++) {
+        const line = this.input_lines[line_index];
+        const match = line.match(robot_data_re);
+        if (!match) {
+            throw new Error(`illegal robot data input at line ${line_index+1}`);
+        }
+        // note: input data is given as x,y pairs which translates to c,r
+        const c  = +match[1];
+        const r  = +match[2];
+        const dc = +match[3];
+        const dr = +match[4];
+        if (c < 0 || c > this.cols) {
+            throw new Error(`robot col (x) specified at input line ${line_index+1} is not in range [0,${this.cols}]: ${c}`);
+        }
+        if (r < 0 || r > this.rows) {
+            throw new Error(`robot row (y) specified at input line ${line_index+1} is not in range [0,${this.rows}]: ${r}`);
+        }
+        this.robots.push({ r, c, dr, dc });
+        this.map[r][c]++;
+    }
+
+    const step_robot = (robot) => {  // robot must be an element of this.robots
+        if (!this.robots.includes(robot)) {
+            throw new Error('robot must be an element of this.robots');
+        }
+        const clamp = (v, limit) => (v < 0 ? v+limit : (v >= limit ? v-limit : v));
+        const { r, c, dr, dc } = robot;
+        const new_r = clamp(r + dr, this.rows);
+        const new_c = clamp(c + dc, this.cols);
+        robot.r = new_r;
+        robot.c = new_c;
+        this.map[r][c]--;
+        this.map[new_r][new_c]++;
+    };
+
+    this.step_map = () => {
+        this.robots.forEach(step_robot);
+    };
+
+    // note that per instructions, the middle row and middle column are not counts
+    this.get_quadrant_robot_counts = () => {  // returns [ top_left_count, top_right_count, bottom_left_count, bottom_right_count ]
+        const get_count = (start_r, limit_r, start_c, limit_c) => {
+            let count = 0;
+            for (let r = start_r; r < limit_r; r++) {
+                for (let c = start_c; c < limit_c; c++) {
+                    count += this.map[r][c];
+                }
+            }
+            return count;
+        };
+        const mid_r = Math.floor(this.rows / 2);  // middle row index
+        const mid_c = Math.floor(this.cols / 2);  // middle col index
+        return [
+            get_count( 0,       mid_r,      0,       mid_c     ),  // top_left_count
+            get_count( 0,       mid_r,      mid_c+1, this.cols ),  // top_right_count
+            get_count( mid_r+1, this.rows,  0,       mid_c     ),  // bottom_left_count
+            get_count( mid_r+1, this.rows,  mid_c+1, this.cols ),  // bottom_right_count
+        ];
+    };
+
+    this.calculate_safety_factor = (quadrant_robot_counts) => {
+        if (!Array.isArray(quadrant_robot_counts) || quadrant_robot_counts.length !== 4 || !quadrant_robot_counts.every(c => (Number.isInteger(c) && c >= 0))) {
+            throw new Error('quadrant_robot_counts must be an array of 4 non-negative integers');
+        }
+        return quadrant_robot_counts.reduce((safety_factor, count) => (safety_factor * count), 1);
+    };
+
+    this.render_map = async (ocx) => {
+        const max_count = this.map.reduce(
+            (max_count, row) => {
+                const row_max_count = row.reduce((row_max_count, cell_count) => (row_max_count < cell_count ? cell_count : row_max_count), 0);
+                return (max_count < row_max_count ? row_max_count : max_count);
+            },
+            0
+        );
+        const max_count_digits = max_count.toString().length;
+                                          
+        return ocx.render_text(
+            this.map
+                .map(row => {
+                    return row
+                        .map(cell_count => {
+                            const cell_representation = (cell_count === 0) ? '.' : cell_count.toString();
+                            return cell_representation.padEnd(max_count_digits);
+                        })
+                        .join((max_count_digits > 1) ? ' ' : '');
+                })
+                .join('\n'),
+            this.map_output_options
+        );
+    };
+};</bq-cell>
+<bq-cell id="id-c83b4867-cc6f-49ee-bef2-ab834af7b393" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+this.init_data();
+
+const use_test_data = false;
+if (use_test_data) {
+    this.input_data = `
+p=0,4 v=3,-3
+p=6,3 v=-1,-3
+p=10,3 v=-1,2
+p=2,0 v=2,-1
+p=0,0 v=1,3
+p=3,0 v=-2,-2
+p=7,6 v=-1,-3
+p=3,0 v=-1,-2
+p=9,3 v=2,3
+p=7,3 v=-1,2
+p=2,4 v=2,-3
+p=9,5 v=-3,-3
+`.trim();
+    // given: "a space which is only 11 tiles wide and 7 tiles tall"
+    this.init_data(7, 11);  // pass in (rows, cols) for test
+}
+
+await ocx.render_text(`The initial map (${this.rows}x${this.cols}):`);
+await this.render_map(ocx);
+
+const quadrant_robot_counts_before = this.get_quadrant_robot_counts();
+const safety_factor_before         = this.calculate_safety_factor(quadrant_robot_counts_before);
+
+const steps = 100;
+for (let i = 0; i < steps; i++) {
+    this.step_map();
+}
+
+await ocx.println();
+await ocx.render_text(`The map after ${steps} steps (${this.rows}x${this.cols}):`);
+await this.render_map(ocx);
+
+const quadrant_robot_counts_after = this.get_quadrant_robot_counts();
+const safety_factor_after         = this.calculate_safety_factor(quadrant_robot_counts_after);
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+* There are ${this.robots.length} robots.
+* The initial quadrant robot counts were ${quadrant_robot_counts_before.join(', ')} yielding a safety factor of ${safety_factor_before}.
+* After ${steps} steps, the robot counts are ${quadrant_robot_counts_after.join(', ')} yielding a safety factor of **${safety_factor_after}**.
+`);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-6e75fbfc-cb73-4e38-bbd5-611295995ef9" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+During the bathroom break, someone notices that these robots seem awfully similar to ones built and used at the North Pole. If they're the same type of robots, they should have a hard-coded Easter egg: very rarely, most of the robots should arrange themselves into a picture of a Christmas tree.
+
+What is the fewest number of seconds that must elapse for the robots to display the Easter egg?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-d94b8610-b3e4-4701-b281-916ec91547cc" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+this.init_data();
+
+// this was my first attempt that didn't work:
+let map_looks_like_a_christmas_tree = () => {
+    const occupied_rows = this.map.filter(row => row.some(cell_count => (cell_count > 0)));
+    if (occupied_rows.length < 2) {  // need at least two rows to make something triangular...
+        return false;
+    } else if (!occupied_rows.every(row => row.every(cell_count => (cell_count === 0 || cell_count === 1)))) {
+        return false;  // assuming pattern uses a single robot in each "pixel"
+    } else {
+        // create an array of info objects, one for each row
+        const occupied_row_info = occupied_rows.map(row => {
+            const first_occupied_index = row.findIndex(cell_count => (cell_count > 0));
+            const last_occupied_index  = row.findLastIndex(cell_count => (cell_count > 0));
+            const mid_occupied_index   = (first_occupied_index + last_occupied_index) / 2;
+            const occupied_count       = row.reduce((total, cell_count) => (total + cell_count), 0);
+            return { first_occupied_index, last_occupied_index, mid_occupied_index, occupied_count };
+        });
+        if (occupied_row_info[0].occupied_count !== 1) {
+            return false;  // assuming the top of the tree is a single robot
+        } else {
+            const mid = occupied_row_info[0].first_occupied_index;
+            const triangle_rows_threshold = 3;//!!!
+            let triangle_rows_seen = 0;
+            for (let i = 1; i < occupied_row_info.length; i++) {
+                const before  = occupied_row_info[i-1];
+                const current = occupied_row_info[i];
+                if (current.mid_occupied_index !== mid) {
+                    return false;
+                } else {
+                     if (++triangle_rows_seen >= triangle_rows_threshold) {
+                         return true;
+                     }
+                }
+            }
+            return false;
+        }
+    }
+};
+
+// I have to admit that I didn't know how to code the recognizer until I found
+// the answer at step 7623.
+//
+// I started hunting through map steps.  After a while I noticed some clumping
+// every 101 steps starting at step 48, so at steps 48, 149, 250, 351, ....
+// It reminded me of how a Poincaré recurrence will start to reassemble
+// periodically before the full reassembly.  So I started outputting maps
+// in those vicinities and after a lot of hunting I finally found it.
+//
+// This recognizer here is coded reverse engineering the answer:
+
+map_looks_like_a_christmas_tree = () => {
+    let found = false;
+    for (const row of this.map) {
+        // look for a long string of robots all in line (the border of the "picture")
+        const line_length_threshold = 15;
+        for (let i = 0, consecutive = 0; i < row.length; i++) {
+            if (row[i] === 0) {
+                consecutive = 0;
+            } else {
+                if (++consecutive >= line_length_threshold) {
+                    return true;  // indicate: found
+                }
+            }
+        }
+    }
+    return false;  // indicate: not found
+};
+
+
+
+const max_steps = 10000;
+
+let easter_egg_step;
+for (let i = 0; i < max_steps; i++) {
+    const hunting = false;  // found it now at step 7623...
+    if (hunting) {
+        const index = ((i-48) % 101);
+        if (i > 7000 && i < 8000 && (index > 98 || index < 2)) {
+            await ocx.println();
+            await ocx.render_text(`The map after ${i} step${i === 1 ? '' : 's'}:`);
+            await this.render_map(ocx);
+        }
+    }
+
+    if (map_looks_like_a_christmas_tree()) {
+        easter_egg_step = i;
+        break;
+    }
+    this.step_map();
+}
+
+const found_easter_egg = (typeof easter_egg_step === 'number');
+
+if (found_easter_egg) {
+    await ocx.render_text(`The map looks like a Christmas tree after ${easter_egg_step} step${easter_egg_step === 1 ? '' : 's'}:`);
+    await this.render_map(ocx);
+}
+
+const answer_markdown = found_easter_egg
+      ? `The map looks like a Christmas tree after **${easter_egg_step}** step${easter_egg_step === 1 ? '' : 's'}.`
+      : '**NO EASTER EGG FOUND!**';
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+${answer_markdown}
+`);</bq-cell>
+</body>
+</html>
