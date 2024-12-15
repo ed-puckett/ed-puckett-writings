@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-39749fff-85f2-4585-8d36-7810277ad4ad" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/15
+`);
+const description = `
+--- Day 15: Warehouse Woes ---
+
+You appear back inside your own mini submarine! Each Historian drives their mini submarine in a different direction; maybe the Chief has his own submarine down here somewhere as well?
+
+You look up to see a vast school of lanternfish swimming past you. On closer inspection, they seem quite anxious, so you drive your mini submarine over to see if you can help.
+
+Because lanternfish populations grow rapidly, they need a lot of food, and that food needs to be stored somewhere. That's why these lanternfish have built elaborate warehouse complexes operated by robots!
+
+These lanternfish seem so anxious because they have lost control of the robot that operates one of their most important warehouses! It is currently running amok, pushing around boxes in the warehouse with no regard for lanternfish logistics or lanternfish inventory management strategies.
+
+Right now, none of the lanternfish are brave enough to swim up to an unpredictable robot so they could shut it off. However, if you could anticipate the robot's movements, maybe they could find a safe option.
+
+The lanternfish already have a map of the warehouse and a list of movements the robot will attempt to make (your puzzle input). The problem is that the movements will sometimes fail as boxes are shifted around, making the actual movements of the robot difficult to predict.
+
+For example:
+
+##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+&lt;vv>^&lt;v^>v>^vv^v>v&lt;>v^v&lt;v&lt;^vv&lt;&lt;&lt;^>&lt;&lt;>&lt;>>v&lt;vvv&lt;>^v^>^&lt;&lt;&lt;>&lt;&lt;v&lt;&lt;&lt;v^vv^v>^
+vvv&lt;&lt;^>^v^^>&lt;&lt;>>>&lt;>^&lt;&lt;>&lt;^vv^^&lt;>vvv&lt;>>&lt;^^v>^>vv&lt;>v&lt;&lt;&lt;&lt;v&lt;^v>^&lt;^^>>>^&lt;v&lt;v
+>&lt;>vv>v^v^&lt;>>&lt;>>>>&lt;^^>vv>v&lt;^^^>>v^v^&lt;^^>v^^>v^&lt;^v>v&lt;>>v^v^&lt;v>v^^&lt;^^vv&lt;
+&lt;&lt;v&lt;^>>^^^^>>>v^&lt;>vvv^>&lt;v&lt;&lt;&lt;>^^^vv^&lt;vvv>^>v&lt;^^^^v&lt;>^>vvvv>&lt;>>v^&lt;&lt;^^^^^
+^>&lt;^>&lt;>>>&lt;>^^&lt;&lt;^^v>>>&lt;^&lt;v>^&lt;vv>>v>>>^v>&lt;>^v>&lt;&lt;&lt;&lt;v>>v&lt;v&lt;v>vvv>^&lt;>&lt;&lt;>^>&lt;
+^>>&lt;>^v&lt;>&lt;^vvv&lt;^^&lt;>&lt;v&lt;&lt;&lt;&lt;&lt;>&lt;^v&lt;&lt;&lt;>&lt;&lt;&lt;^^&lt;v&lt;^^^>&lt;^>>^&lt;v^>&lt;&lt;&lt;^>>^v&lt;v^v&lt;v^
+>^>>^v>vv>^&lt;&lt;^v&lt;>>&lt;&lt;>&lt;&lt;v&lt;&lt;v>&lt;>v&lt;^vv&lt;&lt;&lt;>^^v^>^^>>>&lt;&lt;^v>>v^v>&lt;^^>>^&lt;>vv^
+&lt;>&lt;^^>^^^&lt;>&lt;vvvvv^v&lt;v&lt;&lt;>^v&lt;v>v&lt;&lt;^>&lt;&lt;>&lt;&lt;>&lt;&lt;&lt;^^&lt;&lt;&lt;^&lt;&lt;>>&lt;&lt;>&lt;^^^>^^&lt;>^>v&lt;>
+^^>vv&lt;^v^v&lt;vv>^&lt;>&lt;v&lt;^v>^^^>>>^^vvv^>vvv&lt;>>>^&lt;^>>>>>^&lt;&lt;^v>^vvv&lt;>^&lt;>&lt;&lt;v>
+v^^>>>&lt;&lt;^^&lt;>>^v^&lt;v^vv&lt;>v^&lt;&lt;>^&lt;^v^v>&lt;^&lt;&lt;&lt;>&lt;&lt;^&lt;v>&lt;v&lt;>vv>>v>&lt;v^&lt;vv&lt;>v^&lt;&lt;^
+
+As the robot (@) attempts to move, if there are any boxes (O) in the way, the robot will also attempt to push those boxes. However, if this action would cause the robot or a box to move into a wall (#), nothing moves instead, including the robot. The initial positions of these are shown on the map at the top of the document the lanternfish gave you.
+
+The rest of the document describes the moves (^ for up, v for down, &lt; for left, > for right) that the robot will attempt to make, in order. (The moves form a single giant sequence; they are broken into multiple lines just to make copy-pasting easier. Newlines within the move sequence should be ignored.)
+
+Here is a smaller example to get started:
+
+########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+&lt;^^>>>vv&lt;v>>v&lt;&lt;
+
+Were the robot to attempt the given sequence of moves, it would push around the boxes as follows:
+
+Initial state:
+########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move &lt;:
+########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move ^:
+########
+#.@O.O.#
+##..O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move ^:
+########
+#.@O.O.#
+##..O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move >:
+########
+#..@OO.#
+##..O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move >:
+########
+#...@OO#
+##..O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move >:
+########
+#...@OO#
+##..O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+Move v:
+########
+#....OO#
+##..@..#
+#...O..#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move v:
+########
+#....OO#
+##..@..#
+#...O..#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move &lt;:
+########
+#....OO#
+##.@...#
+#...O..#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move v:
+########
+#....OO#
+##.....#
+#..@O..#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move >:
+########
+#....OO#
+##.....#
+#...@O.#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move >:
+########
+#....OO#
+##.....#
+#....@O#
+#.#.O..#
+#...O..#
+#...O..#
+########
+
+Move v:
+########
+#....OO#
+##.....#
+#.....O#
+#.#.O@.#
+#...O..#
+#...O..#
+########
+
+Move &lt;:
+########
+#....OO#
+##.....#
+#.....O#
+#.#O@..#
+#...O..#
+#...O..#
+########
+
+Move &lt;:
+########
+#....OO#
+##.....#
+#.....O#
+#.#O@..#
+#...O..#
+#...O..#
+########
+
+The larger example has many more moves; after the robot has finished those moves, the warehouse would look like this:
+
+##########
+#.O.O.OOO#
+#........#
+#OO......#
+#OO@.....#
+#O#.....O#
+#O.....OO#
+#O.....OO#
+#OO....OO#
+##########
+
+The lanternfish use their own custom Goods Positioning System (GPS for short) to track the locations of the boxes. The GPS coordinate of a box is equal to 100 times its distance from the top edge of the map plus its distance from the left edge of the map. (This process does not stop at wall tiles; measure all the way to the edges of the map.)
+
+So, the box shown below has a distance of 1 from the top edge of the map and 4 from the left edge of the map, resulting in a GPS coordinate of 100 * 1 + 4 = 104.
+
+#######
+#...O..
+#......
+
+The lanternfish would like to know the sum of all boxes' GPS coordinates after the robot finishes moving. In the larger example, the sum of all boxes' GPS coordinates is 10092. In the smaller example, the sum is 2028.
+
+Predict the motion of the robot and boxes in the warehouse. After the robot is finished moving, what is the sum of all boxes' GPS coordinates?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-ab204d10-7895-469a-9cd5-d86d45f5e6bf" data-type="javascript" class="show-full show-in-presentation">// input_data is a long string of characters separated into rows by newlines.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();</bq-cell>
+<bq-cell id="id-06aa7267-694a-421e-8f44-aeddccf688ac" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+this.map_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+// map cell characters
+this.blank_cell = '.';
+this.wall_cell  = '#';
+this.box_cell   = 'O';
+this.robot_cell = '@';
+
+this.permissable_map_chars    = [ this.blank_cell, this.wall_cell, this.box_cell, this.robot_cell ];
+this.permissable_map_chars_re = new RegExp(`^[${this.permissable_map_chars.join('')}]*$`);
+
+this.E_dir_ch = '&gt;';
+this.N_dir_ch = '^';
+this.W_dir_ch = '&lt;';
+this.S_dir_ch = 'v';
+
+const permissable_dir_chars    = [ this.E_dir_ch, this.N_dir_ch, this.W_dir_ch, this.S_dir_ch ];
+const permissable_dir_chars_re = new RegExp(`^[${permissable_dir_chars.join('')}]*$`);
+
+this.directions = {
+    [this.E_dir_ch]: { dir_ch: this.E_dir_ch, label: 'E', dr:  0, dc:  1, left: this.N_dir_ch, right: this.S_dir_ch, back: this.W_dir_ch },
+    [this.N_dir_ch]: { dir_ch: this.N_dir_ch, label: 'N', dr: -1, dc:  0, left: this.W_dir_ch, right: this.E_dir_ch, back: this.S_dir_ch },
+    [this.W_dir_ch]: { dir_ch: this.W_dir_ch, label: 'W', dr:  0, dc: -1, left: this.S_dir_ch, right: this.N_dir_ch, back: this.E_dir_ch },
+    [this.S_dir_ch]: { dir_ch: this.S_dir_ch, label: 'S', dr:  1, dc:  0, left: this.E_dir_ch, right: this.W_dir_ch, back: this.N_dir_ch },
+};
+
+this.init_data = () => {
+    this.input_lines = this.input_data.split('\n');
+
+    // these are to be parsed from the input:
+    this.map   = [];
+    this.moves = [];
+
+    for (let line_index = 0, parsed_map = false; line_index < this.input_lines.length; line_index++) {
+        const line = this.input_lines[line_index];
+        if (!parsed_map) {
+
+            if (line.length === 0) {
+                if (this.map.length === 0) {
+                    throw new Error('newline encounted before map was parsed');
+                } else {
+                    parsed_map = true;
+                }
+            } else {
+                if (!line.match(this.permissable_map_chars_re)) {
+                    throw new Error(`illegal map character at line ${line_index+1}`);
+                }
+                this.map.push(Array.from(line));
+            }
+
+        } else {  // parsing directions
+
+            if (!line.match(this.permissable_dir_chars_re)) {
+                throw new Error(`illegal move character at line ${line_index+1}`);
+            }
+            for (const dir_ch of Array.from(line)) {
+                this.moves.push(dir_ch);
+            }
+        }
+    }
+
+    this.rows = this.map.length;
+    this.cols = this.map[0].length;  // we expect all rows to be the same length
+
+    // validate map row lengths
+    if (!this.map.every(row => row.length === this.cols)) {
+        throw new Error('input_data does not have all map rows the same length');
+    }
+
+    // find robot
+    this.robot_r = undefined;
+    this.robot_c = undefined;
+    let found_robot = false;
+    for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+            if (this.map[r][c] === this.robot_cell) {
+                if (found_robot) {
+                    throw new Error(`second robot found at (${r}, ${c})`);
+                } else {
+                    found_robot = true;
+                    this.robot_r = r;
+                    this.robot_c = c;
+                }
+            }
+        }
+    }
+    if (!found_robot) {
+        throw new Error('robot not found in map');
+    }
+
+    this.toward = (dir_ch, r=this.robot_r, c=this.robot_c) => {  // returns [ new_r, new_c ]
+        const dir = this.directions[dir_ch];
+        if (!dir) {
+            throw new Error(`illegal dir_ch "${dir_ch}"`);
+        }
+        return [
+            r + dir.dr,
+            c + dir.dc,
+        ];
+    };
+
+    this.cell_toward = (dir_ch, r=this.robot_r, c=this.robot_c) => {  // returns { r, c, cell: this.map[new_r][new_c] }  // cell will be undefined if [ r, c ] out of bounds
+        const dir = this.directions[dir_ch];
+        if (!dir) {
+            throw new Error(`illegal dir_ch "${dir_ch}"`);
+        }
+        const [ new_r, new_c ] = this.toward(dir_ch, r, c);
+        return { r: new_r, c: new_c, cell: this.map[new_r]?.[new_c] };
+    };
+
+    this.find_blank_cell_toward = (dir_ch, r=this.robot_r, c=this.robot_c) => {  // returns [ r, c ] of first blank cell in given direction, or undefined if not found or encounted a wall first
+        for (;;) {
+            let cell;
+            ({ r, c, cell } = this.cell_toward(dir_ch, r, c));
+            if (typeof cell === 'undefined' || cell === this.wall_cell) {
+                return undefined;  // indicate: not found
+            }
+            if (cell === this.blank_cell) {
+                return [ r, c ];  // indicate: found at [ r, c ]
+            }
+        }
+    }
+
+    this.move_robot = (dir_ch) => {  // also moves boxes in the way; returns boolean indicating whether move was possible and was made
+        const blank_cell_location = this.find_blank_cell_toward(dir_ch);
+        if (!blank_cell_location) {
+            return false;  // indicate: move not possible
+        } else {
+            const back_dir_ch = this.directions[dir_ch].back;
+            if (!back_dir_ch) {
+                throw new Error(`illegal dir_ch "${dir_ch}"`);
+            }
+            const { dr, dc } = this.directions[back_dir_ch];
+            for (let [ r, c ] = blank_cell_location; !(r === this.robot_r && c === this.robot_c); r += dr, c += dc) {
+                const adjacent_cell = this.map[r+dr][c+dc];
+                if (adjacent_cell === this.wall_cell) {
+                    throw new Error(`map corruption: moving unexpected character "${adjacent_cell}" at (${r+dr},${c+dc}) to (${r},${c})`);
+                }
+                this.map[r][c] = adjacent_cell;
+            }
+            // note that the last move moved the robot character
+            this.map[this.robot_r][this.robot_c] = this.blank_cell;
+            ([ this.robot_r, this.robot_c ] = this.toward(dir_ch, this.robot_r, this.robot_c));
+        }
+        return true;  // indicate: moved
+    };
+
+    this.render_map = async (ocx) => {
+        return ocx.render_text(this.map.map(row => row.join('')).join('\n'), this.map_output_options);
+    };
+
+    this.gps_coordinate = (r, c) => (100*r + c);
+
+    this.sum_of_box_gps_coordinates = (box_cell=this.box_cell) => {
+        return this.map.reduce(
+            (sum, row, r) => {
+                return ( sum + row.reduce(
+                    (row_sum, cell, c) => {
+                        return (cell === box_cell) ? (row_sum + this.gps_coordinate(r, c)) : row_sum;
+                    },
+                    0
+                ) );
+            },
+            0
+        );
+    };
+};</bq-cell>
+<bq-cell id="id-14311238-6350-435d-af67-82fa75d743dd" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+const use_test_data = false;
+if (use_test_data) {
+    this.input_data = `
+########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+&lt;^^>>>vv&lt;v>>v&lt;&lt;
+`.trim();
+}
+
+this.init_data();
+
+await ocx.render_text(`The initial map (${this.rows}x${this.cols}):`);
+await this.render_map(ocx);
+
+for (const dir_ch of this.moves) {
+    const moved = this.move_robot(dir_ch);
+    if (use_test_data) {
+        await ocx.println();
+        await ocx.render_text(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
+        await this.render_map(ocx);
+    }
+}
+
+if (!use_test_data) {
+    await ocx.println();
+    await ocx.render_text(`The final map:`);
+    await this.render_map(ocx);
+}
+
+const answer = this.sum_of_box_gps_coordinates();
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+The sum of the gps coordinates of the final box positions is **${answer}**.
+`);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-bde722bd-c964-443d-a69e-a507dd14a323" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+The lanternfish use your information to find a safe moment to swim in and turn off the malfunctioning robot! Just as they start preparing a festival in your honor, reports start coming in that a second warehouse's robot is also malfunctioning.
+
+This warehouse's layout is surprisingly similar to the one you just helped. There is one key difference: everything except the robot is twice as wide! The robot's list of movements doesn't change.
+
+To get the wider warehouse's map, start with your original map and, for each tile, make the following changes:
+
+    If the tile is #, the new map contains ## instead.
+    If the tile is O, the new map contains [] instead.
+    If the tile is ., the new map contains .. instead.
+    If the tile is @, the new map contains @. instead.
+
+This will produce a new warehouse map which is twice as wide and with wide boxes that are represented by []. (The robot does not change size.)
+
+The larger example from before would now look like this:
+
+####################
+##....[]....[]..[]##
+##............[]..##
+##..[][]....[]..[]##
+##....[]@.....[]..##
+##[]##....[]......##
+##[]....[]....[]..##
+##..[][]..[]..[][]##
+##........[]......##
+####################
+
+Because boxes are now twice as wide but the robot is still the same size and speed, boxes can be aligned such that they directly push two other boxes at once. For example, consider this situation:
+
+#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+&lt;vv&lt;&lt;^^&lt;&lt;^^
+
+After appropriately resizing this map, the robot would push around these boxes as follows:
+
+Initial state:
+##############
+##......##..##
+##..........##
+##....[][]@.##
+##....[]....##
+##..........##
+##############
+
+Move &lt;:
+##############
+##......##..##
+##..........##
+##...[][]@..##
+##....[]....##
+##..........##
+##############
+
+Move v:
+##############
+##......##..##
+##..........##
+##...[][]...##
+##....[].@..##
+##..........##
+##############
+
+Move v:
+##############
+##......##..##
+##..........##
+##...[][]...##
+##....[]....##
+##.......@..##
+##############
+
+Move &lt;:
+##############
+##......##..##
+##..........##
+##...[][]...##
+##....[]....##
+##......@...##
+##############
+
+Move &lt;:
+##############
+##......##..##
+##..........##
+##...[][]...##
+##....[]....##
+##.....@....##
+##############
+
+Move ^:
+##############
+##......##..##
+##...[][]...##
+##....[]....##
+##.....@....##
+##..........##
+##############
+
+Move ^:
+##############
+##......##..##
+##...[][]...##
+##....[]....##
+##.....@....##
+##..........##
+##############
+
+Move &lt;:
+##############
+##......##..##
+##...[][]...##
+##....[]....##
+##....@.....##
+##..........##
+##############
+
+Move &lt;:
+##############
+##......##..##
+##...[][]...##
+##....[]....##
+##...@......##
+##..........##
+##############
+
+Move ^:
+##############
+##......##..##
+##...[][]...##
+##...@[]....##
+##..........##
+##..........##
+##############
+
+Move ^:
+##############
+##...[].##..##
+##...@.[]...##
+##....[]....##
+##..........##
+##..........##
+##############
+
+This warehouse also uses GPS to locate the boxes. For these larger boxes, distances are measured from the edge of the map to the closest edge of the box in question. So, the box shown below has a distance of 1 from the top edge of the map and 5 from the left edge of the map, resulting in a GPS coordinate of 100 * 1 + 5 = 105.
+
+##########
+##...[]...
+##........
+
+In the scaled-up version of the larger example from above, after the robot has finished all of its moves, the warehouse would look like this:
+
+####################
+##[].......[].[][]##
+##[]...........[].##
+##[]........[][][]##
+##[]......[]....[]##
+##..##......[]....##
+##..[]............##
+##..@......[].[][]##
+##......[][]..[]..##
+####################
+
+The sum of these boxes' GPS coordinates is 9021.
+
+Predict the motion of the robot and boxes in this new, scaled-up warehouse. What is the sum of all boxes' final GPS coordinates?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-f855bfab-dd41-4380-8a0e-4e41022fbb3c" data-type="javascript" class="show-full show-in-presentation">// update the utility functions for Part Two
+
+this.box_cell1 = '[';
+this.box_cell2 = ']';
+
+this.init_data_wide = () => {
+    this.init_data();
+
+    this.original_map = this.map;
+
+    this.map = this.original_map.map((row, r) => {
+        return row.flatMap((cell, c) => {
+            switch (cell) {
+            case this.blank_cell: return [ this.blank_cell, this.blank_cell ];
+            case this.wall_cell:  return [ this.wall_cell,  this.wall_cell  ];
+            case this.box_cell:   return [ this.box_cell1,  this.box_cell2  ];
+            case this.robot_cell: return [ this.robot_cell, this.blank_cell ];
+            default: throw new Error(`unexpected cell value "${cell}" encountered when converting map at (${r},${c})`);
+            }
+        });
+    });
+
+    // number of columns is doubled
+    this.cols    *= 2;
+    this.robot_c *= 2;
+
+    this.original_move_robot = this.move_robot;
+
+    this.move_robot = (dir_ch) => {  // also moves boxes in the way; returns boolean indicating whether move was possible and was made
+        if (dir_ch === this.E_dir_ch || dir_ch === this.W_dir_ch) {
+            return this.original_move_robot(dir_ch);  // this still works for horizontal movement
+        }
+
+        // find_prerequisite_moves() returns array of [ r, c ] of cell coords that must
+        // be moved before moving coords_to_move, otherwise undefined if not possible
+        const find_prerequisite_moves = (dir_ch, coords_to_move) => {
+            const get_linked_coords = (coord) => {
+                const [ coord_r, coord_c ] = coord;
+                const coord_cell = this.map[coord_r][coord_c];
+                if (coord_cell === this.box_cell1) {
+                    if (this.map[coord_r][coord_c+1] !== this.box_cell2) {
+                        throw new Error(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
+                    }
+                    return [ coord, [ coord_r, coord_c+1 ] ];
+                } else if (coord_cell === this.box_cell2) {
+                    if (this.map[coord_r][coord_c-1] !== this.box_cell1) {
+                        throw new Error(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
+                    }
+                    return [ [ coord_r, coord_c-1 ], coord ];
+                } else {
+                    return [ coord ];  // no linked coord
+                }
+            };
+
+            const next_level_coords_to_move = [];
+            for (const [ r, c ] of coords_to_move) {
+                const { r: next_r, c: next_c } = this.cell_toward(dir_ch, r, c);
+                for (const [ linked_r, linked_c ] of get_linked_coords([ next_r, next_c ])) {
+                    const linked_cell = this.map[linked_r][linked_c];
+                    if (typeof linked_cell === 'undefined' || linked_cell === this.wall_cell) {
+                        return undefined;  // indicate: move not possible
+                    }
+                    if (linked_cell !== this.blank_cell) {  // otherwise, nothing needs to move
+                        if (!next_level_coords_to_move.find(([ existing_r, existing_c ]) => (existing_r === linked_r && existing_c === linked_c))) {  // prevent duplicates
+                            next_level_coords_to_move.push([ linked_r, linked_c ]);
+                        }
+                    }
+                }
+            }
+
+            if (next_level_coords_to_move.length === 0) {
+                return coords_to_move;  // no added prerequisites
+            } else {
+                const next_level_prerequisite_moves = find_prerequisite_moves(dir_ch, next_level_coords_to_move);  // max recursion depth is this.rows
+                if (!next_level_prerequisite_moves) {
+                    return undefined;  // indicate: move not possible
+                }
+                return [ ...next_level_prerequisite_moves, ...coords_to_move ];
+            }
+        };
+
+        const preprerequisite_moves = find_prerequisite_moves(dir_ch, [ [ this.robot_r, this.robot_c ] ]);
+        if (!preprerequisite_moves) {
+            return false;  // indicate: move not possible
+        } else {
+            const dir = this.directions[dir_ch];
+            if (!dir) {
+                throw new Error(`illegal dir_ch "${dir_ch}"`);
+            }
+            const { dr, dc } = dir;
+
+            for (const [ r, c ] of preprerequisite_moves) {
+                this.map[r+dr][c+dc] = this.map[r][c];
+                this.map[r][c] = this.blank_cell;
+            }
+
+            // note: robot coords was the last coords of preprerequisite_moves
+            this.map[this.robot_r][this.robot_c] = this.blank_cell;
+            this.robot_r += dr;
+            this.robot_c += dc;
+        }
+        return true;  // indicate: moved
+    };
+
+    // this.render_map() does not depend on this.rows or this.cols so it will
+    // work for either the original or the widened map.
+    this.render_map = async (ocx, map=this.map) => {
+        return ocx.render_text(map.map(row => row.join('')).join('\n'), this.map_output_options);
+    };
+};</bq-cell>
+<bq-cell id="id-f561045c-52d5-49c4-bbd0-b240b2b501ff" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+const use_test_data = false;
+if (use_test_data) {
+    this.input_data = `
+#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+&lt;vv&lt;&lt;^^&lt;&lt;^^
+`.trim();
+}
+
+this.init_data_wide();
+
+await ocx.render_text(`The original initial map:`);
+await this.render_map(ocx, this.original_map);
+
+await println();
+await ocx.render_text(`The initial widened map:`);
+await this.render_map(ocx);
+
+for (const dir_ch of this.moves) {
+    const moved = this.move_robot(dir_ch);
+    if (use_test_data) {
+        await ocx.println();
+        await ocx.render_text(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
+        await this.render_map(ocx);
+    }
+}
+
+if (!use_test_data) {
+    await ocx.println();
+    await ocx.render_text(`The final widened map:`);
+    await this.render_map(ocx);
+}
+
+const answer = this.sum_of_box_gps_coordinates(this.box_cell1);
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+The sum of the gps coordinates of the final box positions is **${answer}**.
+`);</bq-cell>
+</body>
+</html>
