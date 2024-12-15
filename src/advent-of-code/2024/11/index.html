@@ -393,7 +393,7 @@ const get_largest_partial_answer = (for_stone, desired_blinks, max_blinks) => { 
 
 const multiply_stone_counts_object = (factor, stone_counts_object) => {
     const result = {};
-    for (stone_string in stone_counts_object) {
+    for (const stone_string in stone_counts_object) {
         result[stone_string] = factor * stone_counts_object[stone_string];
     }
     return result;

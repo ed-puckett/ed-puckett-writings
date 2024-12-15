@@ -209,7 +209,7 @@ this.init_map = () => {
             // (set below when regions are determined)
             region: undefined,
         };
-        for (dir_ch in this.directions) {
+        for (const dir_ch in this.directions) {
             if (plot_cell.type === this.cell_toward(this.map, r, c, dir_ch)) {
                 plot_cell.matches.push(dir_ch);
             } else {
@@ -255,8 +255,8 @@ this.init_map = () => {
             // added for Part Two:
             get corners (){
                 let count = 0;
-                for (plot_cell of this.plot_cells.values()) {
-                    for (dir_ch in the_directions) {
+                for (const plot_cell of this.plot_cells.values()) {
+                    for (const dir_ch in the_directions) {
                         if (plot_cell.boundaries.includes(dir_ch)) {
                             const dir = the_directions[dir_ch];
                             if (plot_cell.boundaries.includes(dir.left)) {
