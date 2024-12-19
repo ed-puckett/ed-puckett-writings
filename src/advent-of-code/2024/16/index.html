@@ -350,96 +350,6 @@ globalThis.t = this;//!!!
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
                 const cell = this.get_cell(r, c);
-                cell.best_solution_from_here = undefined;
-            }
-        }
-
-        let attempt_count = 0;
-
-        const search = async (  // returns { cost, path } of best solution or undefined if no solution was found
-            cell          = start_cell,
-            entry_dir     = start_dir,  // dir upon entry
-            visited_cells = new Set(),
-            cost_budget   = Infinity,
-        ) => {
-            let best_solution_from_here;
-
-            const new_visited_cells = visited_cells.union(new Set([ cell ]));
-
-            const attempt = async (attempt_dir) => {
-                const attempt_cell = this.cell_toward(cell, attempt_dir);
-
-                const cost_this_step = (attempt_dir === entry_dir) ? this.move_cost : this.turn_cost+this.move_cost;
-                const new_cost_budget = (best_solution_from_here ? best_solution_from_here.cost-cost_this_step : cost_budget) - cost_this_step;
-
-                if (attempt_count++ % trace_mod === 0) {
-                    await trace_fn?.({
-                        attempt_count, best_solution_from_here, attempt_cell, attempt_dir,
-                        new_visited_cells, cost_this_step,
-                        minimum_remaining_cost: this.calculate_minimum_remaining_cost(cell, entry_dir),
-                        cost_this_step, new_cost_budget,
-                    });
-                }
-
-                const attempt_result = await search(attempt_cell, attempt_dir, new_visited_cells, new_cost_budget);  // keep full (new_)visited_cells...
-                if (!attempt_result) {
-                    return undefined;  // indicate: not found
-                } else {
-                    // adjust result to perspective of this cell
-                    // potentially update best_solution_from_here
-                    const cost = cost_this_step + attempt_result.cost;
-                    if (!best_solution_from_here || cost < best_solution_from_here.cost) {
-                        const path = [ { cell, entry_dir }, ...attempt_result.path ];
-                        best_solution_from_here = { cost, path };
-                    }
-                }
-            };
-
-            if (visited_cells.has(cell) || cell.ch === this.wall_cell_ch) {
-                // impossible to proceed...
-                return undefined;  // indicate: not found
-            } else if (cell.best_solution_from_here) {
-                // already have the answer, but may need to adjust it for current entry_dir...
-                // note: if the solution cannot be adjusted, then undefined will be returned (indicating not found)
-                return adjust_solution_for_entry_dir(cell.best_solution_from_here, entry_dir);
-            } else {
-                if (cell === this.end_cell) {
-                    // trivial base case...
-                    best_solution_from_here = { cost: 0, path: [ { cell, entry_dir } ] };
-                } else if (this.calculate_minimum_remaining_cost(cell, entry_dir) >= cost_budget) {
-                    return undefined;  // indicate: not found
-                } else {
-                    // attempt the various directions...
-                    await attempt(entry_dir);
-                    await attempt(this.directions[entry_dir.left]);
-                    await attempt(this.directions[entry_dir.right]);
-                    // no need to attempt entry_dir.back, it would just be turning back the way we entered...
-                }
-
-                if (best_solution_from_here) {
-                    // update cell housekeeping data
-                    cell.best_solution_from_here = best_solution_from_here;
-                }
-
-                return best_solution_from_here;
-            }
-        };
-
-        return await search();
-    };
-
-    this.find_best_maze_solution_breadth_first = async (options) => {  // returns { cost, path } or undefined if no solution was found; path is an array of { cell, entry_dir }
-        const {
-            start_cell = this.start_cell,
-            start_dir  = this.start_dir,
-            trace_fn,
-            trace_mod = 1000,
-        } = (options ?? {});
-
-        // initialize state for each cell
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
-                const cell = this.get_cell(r, c);
                 // cell.arrivals maps each dir_ch to:
                 // - undefined if no path has entered with that entry_dir before
                 // - { cost, path } for the best path with the best cost for that entry_dir so far
@@ -777,7 +687,7 @@ const trace_fn = async (data) => {
 };
 waiting_element.scrollIntoView();
 
-const best_solution = await this.find_best_maze_solution_breadth_first({
+const best_solution = await this.find_best_maze_solution({
 //    start_cell: this.get_cell(this.end_cell.r+8, this.end_cell.c-32),
 //    start_dir:  this.directions[this.N_dir_ch],
     trace_fn,
