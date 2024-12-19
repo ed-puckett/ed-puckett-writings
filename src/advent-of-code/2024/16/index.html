@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-ec33f750-af93-480c-8f91-4ca44e0b5940" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/16
+`);
+const description = `
+--- Day 16: Reindeer Maze ---
+
+It's time again for the Reindeer Olympics! This year, the big event is the Reindeer Maze, where the Reindeer compete for the lowest score.
+
+You and The Historians arrive to search for the Chief right as the event is about to start. It wouldn't hurt to watch a little, right?
+
+The Reindeer start on the Start Tile (marked S) facing East and need to reach the End Tile (marked E). They can move forward one tile at a time (increasing their score by 1 point), but never into a wall (#). They can also rotate clockwise or counterclockwise 90 degrees at a time (increasing their score by 1000 points).
+
+To figure out the best place to sit, you start by grabbing a map (your puzzle input) from a nearby kiosk. For example:
+
+###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############
+
+There are many paths through this maze, but taking any of the best paths would incur a score of only 7036. This can be achieved by taking a total of 36 steps forward and turning 90 degrees a total of 7 times:
+
+
+###############
+#.......#....E#
+#.#.###.#.###^#
+#.....#.#...#^#
+#.###.#####.#^#
+#.#.#.......#^#
+#.#.#####.###^#
+#..>>>>>>>>v#^#
+###^#.#####v#^#
+#>>^#.....#v#^#
+#^#.#.###.#v#^#
+#^....#...#v#^#
+#^###.#.#.#v#^#
+#S..#.....#>>^#
+###############
+
+Here's a second example:
+
+#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################
+
+In this maze, the best paths cost 11048 points; following one such path would look like this:
+
+#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#^#
+#.#.#.#...#...#^#
+#.#.#.#.###.#.#^#
+#>>v#.#.#.....#^#
+#^#v#.#.#.#####^#
+#^#v..#.#.#>>>>^#
+#^#v#####.#^###.#
+#^#v#..>>>>^#...#
+#^#v###^#####.###
+#^#v#>>^#.....#.#
+#^#v#^#####.###.#
+#^#v#^........#.#
+#^#v#^#########.#
+#S#>>^..........#
+#################
+
+Note that the path shown above includes one 90 degree turn as the very first move, rotating the Reindeer from facing East to facing North.
+
+Analyze your map carefully. What is the lowest score a Reindeer could possibly get?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-e445af22-5d46-421d-845d-a9021313f5a4" data-type="javascript" class="show-full show-in-presentation">// input_data is a long string of characters separated into rows by newlines.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+this.input_data = input_data.trim();</bq-cell>
+<bq-cell id="id-1567e835-d31b-42a0-b1af-dbe36b9127cc" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+this.map_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+this.solution_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+this.E_dir_ch = '&gt;';
+this.N_dir_ch = '^';
+this.W_dir_ch = '&lt;';
+this.S_dir_ch = 'v';
+
+const permissable_dir_chars    = [ this.E_dir_ch, this.N_dir_ch, this.W_dir_ch, this.S_dir_ch ];
+const permissable_dir_chars_re = new RegExp(`^[${permissable_dir_chars.join('')}]*$`);
+
+this.directions = {
+    [this.E_dir_ch]: { dir_ch: this.E_dir_ch, label: 'E', dr:  0, dc:  1, left: this.N_dir_ch, right: this.S_dir_ch, back: this.W_dir_ch },
+    [this.N_dir_ch]: { dir_ch: this.N_dir_ch, label: 'N', dr: -1, dc:  0, left: this.W_dir_ch, right: this.E_dir_ch, back: this.S_dir_ch },
+    [this.W_dir_ch]: { dir_ch: this.W_dir_ch, label: 'W', dr:  0, dc: -1, left: this.S_dir_ch, right: this.N_dir_ch, back: this.E_dir_ch },
+    [this.S_dir_ch]: { dir_ch: this.S_dir_ch, label: 'S', dr:  1, dc:  0, left: this.E_dir_ch, right: this.W_dir_ch, back: this.N_dir_ch },
+};
+
+// map cell characters
+this.empty_cell_ch = '.';
+this.wall_cell_ch  = '#';
+this.start_cell_ch = 'S';
+this.end_cell_ch   = 'E';
+
+this.permissable_map_chars    = [ this.empty_cell_ch, this.wall_cell_ch, this.start_cell_ch, this.end_cell_ch ];
+this.permissable_map_chars_re = new RegExp(`^[${this.permissable_map_chars.join('')}]*$`);
+
+this.init_data = () => {
+    this.input_lines = this.input_data.split('\n');
+
+    // map to be parsed from the input:
+    this.map = [];  // an array of rows, each row an array of { r, c, ch }
+
+    for (let r = 0; r < this.input_lines.length; r++) {
+        const line = this.input_lines[r];
+        if (!line.match(this.permissable_map_chars_re)) {
+            throw new Error(`illegal map character at line ${r+1}`);
+        }
+        const row = Array.from(line).map((ch, c) => {
+            return { r, c, ch };
+        });
+        this.map.push(row);
+    }
+    this.rows = this.map.length;
+    this.cols = this.map[0].length;  // all rows are expected to be the same length
+    // validate map row lengths
+    if (!this.map.every(row => row.length === this.cols)) {
+        throw new Error('input_data does not have all map rows the same length');
+    }
+
+    this.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
+        return this.map[r]?.[c];
+    }
+
+    // costs for each action, given in the problem description
+    this.move_cost = 1;
+    this.turn_cost = 1000;
+
+    // the start direction is given as East in the problem description
+    this.start_dir = this.directions[this.E_dir_ch];
+
+    // find start and end in map
+    this.start_cell = undefined;
+    this.end_cell   = undefined;
+    for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+            const cell = this.get_cell(r, c);
+            if (cell.ch === this.start_cell_ch) {
+                if (this.start_cell) {
+                    throw new Error(`second start found at (${r}, ${c})`);
+                } else {
+                    this.start_cell = cell;
+                }
+            } else if (cell.ch === this.end_cell_ch) {
+                if (this.end_cell) {
+                    throw new Error(`second end found at (${r}, ${c})`);
+                } else {
+                    this.end_cell = cell;
+                }
+            }
+        }
+    }
+    if (!this.start_cell) {
+        throw new Error('start not found in map');
+    }
+    if (!this.end_cell) {
+        throw new Error('end not found in map');
+    }
+
+    this.cell_toward = (cell, dir) => {
+        const { r, c } = cell;
+        const { dr, dc } = dir;
+        return this.get_cell(r+dr, c+dc);
+    }
+
+    this.render_map = async (ocx, with_path=null) => {
+        const path_cells = with_path
+              ? new Map(with_path.map(({ cell, entry_dir }) => ([ cell, entry_dir.dir_ch ])))
+              : undefined;
+        return ocx.render_text(
+            this.map
+                .map(row => {
+                    return row
+                        .map(cell => {
+                            return path_cells?.get(cell) ?? cell.ch;
+                        })
+                        .join('');
+                })
+                .join('\n'),
+            this.map_output_options,
+        );
+    };
+
+globalThis.t = this;//!!!
+
+    this.calculate_minimum_remaining_cost = (cell, entry_dir) => {
+        if (cell === this.end_cell) {
+            return 0;
+        } else {
+            const delta_r = this.end_cell.r - cell.r;
+            const delta_c = this.end_cell.c - cell.c;
+            const { dr, dc } = entry_dir;
+
+            let minimum_remaining = Math.abs(delta_r) + Math.abs(delta_c);
+
+            if (!(dr === -1 || dr === 0 || dr === 1) && (dc === -1 || dc === 0 || dc === 1) && ((dr === 0) !== (dc === 0))) {
+                throw new Error('assumptions for calculating minimum_remaining violated');
+            }
+            if (delta_r === 0) {
+                if (dr === 0) {
+                    if ((delta_c * dc) < 0) {  // wrong direction?
+                        minimum_remaining += 2*this.turn_cost;  // must turn 180 degrees
+                    }
+                } else {  // (dr !== 0)
+                    minimum_remaining += this.turn_cost;  // must turn 90 degrees
+                }
+            } else if (delta_c === 0) {  // (delta_c === 0) && (delta_r !== 0)
+                if (dc === 0) {
+                    if (delta_r * dr < 0) {
+                        minimum_remaining += 2*this.turn_cost;  // must turn 180 degrees
+                    }
+                } else {  // (dc !== 0)
+                    minimum_remaining += this.turn_cost;  // must turn 90 degrees
+                }
+            } else {  // (delta_c !== 0) && (delta_r !== 0)
+                if ((delta_c * dc) < 0 || (delta_r * dr) < 0) {  // wrong direction?
+                    minimum_remaining += this.turn_cost + this.turn_cost;  // must turn 90 degrees two times
+                } else {
+                    minimum_remaining += this.turn_cost;  // must turn 90 degrees one time
+                }
+            }
+            return minimum_remaining;
+        }
+    };
+
+    const adjust_solution_for_entry_dir = (solution, entry_dir) => {  // returns adjusted solution or undefined if solution cannot be adjusted
+        if (!Array.isArray(solution.path) || solution.path.length <= 0) {
+            throw new Error('unexpected: solution has a bad path');
+        }
+        const { cost, path } = solution;
+        const { cell: cell0, entry_dir: entry_dir0 } = path[0];
+        if (entry_dir0.dir_ch != entry_dir.left && entry_dir0.dir_ch != entry_dir.right) {
+            return undefined;  // indicate: solution cannot be adjusted
+        }
+        if (entry_dir0 === entry_dir) {
+            return solution;  // no change necessary
+        } else {
+            // copy and adjust, setting new entry_dir for first path element
+            if (path.length === 1) {
+                if (cost !== 0) {
+                    throw new Error('unexpected: solution.path is length 1 but solution.cost is not 0');
+                }
+                if (cell0 !== this.end_cell) {
+                    throw new Error('unexpected: solution.path is length 1 but solution.path[0].cell is not this.end_cell');
+                }
+                // zero cost and single path component with new entry_dir
+                return { cost: 0, path: [ { cell: cell0, entry_dir } ] };
+            } else {
+                const { cell: cell1, entry_dir: entry_dir1 } = path[1];
+                // changing direction (either left or right), update path and cost accordingly:
+                const new_path = [ ...path ];
+                new_path[0] = { cell: cell0, entry_dir };
+                const new_cost = (entry_dir === entry_dir1)  // note: entry_dir !== entry_dir0
+                      ? cost - this.turn_cost   // solution no longer turns after first path component
+                      : cost + this.turn_cost;  // solution now turns after first path component
+                return { cost: new_cost, path: new_path };
+            }
+        }
+    };
+
+    this.find_best_maze_solution = async (options) => {  // returns { cost, path } or undefined if no solution was found; path is an array of { cell, entry_dir }
+        const {
+            start_cell = this.start_cell,
+            start_dir  = this.start_dir,
+            trace_fn,
+            trace_mod = 1000,
+        } = (options ?? {});
+
+        // initialize state for each cell
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const cell = this.get_cell(r, c);
+                cell.best_solution_from_here = undefined;
+            }
+        }
+
+        let attempt_count = 0;
+
+        const search = async (  // returns { cost, path } of best solution or undefined if no solution was found
+            cell          = start_cell,
+            entry_dir     = start_dir,  // dir upon entry
+            visited_cells = new Set(),
+            cost_budget   = Infinity,
+        ) => {
+            let best_solution_from_here;
+
+            const new_visited_cells = visited_cells.union(new Set([ cell ]));
+
+            const attempt = async (attempt_dir) => {
+                const attempt_cell = this.cell_toward(cell, attempt_dir);
+
+                const cost_this_step = (attempt_dir === entry_dir) ? this.move_cost : this.turn_cost+this.move_cost;
+                const new_cost_budget = (best_solution_from_here ? best_solution_from_here.cost-cost_this_step : cost_budget) - cost_this_step;
+
+                if (attempt_count++ % trace_mod === 0) {
+                    await trace_fn?.({
+                        attempt_count, best_solution_from_here, attempt_cell, attempt_dir,
+                        new_visited_cells, cost_this_step,
+                        minimum_remaining_cost: this.calculate_minimum_remaining_cost(cell, entry_dir),
+                        cost_this_step, new_cost_budget,
+                    });
+                }
+
+                const attempt_result = await search(attempt_cell, attempt_dir, new_visited_cells, new_cost_budget);  // keep full (new_)visited_cells...
+                if (!attempt_result) {
+                    return undefined;  // indicate: not found
+                } else {
+                    // adjust result to perspective of this cell
+                    // potentially update best_solution_from_here
+                    const cost = cost_this_step + attempt_result.cost;
+                    if (!best_solution_from_here || cost < best_solution_from_here.cost) {
+                        const path = [ { cell, entry_dir }, ...attempt_result.path ];
+                        best_solution_from_here = { cost, path };
+                    }
+                }
+            };
+
+            if (visited_cells.has(cell) || cell.ch === this.wall_cell_ch) {
+                // impossible to proceed...
+                return undefined;  // indicate: not found
+            } else if (cell.best_solution_from_here) {
+                // already have the answer, but may need to adjust it for current entry_dir...
+                // note: if the solution cannot be adjusted, then undefined will be returned (indicating not found)
+                return adjust_solution_for_entry_dir(cell.best_solution_from_here, entry_dir);
+            } else {
+                if (cell === this.end_cell) {
+                    // trivial base case...
+                    best_solution_from_here = { cost: 0, path: [ { cell, entry_dir } ] };
+                } else if (this.calculate_minimum_remaining_cost(cell, entry_dir) >= cost_budget) {
+                    return undefined;  // indicate: not found
+                } else {
+                    // attempt the various directions...
+                    await attempt(entry_dir);
+                    await attempt(this.directions[entry_dir.left]);
+                    await attempt(this.directions[entry_dir.right]);
+                    // no need to attempt entry_dir.back, it would just be turning back the way we entered...
+                }
+
+                if (best_solution_from_here) {
+                    // update cell housekeeping data
+                    cell.best_solution_from_here = best_solution_from_here;
+                }
+
+                return best_solution_from_here;
+            }
+        };
+
+        return await search();
+    };
+
+    this.find_best_maze_solution_breadth_first = async (options) => {  // returns { cost, path } or undefined if no solution was found; path is an array of { cell, entry_dir }
+        const {
+            start_cell = this.start_cell,
+            start_dir  = this.start_dir,
+            trace_fn,
+            trace_mod = 1000,
+        } = (options ?? {});
+
+        // initialize state for each cell
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const cell = this.get_cell(r, c);
+                // cell.arrivals maps each dir_ch to:
+                // - undefined if no path has entered with that entry_dir before
+                // - { cost, path } for the best path with the best cost for that entry_dir so far
+                cell.arrivals = Object.fromEntries(Object.entries(this.directions).map(({ dir_ch, _ }) => ([ dir_ch, undefined ])));
+            }
+        }
+        // set the state of the start cell
+        start_cell.arrivals[start_dir.dir_ch] = { cost: 0, path: [] };
+
+        let best_solution;  // undefined if none found yet, otherwise { cost, path }
+
+        let work_queue = [];  // array of { cell, entry_dir, path, visited_cells, cost }; path is an array of { cell, entry_dir }
+
+        const add_work = (
+            cell          = start_cell,
+            entry_dir     = start_dir,  // dir upon entry
+            path          = [],
+            visited_cells = new Set(),
+            cost          = 0,
+            mrc           = Infinity,  // minimum remaining cost
+        ) => {
+            work_queue.push({ cell, entry_dir, path, visited_cells, cost, mrc });
+        };
+
+        // returns first entry with lowest cost (which will have been removed); returns undefined if nothing left
+        // selector: (best_so_far, another_work_item) => choose_another?
+        const filter_work_queue = (selector) => {
+            let result;
+            for (const work_item of work_queue) {
+                if (!result || selector(result, work_item)) {
+                    result = work_item;
+                }
+            }
+            if (result) {
+                // remove result
+                work_queue = work_queue.filter(work_item => (work_item !== result));
+            }
+            return result;
+        };
+
+        const work_item_selector = (best_so_far, another) => (best_so_far.path.length < another.path.length);
+        //const work_item_selector = (best_so_far, another) => (best_so_far.mrc > another.mrc);
+        //const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
+
+        add_work();  // add initial work (the start cell)
+        for (let attempt_count = 0, work_item; work_item = filter_work_queue(work_item_selector); attempt_count++) {
+            const { cell, entry_dir, path, visited_cells, cost } = work_item;
+
+            if (attempt_count % trace_mod === 0) {
+                await trace_fn?.({
+                    attempt_count,
+                    cell,
+                    entry_dir,
+                    visited_cells,
+                    best_solution,
+                    work_queue,
+                });
+            }
+
+            if (cell === this.end_cell) {
+                // found a new solution
+                if (!best_solution || cost < best_solution.cost) {
+                    best_solution = { cost, path };
+                }
+            } else {
+                const new_visited_cells = visited_cells.union(new Set([ cell ]));
+
+                const add = (new_entry_dir) => {
+                    const new_cell = this.cell_toward(cell, new_entry_dir);
+                    if (new_cell && !new_visited_cells.has(new_cell) && new_cell.ch !== this.wall_cell_ch) {
+                        const cost_this_step = (new_entry_dir === entry_dir) ? this.move_cost : this.turn_cost+this.move_cost;
+                        const new_cost = cost + cost_this_step;
+                        const new_mrc = this.calculate_minimum_remaining_cost(new_cell, new_entry_dir);
+                        if (!best_solution || new_cost + new_mrc <= best_solution.cost) {
+                            const new_path_component = { cell: new_cell, entry_dir: new_entry_dir };
+                            const new_path = [ ...path, new_path_component ];
+                            add_work(new_cell, new_entry_dir, new_path, new_visited_cells, new_cost, new_mrc);
+                        }
+                    }
+                };
+
+                add(entry_dir);
+                add(this.directions[entry_dir.left]);
+                add(this.directions[entry_dir.right]);
+                // no need to add entry_dir.back, it would just be turning back the way we entered...
+            }
+        }
+
+        return best_solution;
+    };
+
+    this.path_from_dir_ch_string = (dir_ch_string) => {  // returns a path that does not contain cell members, only entry_dir members
+        return Array.from(dir_ch_string).map(ch => ({ entry_dir: t.directions[ch] }));
+    };
+
+    this.cost_from_path = (path) => {
+        let cost = (path.length <= 0) ? 0 : this.move_cost;
+        for (let i = 1; i < path.length; i++) {
+            let prior_dir = path[i-1].entry_dir;
+            let entry_dir = path[i].entry_dir;
+            cost += this.move_cost;
+            if (prior_dir) {
+                if (prior_dir !== entry_dir) {
+                    if (prior_dir.left !== entry_dir.dir_ch && prior_dir.right !== entry_dir.dir_ch) {
+                        throw new Error(`prior entry dir "${prior_dir.dir_ch}" is neither left nor right of current entry dir "${entry_dir.dir_ch}" at index ${i}`);
+                    }
+                    cost += this.turn_cost;
+                }
+            }
+            prior_dir = entry_dir;
+        }
+        return cost;
+    };
+
+    this.cost_from_dir_ch_string = (dir_ch_string) => {
+        return this.cost_from_path(this.path_from_dir_ch_string(dir_ch_string));
+    };
+
+    this.format_path = (path) => {
+        return path.map(({ cell, entry_dir }) => `${cell.ch} ${entry_dir.dir_ch} (${cell.r},${cell.c})`).join('\n');
+    };
+
+    this.get_cells_with_stored_solutions = () => {
+        return this.map
+            .flatMap(row => {
+                return row.filter(({ best_solution_from_here }) => best_solution_from_here);
+            });
+    };
+
+};</bq-cell>
+<bq-cell id="id-877ff9d3-dffc-4bec-981a-2d765db39e43" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+const input_data_examples = [
+// 0: (score 7036)  <<< score specified in problem
+`
+###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############
+`,
+// 1: (score 11048)  <<< score specified in problem
+`
+#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################
+`,
+// 2: (score 16095)
+`
+#####################################################
+#...........#.....#...........#...........#........E#
+#.#########.#.#.#.#########.#.###.###.#.###.#.###.#.#
+#.#.......#...#.#...........#.....#...#.....#.#.....#
+#.#.#####.#####.###################.#########.#.###.#
+#.#.#.......#...#...................#.............#.#
+#.#.#.......#...#...........#.....................#.#
+#.#.#.#####.#.###.#####.###.#.#########.#.#######.#.#
+#.#.#.#...#.#.#...#...#...#...#.........#.....#...#.#
+#.#.###.#.#.#.#.###.#.###.#####.#.###.###.###.#.#####
+#.#.....#.#...#.#...#.#.#.#.......#...#.#.......#...#
+#########.###.###.###.#.#.#.#######.###.#.#.#######.#
+#S..........#...............................#.....#.#
+#####################################################
+`,
+// 3: (score 4026)
+`
+###########
+#........E#
+#.#########
+#.........#
+#.........#
+#.........#
+#######.###
+#S........#
+###########
+`,
+// 4: (score 16095)
+`
+#####################################################
+#...........#.....#...........#...........#........E#
+#.#########.#.#.#.#########.#.###.###.#.###.#.###.#.#
+#.#.......#...#.#...........#.....#...#.....#.#.....#
+#.#.#####.#####.###################.#########.#.###.#
+#.#.#.......#...#...................#.............#.#
+#.#.#.......#...#...........#.....................#.#
+#.#.#.#####.#.###.#####.###.#.#########.#.#######.#.#
+#.#.#.#...#.#.#...#...#...#...#.........#.....#...#.#
+#.#.###.#.#.#.#.###.#.###.#####.#.###.###.###.#.#####
+#.#.....#.#...#.#...#.#.#.#.......#...#.#.......#...#
+#########.###.###.###.#.#.#.#######.###.#.#.#######.#
+#S..........#...............................#.....#.#
+#####################################################
+`,
+// 5:
+`
+#########################################
+#...........#.....#...........#........E#
+#.#.#####.#####.#################.#.###.#
+#.#.#.......#...#.....................#.#
+#.#.#.......#...#...........#.........#.#
+#.#.#.#####.#.###.#####.###.#.#######.#.#
+#.#.#.#...#.#.#...#...#...#.......#...#.#
+#.#.###.#.#.#.#.###.#.###.#######.#.#####
+#.#.....#.#...#.#...#.#.#.#.........#...#
+#########.###.###.###.#.#.#.###.#######.#
+#S..........#...................#.....#.#
+#########################################
+`,
+// 6:
+`
+#################################
+#.#.#.......#...#...............#
+#.#.#.......#...#...........#...#
+#.#.#.###.#.#.###.#####.#.#.#.#.#
+#.#.###.#.#.#.#.###.#.###.#######
+#.#.....#.#...#.#...#.#.#.#.....#
+#########.###.###.###.#.#.#.###.#
+#S.........E#...................#
+#################################
+`,
+// 7:
+`
+###############
+#............E#
+###.#######.###
+#.............#
+######.########
+#.......#.....#
+#.#######.###.#
+#...........#.#
+###########.#.#
+#S............#
+###############
+`,
+];
+const input_data_example_to_use = 4;
+if (typeof input_data_example_to_use === 'number') {
+    if (!(input_data_example_to_use in input_data_examples)) {
+        throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+    }
+    this.input_data = input_data_examples[input_data_example_to_use].trim();
+}
+
+this.init_data();
+
+await ocx.render_text(`The map (${this.rows}x${this.cols}):`);
+await this.render_map(ocx);
+
+const trace_label = ocx.create_child({
+    tag: 'label',
+    children: [
+        'Trace',
+        {
+            tag: 'style',
+            innerText: 'input[type="checkbox"]:checked + .trace-output-indicator { display: inline !important; }',
+        },
+        {
+            tag: 'input',
+            attrs: {
+                type: 'checkbox',
+            },
+        },
+        {
+            innerText: '(outputting to console)',
+            attrs: {
+                class: 'trace-output-indicator',
+            },
+            style: {
+                display:      'none',
+                color:        'grey',
+                'font-style': 'italic',
+            },
+        },
+    ],
+});
+const trace_checkbox = trace_label.querySelector('input[type="checkbox"]');
+
+const wait_ocx = ocx.create_child_ocx({
+    style: {
+        'line-break': 'anywhere',
+        'max-width':  '100ch',
+        border:       '1px solid grey',
+        padding:      '1em',
+    }
+});
+const waiting_element = await wait_ocx.render_text('Part One: working ', { inline: true });
+sleep(0.1).then(() => waiting_element.scrollIntoView());
+
+const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
+const trace_iterations_mod = 100;  // calls to trace_fn between trace outputs
+//trace_checkbox.checked = true;//!!!
+
+let trace_iterations = 0;
+const trace_fn = async (data) => {
+    if (trace_iterations++ % trace_iterations_mod === 0) {
+        if (trace_checkbox.checked) {
+            const { cell, entry_dir, work_queue } = data;
+            console.log(cell.r, cell.c, entry_dir.dir_ch, work_queue.length, data);
+        }
+        let waiting_innerText = waiting_element.innerText;
+        if (waiting_innerText.length > 1000) {
+            waiting_innerText = waiting_innerText.replace(/(?:[[][\d]+][ ])?[.]*$/, '') + `[${Math.floor((trace_iterations-1) / trace_iterations_mod)}] `;
+        }
+        waiting_element.innerText = waiting_innerText + '.';
+        if (waiting_element.getBoundingClientRect().y <= window.innerHeight) {
+            // only scroll back into view if already at least partially showing
+            waiting_element.scrollIntoView();
+        }
+    }
+    await next_tick();
+};
+waiting_element.scrollIntoView();
+
+const best_solution = await this.find_best_maze_solution_breadth_first({
+//    start_cell: this.get_cell(this.end_cell.r+8, this.end_cell.c-32),
+//    start_dir:  this.directions[this.N_dir_ch],
+    trace_fn,
+    trace_mod,
+});
+
+const answer_markdown = best_solution
+      ? `The best score for getting through the maze is **${best_solution.cost}**.`
+      : `NO SOLUTIONS FOUND!`;
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+${answer_markdown}
+`);
+
+if (best_solution) {
+    await println();
+    await println(`Best solution: [ ${best_solution.cost} ] ${best_solution.path.map(({ entry_dir }) => entry_dir.dir_ch).join('')}`);
+    await println();
+    await ocx.render_text(`The final map (${this.rows}x${this.cols}):`);
+    await this.render_map(ocx, best_solution.path);
+}
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.2).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-93766a4f-bf79-4697-b8f9-152ec95bb47b" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-0f6276a7-6146-448d-803c-0623864d97e7" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+return;//!!!
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+!!!
+`);</bq-cell>
+</body>
+</html>
