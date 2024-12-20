@@ -122,10 +122,12 @@ if (typeof input_data !== 'string') {
     throw new Error('input_data is not a string');
 }
 
-this.input_data = input_data.trim();</bq-cell>
+bqe.input_data = input_data.trim();</bq-cell>
 <bq-cell id="id-1567e835-d31b-42a0-b1af-dbe36b9127cc" data-type="javascript" class="show-full show-in-presentation">// utility definitions
 
-this.map_output_options = {
+globalThis.bqe = bqe;//!!!
+
+bqe.map_output_options = {
     style: {
         'font-family':          'monospace',
         'white-space':          'nowrap',
@@ -138,7 +140,7 @@ this.map_output_options = {
     },
 };
 
-this.solution_output_options = {
+bqe.solution_output_options = {
     style: {
         'font-family':          'monospace',
         'white-space':          'nowrap',
@@ -151,104 +153,161 @@ this.solution_output_options = {
     },
 };
 
-this.E_dir_ch = '&gt;';
-this.N_dir_ch = '^';
-this.W_dir_ch = '&lt;';
-this.S_dir_ch = 'v';
+class Direction {
+    // public:
 
-const permissable_dir_chars    = [ this.E_dir_ch, this.N_dir_ch, this.W_dir_ch, this.S_dir_ch ];
-const permissable_dir_chars_re = new RegExp(`^[${permissable_dir_chars.join('')}]*$`);
+    static {
+        Object.defineProperties(this, {
+            E_ch: { enumerable: true, value: '&gt;' },
+            N_ch: { enumerable: true, value: '^' },
+            W_ch: { enumerable: true, value: '&lt;' },
+            S_ch: { enumerable: true, value: 'v' },
+        });
+    }
 
-this.directions = {
-    [this.E_dir_ch]: { dir_ch: this.E_dir_ch, label: 'E', dr:  0, dc:  1, left: this.N_dir_ch, right: this.S_dir_ch, back: this.W_dir_ch },
-    [this.N_dir_ch]: { dir_ch: this.N_dir_ch, label: 'N', dr: -1, dc:  0, left: this.W_dir_ch, right: this.E_dir_ch, back: this.S_dir_ch },
-    [this.W_dir_ch]: { dir_ch: this.W_dir_ch, label: 'W', dr:  0, dc: -1, left: this.S_dir_ch, right: this.N_dir_ch, back: this.E_dir_ch },
-    [this.S_dir_ch]: { dir_ch: this.S_dir_ch, label: 'S', dr:  1, dc:  0, left: this.E_dir_ch, right: this.W_dir_ch, back: this.N_dir_ch },
-};
+    // internal:
+
+    static #directions = {
+        //                     ch         name   dr  dc    left_ch    right_ch   back_ch
+        [this.E_ch]: new this( this.E_ch, 'E',    0,  1,   this.N_ch, this.S_ch, this.W_ch ),
+        [this.N_ch]: new this( this.N_ch, 'N',   -1,  0,   this.W_ch, this.E_ch, this.S_ch ),
+        [this.W_ch]: new this( this.W_ch, 'W',    0, -1,   this.S_ch, this.N_ch, this.E_ch ),
+        [this.S_ch]: new this( this.S_ch, 'S',    1,  0,   this.E_ch, this.W_ch, this.N_ch ),
+    };
+
+    static #permissable_chars    = [ this.E_ch, this.N_ch, this.W_ch, this.S_ch ];
+    static #permissable_chars_re = new RegExp(`^[${this.#permissable_chars.join('')}]*$`);
+
+    // public:
+
+    static {
+        Object.defineProperties(this, {
+            E: { enumerable: true, value: this.#directions[this.E_ch] },
+            N: { enumerable: true, value: this.#directions[this.N_ch] },
+            W: { enumerable: true, value: this.#directions[this.W_ch] },
+            S: { enumerable: true, value: this.#directions[this.S_ch] },
+        });
+    }
+
+    static from(dir_ch) {
+        if (!(dir_ch in this.#directions)) {
+            throw new Error('invalid dir_ch');
+        }
+        return this.#directions[dir_ch];
+    }
+
+    static chars() { return Object.keys(this.#directions); }
+
+    static permissable_chars    (){ return [ ...this.#permissable_chars ]; }
+    static permissable_chars_re (){ return this.#permissable_chars_re; }
+
+    // note: don't call constructor, use static methods to get pre-defined instances
+    // this is here to show the public properties it defines
+    constructor(ch, name, dr, dc, left_ch, right_ch, back_ch) {
+        Object.defineProperties(this, {
+            ch:       { enumerable: true, value: ch },
+            name:     { enumerable: true, value: name },
+            dr:       { enumerable: true, value: dr },
+            dc:       { enumerable: true, value: dc },
+            left_ch:  { enumerable: true, value: left_ch },
+            right_ch: { enumerable: true, value: right_ch },
+            back_ch:  { enumerable: true, value: back_ch },
+        });
+    }
+
+    // Would rather define left, right and back as properties in the constructor
+    // but get error: TypeError: Cannot read private member #directions from
+    // an object whose class did not declare it
+
+    get left  (){ return this.constructor.#directions[this.left_ch]; }
+    get right (){ return this.constructor.#directions[this.right_ch]; }
+    get back  (){ return this.constructor.#directions[this.back_ch]; }
+}
+bqe.Direction = Direction;
 
 // map cell characters
-this.empty_cell_ch = '.';
-this.wall_cell_ch  = '#';
-this.start_cell_ch = 'S';
-this.end_cell_ch   = 'E';
+bqe.empty_cell_ch = '.';
+bqe.wall_cell_ch  = '#';
+bqe.start_cell_ch = 'S';
+bqe.end_cell_ch   = 'E';
 
-this.permissable_map_chars    = [ this.empty_cell_ch, this.wall_cell_ch, this.start_cell_ch, this.end_cell_ch ];
-this.permissable_map_chars_re = new RegExp(`^[${this.permissable_map_chars.join('')}]*$`);
+bqe.permissable_map_chars    = [ bqe.empty_cell_ch, bqe.wall_cell_ch, bqe.start_cell_ch, bqe.end_cell_ch ];
+bqe.permissable_map_chars_re = new RegExp(`^[${bqe.permissable_map_chars.join('')}]*$`);
 
-this.init_data = () => {
-    this.input_lines = this.input_data.split('\n');
+bqe.init_data = () => {
+    bqe.input_lines = bqe.input_data.split('\n');
 
     // map to be parsed from the input:
-    this.map = [];  // an array of rows, each row an array of { r, c, ch }
+    bqe.map = [];  // an array of rows, each row an array of { r, c, ch }
 
-    for (let r = 0; r < this.input_lines.length; r++) {
-        const line = this.input_lines[r];
-        if (!line.match(this.permissable_map_chars_re)) {
+    for (let r = 0; r < bqe.input_lines.length; r++) {
+        const line = bqe.input_lines[r];
+        if (!line.match(bqe.permissable_map_chars_re)) {
             throw new Error(`illegal map character at line ${r+1}`);
         }
         const row = Array.from(line).map((ch, c) => {
             return { r, c, ch };
         });
-        this.map.push(row);
+        bqe.map.push(row);
     }
-    this.rows = this.map.length;
-    this.cols = this.map[0].length;  // all rows are expected to be the same length
+    bqe.rows = bqe.map.length;
+    bqe.cols = bqe.map[0].length;  // all rows are expected to be the same length
     // validate map row lengths
-    if (!this.map.every(row => row.length === this.cols)) {
+    if (!bqe.map.every(row => row.length === bqe.cols)) {
         throw new Error('input_data does not have all map rows the same length');
     }
 
-    this.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
-        return this.map[r]?.[c];
+    bqe.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
+        return bqe.map[r]?.[c];
     }
 
     // costs for each action, given in the problem description
-    this.move_cost = 1;
-    this.turn_cost = 1000;
+    bqe.move_cost = 1;
+    bqe.turn_cost = 1000;
 
     // the start direction is given as East in the problem description
-    this.start_dir = this.directions[this.E_dir_ch];
+    bqe.start_dir = Direction.E;
 
     // find start and end in map
-    this.start_cell = undefined;
-    this.end_cell   = undefined;
-    for (let r = 0; r < this.rows; r++) {
-        for (let c = 0; c < this.cols; c++) {
-            const cell = this.get_cell(r, c);
-            if (cell.ch === this.start_cell_ch) {
-                if (this.start_cell) {
+    bqe.start_cell = undefined;
+    bqe.end_cell   = undefined;
+    for (let r = 0; r < bqe.rows; r++) {
+        for (let c = 0; c < bqe.cols; c++) {
+            const cell = bqe.get_cell(r, c);
+            if (cell.ch === bqe.start_cell_ch) {
+                if (bqe.start_cell) {
                     throw new Error(`second start found at (${r}, ${c})`);
                 } else {
-                    this.start_cell = cell;
+                    bqe.start_cell = cell;
                 }
-            } else if (cell.ch === this.end_cell_ch) {
-                if (this.end_cell) {
+            } else if (cell.ch === bqe.end_cell_ch) {
+                if (bqe.end_cell) {
                     throw new Error(`second end found at (${r}, ${c})`);
                 } else {
-                    this.end_cell = cell;
+                    bqe.end_cell = cell;
                 }
             }
         }
     }
-    if (!this.start_cell) {
+    if (!bqe.start_cell) {
         throw new Error('start not found in map');
     }
-    if (!this.end_cell) {
+    if (!bqe.end_cell) {
         throw new Error('end not found in map');
     }
 
-    this.cell_toward = (cell, dir) => {
+    bqe.cell_toward = (cell, dir) => {
         const { r, c } = cell;
         const { dr, dc } = dir;
-        return this.get_cell(r+dr, c+dc);
+        return bqe.get_cell(r+dr, c+dc);
     }
 
-    this.render_map = async (ocx, with_path=null) => {
+    bqe.render_map = async (ocx, with_path=null) => {
         const path_cells = with_path
-              ? new Map(with_path.map(({ cell, entry_dir }) => ([ cell, entry_dir.dir_ch ])))
+              ? new Map(with_path.map(({ cell, entry_dir }) => ([ cell, entry_dir.ch ])))
               : undefined;
         return ocx.render_text(
-            this.map
+            bqe.map
                 .map(row => {
                     return row
                         .map(cell => {
@@ -257,18 +316,16 @@ this.init_data = () => {
                         .join('');
                 })
                 .join('\n'),
-            this.map_output_options,
+            bqe.map_output_options,
         );
     };
 
-globalThis.t = this;//!!!
-
-    this.calculate_minimum_remaining_cost = (cell, entry_dir) => {
-        if (cell === this.end_cell) {
+    bqe.calculate_minimum_remaining_cost = (cell, entry_dir) => {
+        if (cell === bqe.end_cell) {
             return 0;
         } else {
-            const delta_r = this.end_cell.r - cell.r;
-            const delta_c = this.end_cell.c - cell.c;
+            const delta_r = bqe.end_cell.r - cell.r;
+            const delta_c = bqe.end_cell.c - cell.c;
             const { dr, dc } = entry_dir;
 
             let minimum_remaining = Math.abs(delta_r) + Math.abs(delta_c);
@@ -279,124 +336,193 @@ globalThis.t = this;//!!!
             if (delta_r === 0) {
                 if (dr === 0) {
                     if ((delta_c * dc) < 0) {  // wrong direction?
-                        minimum_remaining += 2*this.turn_cost;  // must turn 180 degrees
+                        minimum_remaining += 2*bqe.turn_cost;  // must turn 180 degrees
                     }
                 } else {  // (dr !== 0)
-                    minimum_remaining += this.turn_cost;  // must turn 90 degrees
+                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees
                 }
             } else if (delta_c === 0) {  // (delta_c === 0) && (delta_r !== 0)
                 if (dc === 0) {
                     if (delta_r * dr < 0) {
-                        minimum_remaining += 2*this.turn_cost;  // must turn 180 degrees
+                        minimum_remaining += 2*bqe.turn_cost;  // must turn 180 degrees
                     }
                 } else {  // (dc !== 0)
-                    minimum_remaining += this.turn_cost;  // must turn 90 degrees
+                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees
                 }
             } else {  // (delta_c !== 0) && (delta_r !== 0)
                 if ((delta_c * dc) < 0 || (delta_r * dr) < 0) {  // wrong direction?
-                    minimum_remaining += this.turn_cost + this.turn_cost;  // must turn 90 degrees two times
+                    minimum_remaining += bqe.turn_cost + bqe.turn_cost;  // must turn 90 degrees two times
                 } else {
-                    minimum_remaining += this.turn_cost;  // must turn 90 degrees one time
+                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees one time
                 }
             }
             return minimum_remaining;
         }
     };
 
-    const adjust_solution_for_entry_dir = (solution, entry_dir) => {  // returns adjusted solution or undefined if solution cannot be adjusted
-        if (!Array.isArray(solution.path) || solution.path.length <= 0) {
-            throw new Error('unexpected: solution has a bad path');
-        }
-        const { cost, path } = solution;
-        const { cell: cell0, entry_dir: entry_dir0 } = path[0];
-        if (entry_dir0.dir_ch != entry_dir.left && entry_dir0.dir_ch != entry_dir.right) {
-            return undefined;  // indicate: solution cannot be adjusted
-        }
-        if (entry_dir0 === entry_dir) {
-            return solution;  // no change necessary
-        } else {
-            // copy and adjust, setting new entry_dir for first path element
-            if (path.length === 1) {
-                if (cost !== 0) {
-                    throw new Error('unexpected: solution.path is length 1 but solution.cost is not 0');
-                }
-                if (cell0 !== this.end_cell) {
-                    throw new Error('unexpected: solution.path is length 1 but solution.path[0].cell is not this.end_cell');
-                }
-                // zero cost and single path component with new entry_dir
-                return { cost: 0, path: [ { cell: cell0, entry_dir } ] };
-            } else {
-                const { cell: cell1, entry_dir: entry_dir1 } = path[1];
-                // changing direction (either left or right), update path and cost accordingly:
-                const new_path = [ ...path ];
-                new_path[0] = { cell: cell0, entry_dir };
-                const new_cost = (entry_dir === entry_dir1)  // note: entry_dir !== entry_dir0
-                      ? cost - this.turn_cost   // solution no longer turns after first path component
-                      : cost + this.turn_cost;  // solution now turns after first path component
-                return { cost: new_cost, path: new_path };
-            }
-        }
-    };
-
-    this.find_best_maze_solution = async (options) => {  // returns { cost, path } or undefined if no solution was found; path is an array of { cell, entry_dir }
+    bqe.find_best_maze_solution = async (options) => {  // returns { cost, best_paths } or undefined if no solution was found; best_paths is an array of arrays of { cell, entry_dir }
         const {
-            start_cell = this.start_cell,
-            start_dir  = this.start_dir,
+            start_cell = bqe.start_cell,
+            start_dir  = bqe.start_dir,
+            end_cell   = bqe.end_cell,
             trace_fn,
-            trace_mod = 1000,
+            trace_mod  = 1000,
         } = (options ?? {});
-
-        // initialize state for each cell
-        for (let r = 0; r < this.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
-                const cell = this.get_cell(r, c);
-                // cell.arrivals maps each dir_ch to:
-                // - undefined if no path has entered with that entry_dir before
-                // - { cost, path } for the best path with the best cost for that entry_dir so far
-                cell.arrivals = Object.fromEntries(Object.entries(this.directions).map(({ dir_ch, _ }) => ([ dir_ch, undefined ])));
-            }
-        }
-        // set the state of the start cell
-        start_cell.arrivals[start_dir.dir_ch] = { cost: 0, path: [] };
 
         let best_solution;  // undefined if none found yet, otherwise { cost, path }
 
-        let work_queue = [];  // array of { cell, entry_dir, path, visited_cells, cost }; path is an array of { cell, entry_dir }
+        // initialize state for each cell
+        for (let r = 0; r < bqe.rows; r++) {
+            for (let c = 0; c < bqe.cols; c++) {
+                const cell = bqe.get_cell(r, c);
+                // cell.arrivals maps each direction ch to:
+                // - undefined if no path has entered with that entry_dir before
+                // - { cost } where cost is for the best path with the best cost for that entry_dir so far
+                cell.arrivals = Object.fromEntries(Direction.chars().map(dir_ch => ([ dir_ch, undefined ])));
+            }
+        }
+        // set the initial arrivals state for the start cell
+        start_cell.arrivals[start_dir.ch] = { cost: 0 };
 
-        const add_work = (
-            cell          = start_cell,
-            entry_dir     = start_dir,  // dir upon entry
-            path          = [],
-            visited_cells = new Set(),
-            cost          = 0,
-            mrc           = Infinity,  // minimum remaining cost
-        ) => {
-            work_queue.push({ cell, entry_dir, path, visited_cells, cost, mrc });
+        const can_occupy = (test_cell) => {
+            return (test_cell === start_cell || test_cell === end_cell || test_cell.ch === bqe.empty_cell_ch);
         };
 
-        // returns first entry with lowest cost (which will have been removed); returns undefined if nothing left
-        // selector: (best_so_far, another_work_item) => choose_another?
-        const filter_work_queue = (selector) => {
-            let result;
-            for (const work_item of work_queue) {
-                if (!result || selector(result, work_item)) {
-                    result = work_item;
+        // get_best_paths() must be called after the main work loop
+        // finishes and all cell arrivals objects are populated
+        const get_best_paths = () => {  // returns array of arrays of { cell, entry_dir }
+            const best_paths = [];
+
+            const min_arrival_cost = (cell) => Object.entries(cell.arrivals).reduce(
+                (min_arrival_cost, [ entry_dir_ch, arrival ]) => {
+                    if (!arrival) {
+                        return min_arrival_cost;
+                    } else {
+                        return (arrival.cost < min_arrival_cost)
+                            ? arrival.cost
+                            : min_arrival_cost;
+                    }
+                },
+                Infinity,
+            );
+
+            const walk = (walk_cell, cost_budget, exit_dir=null, path_so_far=[], walked_cells=new Set()) => {
+                if (!walked_cells.has(walk_cell)) {
+                    if (walk_cell === start_cell) {
+                        best_paths.push(path_so_far);
+                    } else {
+                        const arrivals = walk_cell.arrivals;
+                        for (const entry_dir_ch in arrivals) {
+                            const entry_dir = Direction.from(entry_dir_ch);
+                            const arrival = arrivals[entry_dir_ch];
+                            const adjusted_cost_budget = (!exit_dir || exit_dir === entry_dir) ? cost_budget : cost_budget-bqe.turn_cost;
+                            if (arrival && arrival.cost === adjusted_cost_budget) {
+                                const prior_cell = bqe.cell_toward(walk_cell, entry_dir.back);
+                                if (can_occupy(prior_cell)) {
+                                    const new_cost_budget = adjusted_cost_budget - bqe.move_cost;
+                                    const new_path = [ { cell: prior_cell, entry_dir }, ...path_so_far ];
+                                    const new_walked_cells = walked_cells.union(new Set([ walk_cell ]));
+                                    walk(prior_cell, new_cost_budget, entry_dir, new_path, new_walked_cells);
+                                }
+                            }
+                        }
+                    }
                 }
-            }
-            if (result) {
-                // remove result
-                work_queue = work_queue.filter(work_item => (work_item !== result));
-            }
-            return result;
+            };
+
+            walk(end_cell, min_arrival_cost(end_cell));
+
+            return best_paths;
         };
 
-        const work_item_selector = (best_so_far, another) => (best_so_far.path.length < another.path.length);
-        //const work_item_selector = (best_so_far, another) => (best_so_far.mrc > another.mrc);
-        //const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
+        const recalculate_arrival_costs_in_paths_from = (changed_cell, change_dir, changed_cost) => {
+            const walk = (walk_cell, walk_dir, walk_cost, walked_cells=new Set()) => {
+                if (!walked_cells.has(walk_cell) && walk_cell !== end_cell) {  // prevent loops and stop at end_cell
+                    const new_walked_cells = walked_cells.union(new Set([ walk_cell ]));
+                    for (const arrival_dir_ch in walk_cell.arrivals) {
+                        const arrival_dir = Direction.from(arrival_dir_ch);
+                        if (arrival_dir !== walk_dir.back) {
+                            const new_arrival_cost = walk_cost + ((arrival_dir === walk_dir) ? bqe.move_cost : bqe.turn_cost+bqe.move_cost);
+                            const arrival = walk_cell.arrivals[arrival_dir_ch];
+                            if (arrival && new_arrival_cost < arrival.cost) {  // will not be populating any arrivals that are not already populated
+                                arrival.cost = new_arrival_cost;  // change to new lower cost
+                                // changed; continue if possible
+                                const next_cell = bqe.cell_toward(walk_cell, arrival_dir);
+                                if (can_occupy(next_cell)) {
+                                    walk(next_cell, arrival_dir, new_arrival_cost, new_walked_cells);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            walk(changed_cell, change_dir, changed_cost);
+        };
 
-        add_work();  // add initial work (the start cell)
-        for (let attempt_count = 0, work_item; work_item = filter_work_queue(work_item_selector); attempt_count++) {
-            const { cell, entry_dir, path, visited_cells, cost } = work_item;
+        const check_new_arrival = (new_cell, new_entry_dir, new_cost) => {
+            let keep_arrival = false;
+
+            const check_new_arrival_for_dir = (dir, cost) => {
+                const prior_arrival = new_cell.arrivals[dir.ch];
+                if (!prior_arrival || cost < prior_arrival.cost) {
+                    // found at least one direction where this arrival is advantageous
+                    keep_arrival = true;
+                    if (can_occupy(bqe.cell_toward(new_cell, dir.back))) {  // make sure we could have come from that direction
+                        // store the new lower cost in arrival for direction dir
+                        // note that recorded costs in cell.arrivals only ever go down...
+                        new_cell.arrivals[dir.ch] = { cost };
+                        recalculate_arrival_costs_in_paths_from(new_cell, dir, cost);
+                    }
+                }
+            };
+
+            check_new_arrival_for_dir(new_entry_dir,       new_cost);
+            check_new_arrival_for_dir(new_entry_dir.left,  new_cost+bqe.turn_cost);
+            check_new_arrival_for_dir(new_entry_dir.right, new_cost+bqe.turn_cost);
+
+            return keep_arrival;
+        };
+
+        class WorkQueue {
+            #queue = [];
+
+            get length (){ return this.#queue.length; }
+
+            add( cell          = start_cell,
+                 entry_dir     = start_dir,  // dir upon entry
+                 visited_cells = new Set(),
+                 cost          = 0,
+                 mrc           = Infinity,  // minimum remaining cost
+            ) {
+                this.#queue.push({ cell, entry_dir, visited_cells, cost, mrc });
+            }
+
+            // returns first entry with lowest cost (which will have been removed); returns undefined if nothing left
+            // selector: (best_so_far, another_work_item) => choose_another?
+            pop(selector) {
+                let result;
+                for (const work_item of this.#queue) {
+                    if (!result || selector(result, work_item)) {
+                        result = work_item;
+                    }
+                }
+                if (result) {
+                    // remove result
+                    this.#queue = this.#queue.filter(work_item => (work_item !== result));
+                }
+                return result;
+            }
+        }
+        const work_queue = new WorkQueue();
+
+        //const work_item_selector = (best_so_far, another) => (best_so_far.mrc > another.mrc);  // way slower than testing cost,,,
+        const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
+
+        // --- the main work loop ---
+        work_queue.add();  // add initial work (the start cell)
+        for (let attempt_count = 0, work_item; work_item = work_queue.pop(work_item_selector); attempt_count++) {
+            // work_item represents a path being constructed
+            const { cell, entry_dir, visited_cells, cost } = work_item;
 
             if (attempt_count % trace_mod === 0) {
                 await trace_fn?.({
@@ -409,54 +535,61 @@ globalThis.t = this;//!!!
                 });
             }
 
-            if (cell === this.end_cell) {
+            if (cell === end_cell) {
                 // found a new solution
                 if (!best_solution || cost < best_solution.cost) {
-                    best_solution = { cost, path };
+                    best_solution = { cost };
                 }
             } else {
                 const new_visited_cells = visited_cells.union(new Set([ cell ]));
 
-                const add = (new_entry_dir) => {
-                    const new_cell = this.cell_toward(cell, new_entry_dir);
-                    if (new_cell && !new_visited_cells.has(new_cell) && new_cell.ch !== this.wall_cell_ch) {
-                        const cost_this_step = (new_entry_dir === entry_dir) ? this.move_cost : this.turn_cost+this.move_cost;
+                const try_to_extend_path_in_dir = (new_entry_dir) => {
+                    const new_cell = bqe.cell_toward(cell, new_entry_dir);
+                    if (new_cell && !new_visited_cells.has(new_cell) && new_cell.ch !== bqe.wall_cell_ch) {
+                        const cost_this_step = (new_entry_dir === entry_dir) ? bqe.move_cost : bqe.turn_cost+bqe.move_cost;
                         const new_cost = cost + cost_this_step;
-                        const new_mrc = this.calculate_minimum_remaining_cost(new_cell, new_entry_dir);
+                        // check if this path has any hope of beating the current best (if any)
+                        const new_mrc = bqe.calculate_minimum_remaining_cost(new_cell, new_entry_dir);
                         if (!best_solution || new_cost + new_mrc <= best_solution.cost) {
-                            const new_path_component = { cell: new_cell, entry_dir: new_entry_dir };
-                            const new_path = [ ...path, new_path_component ];
-                            add_work(new_cell, new_entry_dir, new_path, new_visited_cells, new_cost, new_mrc);
+                            // finally, check that no earlier arrival already beats this path
+                            if (check_new_arrival(new_cell, new_entry_dir, new_cost)) {
+                                work_queue.add(new_cell, new_entry_dir, new_visited_cells, new_cost, new_mrc);
+                            }
                         }
                     }
                 };
 
-                add(entry_dir);
-                add(this.directions[entry_dir.left]);
-                add(this.directions[entry_dir.right]);
-                // no need to add entry_dir.back, it would just be turning back the way we entered...
+                try_to_extend_path_in_dir(entry_dir);
+                try_to_extend_path_in_dir(entry_dir.left);
+                try_to_extend_path_in_dir(entry_dir.right);
+                // no need to try entry_dir.back, it would just be turning back the way we entered...
             }
         }
 
-        return best_solution;
+        return !best_solution
+            ? undefined
+            : {
+                ...best_solution,
+                best_paths: get_best_paths(),
+            };
     };
 
-    this.path_from_dir_ch_string = (dir_ch_string) => {  // returns a path that does not contain cell members, only entry_dir members
-        return Array.from(dir_ch_string).map(ch => ({ entry_dir: t.directions[ch] }));
+    bqe.path_from_dir_ch_string = (dir_ch_string) => {  // returns a path that does not contain cell members, only entry_dir members
+        return Array.from(dir_ch_string).map(dir_ch => ({ entry_dir: Direction.from(dir_ch) }));
     };
 
-    this.cost_from_path = (path) => {
-        let cost = (path.length <= 0) ? 0 : this.move_cost;
+    bqe.cost_from_path = (path) => {
+        let cost = (path.length <= 0) ? 0 : bqe.move_cost;
         for (let i = 1; i < path.length; i++) {
             let prior_dir = path[i-1].entry_dir;
             let entry_dir = path[i].entry_dir;
-            cost += this.move_cost;
+            cost += bqe.move_cost;
             if (prior_dir) {
                 if (prior_dir !== entry_dir) {
-                    if (prior_dir.left !== entry_dir.dir_ch && prior_dir.right !== entry_dir.dir_ch) {
-                        throw new Error(`prior entry dir "${prior_dir.dir_ch}" is neither left nor right of current entry dir "${entry_dir.dir_ch}" at index ${i}`);
+                    if (prior_dir.left !== entry_dir && prior_dir.right !== entry_dir) {
+                        throw new Error(`prior entry dir "${prior_dir.ch}" is neither left nor right of current entry dir "${entry_dir.ch}" at index ${i}`);
                     }
-                    cost += this.turn_cost;
+                    cost += bqe.turn_cost;
                 }
             }
             prior_dir = entry_dir;
@@ -464,16 +597,16 @@ globalThis.t = this;//!!!
         return cost;
     };
 
-    this.cost_from_dir_ch_string = (dir_ch_string) => {
-        return this.cost_from_path(this.path_from_dir_ch_string(dir_ch_string));
+    bqe.cost_from_dir_ch_string = (dir_ch_string) => {
+        return bqe.cost_from_path(bqe.path_from_dir_ch_string(dir_ch_string));
     };
 
-    this.format_path = (path) => {
-        return path.map(({ cell, entry_dir }) => `${cell.ch} ${entry_dir.dir_ch} (${cell.r},${cell.c})`).join('\n');
+    bqe.format_path = (path) => {
+        return path.map(({ cell, entry_dir }) => `${cell.ch} ${entry_dir.ch} (${cell.r},${cell.c})`).join('\n');
     };
 
-    this.get_cells_with_stored_solutions = () => {
-        return this.map
+    bqe.get_cells_with_stored_solutions = () => {
+        return bqe.map
             .flatMap(row => {
                 return row.filter(({ best_solution_from_here }) => best_solution_from_here);
             });
@@ -483,7 +616,7 @@ globalThis.t = this;//!!!
 <bq-cell id="id-877ff9d3-dffc-4bec-981a-2d765db39e43" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
 
 const input_data_examples = [
-// 0: (score 7036)  <<< score specified in problem
+// 0: (score 7036)  <<< score given in problem
 `
 ###############
 #.......#....E#
@@ -501,7 +634,7 @@ const input_data_examples = [
 #S..#.....#...#
 ###############
 `,
-// 1: (score 11048)  <<< score specified in problem
+// 1: (score 11048)  <<< score given in problem
 `
 #################
 #...#...#...#..E#
@@ -550,77 +683,30 @@ const input_data_examples = [
 #S........#
 ###########
 `,
-// 4: (score 16095)
+// 4: (score: 4009)
 `
-#####################################################
-#...........#.....#...........#...........#........E#
-#.#########.#.#.#.#########.#.###.###.#.###.#.###.#.#
-#.#.......#...#.#...........#.....#...#.....#.#.....#
-#.#.#####.#####.###################.#########.#.###.#
-#.#.#.......#...#...................#.............#.#
-#.#.#.......#...#...........#.....................#.#
-#.#.#.#####.#.###.#####.###.#.#########.#.#######.#.#
-#.#.#.#...#.#.#...#...#...#...#.........#.....#...#.#
-#.#.###.#.#.#.#.###.#.###.#####.#.###.###.###.#.#####
-#.#.....#.#...#.#...#.#.#.#.......#...#.#.......#...#
-#########.###.###.###.#.#.#.#######.###.#.#.#######.#
-#S..........#...............................#.....#.#
-#####################################################
-`,
-// 5:
-`
-#########################################
-#...........#.....#...........#........E#
-#.#.#####.#####.#################.#.###.#
-#.#.#.......#...#.....................#.#
-#.#.#.......#...#...........#.........#.#
-#.#.#.#####.#.###.#####.###.#.#######.#.#
-#.#.#.#...#.#.#...#...#...#.......#...#.#
-#.#.###.#.#.#.#.###.#.###.#######.#.#####
-#.#.....#.#...#.#...#.#.#.#.........#...#
-#########.###.###.###.#.#.#.###.#######.#
-#S..........#...................#.....#.#
-#########################################
-`,
-// 6:
-`
-#################################
-#.#.#.......#...#...............#
-#.#.#.......#...#...........#...#
-#.#.#.###.#.#.###.#####.#.#.#.#.#
-#.#.###.#.#.#.#.###.#.###.#######
-#.#.....#.#...#.#...#.#.#.#.....#
-#########.###.###.###.#.#.#.###.#
-#S.........E#...................#
-#################################
-`,
-// 7:
-`
-###############
-#............E#
-###.#######.###
-#.............#
-######.########
-#.......#.....#
-#.#######.###.#
-#...........#.#
-###########.#.#
-#S............#
-###############
+#######
+#..E..#
+#..#..#
+#.....#
+#.....#
+###.###
+#S....#
+#######
 `,
 ];
-const input_data_example_to_use = 4;
+const input_data_example_to_use = undefined;
 if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
         throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
-    this.input_data = input_data_examples[input_data_example_to_use].trim();
+    bqe.input_data = input_data_examples[input_data_example_to_use].trim();
 }
 
-this.init_data();
+bqe.init_data();
 
-await ocx.render_text(`The map (${this.rows}x${this.cols}):`);
-await this.render_map(ocx);
+await ocx.render_text(`The map (${bqe.rows}x${bqe.cols}):`);
+await bqe.render_map(ocx);
 
 const trace_label = ocx.create_child({
     tag: 'label',
@@ -664,14 +750,13 @@ sleep(0.1).then(() => waiting_element.scrollIntoView());
 
 const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
 const trace_iterations_mod = 100;  // calls to trace_fn between trace outputs
-//trace_checkbox.checked = true;//!!!
 
 let trace_iterations = 0;
 const trace_fn = async (data) => {
     if (trace_iterations++ % trace_iterations_mod === 0) {
         if (trace_checkbox.checked) {
             const { cell, entry_dir, work_queue } = data;
-            console.log(cell.r, cell.c, entry_dir.dir_ch, work_queue.length, data);
+            console.log(cell.r, cell.c, entry_dir.ch, work_queue.length, data);
         }
         let waiting_innerText = waiting_element.innerText;
         if (waiting_innerText.length > 1000) {
@@ -687,15 +772,13 @@ const trace_fn = async (data) => {
 };
 waiting_element.scrollIntoView();
 
-const best_solution = await this.find_best_maze_solution({
-//    start_cell: this.get_cell(this.end_cell.r+8, this.end_cell.c-32),
-//    start_dir:  this.directions[this.N_dir_ch],
+bqe.best_solution = await bqe.find_best_maze_solution({
     trace_fn,
     trace_mod,
 });
 
-const answer_markdown = best_solution
-      ? `The best score for getting through the maze is **${best_solution.cost}**.`
+const answer_markdown = bqe.best_solution
+      ? `The best score for getting through the maze is **${bqe.best_solution.cost}**.`
       : `NO SOLUTIONS FOUND!`;
 
 const answer_element = await ocx.markdown(`
@@ -703,12 +786,23 @@ const answer_element = await ocx.markdown(`
 ${answer_markdown}
 `);
 
-if (best_solution) {
+const show_all_best_paths = false;
+
+if (bqe.best_solution) {
     await println();
-    await println(`Best solution: [ ${best_solution.cost} ] ${best_solution.path.map(({ entry_dir }) => entry_dir.dir_ch).join('')}`);
-    await println();
-    await ocx.render_text(`The final map (${this.rows}x${this.cols}):`);
-    await this.render_map(ocx, best_solution.path);
+    if (show_all_best_paths) {
+        await println(`The ${bqe.best_solution.best_paths.length} best path${bqe.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqe.best_solution.cost}:`);
+        for (let i = 0; i < bqe.best_solution.best_paths.length; i++) {
+            await println(`${i+1}. ${bqe.best_solution.best_paths[i].map(({ entry_dir }) => entry_dir.ch).join('')}`);
+        }
+        await println();
+        await ocx.render_text(`The final map with the first best path shown:`);
+        for (let i = 0; i < bqe.best_solution.best_paths.length; i++) {
+            await bqe.render_map(ocx, bqe.best_solution.best_paths[i]);
+        }
+    } else {
+        await println(`There ${bqe.best_solution.best_paths.length} best path${bqe.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqe.best_solution.cost}.`);
+    }
 }
 
 // scroll answer_element into view, but after a delay to let other rendering finish
@@ -724,6 +818,53 @@ const ccx = ocx.create_child_ocx({
 });
 
 const description = `
+--- Part Two ---
+
+Now that you know what the best paths look like, you can figure out the best spot to sit.
+
+Every non-wall tile (S, ., or E) is equipped with places to sit along the edges of the tile. While determining which of these tiles would be the best spot to sit depends on a whole bunch of factors (how comfortable the seats are, how far away the bathrooms are, whether there's a pillar blocking your view, etc.), the most important factor is whether the tile is on one of the best paths through the maze. If you sit somewhere else, you'd miss all the action!
+
+So, you'll need to determine which tiles are part of any best path through the maze, including the S and E tiles.
+
+In the first example, there are 45 tiles (marked O) that are part of at least one of the various best paths through the maze:
+
+###############
+#.......#....O#
+#.#.###.#.###O#
+#.....#.#...#O#
+#.###.#####.#O#
+#.#.#.......#O#
+#.#.#####.###O#
+#..OOOOOOOOO#O#
+###O#O#####O#O#
+#OOO#O....#O#O#
+#O#O#O###.#O#O#
+#OOOOO#...#O#O#
+#O###.#.#.#O#O#
+#O..#.....#OOO#
+###############
+
+In the second example, there are 64 tiles that are part of at least one of the best paths:
+
+#################
+#...#...#...#..O#
+#.#.#.#.#.#.#.#O#
+#.#.#.#...#...#O#
+#.#.#.#.###.#.#O#
+#OOO#.#.#.....#O#
+#O#O#.#.#.#####O#
+#O#O..#.#.#OOOOO#
+#O#O#####.#O###O#
+#O#O#..OOOOO#OOO#
+#O#O###O#####O###
+#O#O#OOO#..OOO#.#
+#O#O#O#####O###.#
+#O#O#OOOOOOO..#.#
+#O#O#O#########.#
+#O#OOO..........#
+#################
+
+Analyze your map further. How many tiles are part of at least one of the best paths through the maze?
 `;
 
 await ccx.render_text(description, {
@@ -734,11 +875,12 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-0f6276a7-6146-448d-803c-0623864d97e7" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
 
-return;//!!!
+// note that the best_paths returned do not contain the end cell...
+const answer = new Set((bqe?.best_solution?.best_paths ?? [ [] ]).flatMap(path => [ ...path, bqe.end_cell ].map(({ cell }) => cell))).size;
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
-!!!
+**${answer}** tile${answer === 1 ? '' : 's'} are part of at least one of the best paths through the maze.
 `);</bq-cell>
 </body>
 </html>
