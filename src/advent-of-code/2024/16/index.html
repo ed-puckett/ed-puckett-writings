@@ -409,7 +409,7 @@ bqe.init_data = () => {
             const walk = (walk_cell, cost_budget, exit_dir=null, path_so_far=[], walked_cells=new Set()) => {
                 if (!walked_cells.has(walk_cell)) {
                     if (walk_cell === start_cell) {
-                        best_paths.push(path_so_far);
+                        best_paths.push([ { cell: start_cell, entry_dir: start_dir }, ...path_so_far ]);
                     } else {
                         const arrivals = walk_cell.arrivals;
                         for (const entry_dir_ch in arrivals) {
@@ -420,7 +420,7 @@ bqe.init_data = () => {
                                 const prior_cell = bqe.cell_toward(walk_cell, entry_dir.back);
                                 if (can_occupy(prior_cell)) {
                                     const new_cost_budget = adjusted_cost_budget - bqe.move_cost;
-                                    const new_path = [ { cell: prior_cell, entry_dir }, ...path_so_far ];
+                                    const new_path = [ { cell: walk_cell, entry_dir }, ...path_so_far ];
                                     const new_walked_cells = walked_cells.union(new Set([ walk_cell ]));
                                     walk(prior_cell, new_cost_budget, entry_dir, new_path, new_walked_cells);
                                 }
@@ -579,7 +579,7 @@ bqe.init_data = () => {
     };
 
     bqe.cost_from_path = (path) => {
-        let cost = (path.length <= 0) ? 0 : bqe.move_cost;
+        let cost = 0;
         for (let i = 1; i < path.length; i++) {
             let prior_dir = path[i-1].entry_dir;
             let entry_dir = path[i].entry_dir;
@@ -795,14 +795,14 @@ if (bqe.best_solution) {
         for (let i = 0; i < bqe.best_solution.best_paths.length; i++) {
             await println(`${i+1}. ${bqe.best_solution.best_paths[i].map(({ entry_dir }) => entry_dir.ch).join('')}`);
         }
-        await println();
-        await ocx.render_text(`The final map with the first best path shown:`);
-        for (let i = 0; i < bqe.best_solution.best_paths.length; i++) {
-            await bqe.render_map(ocx, bqe.best_solution.best_paths[i]);
-        }
     } else {
         await println(`There ${bqe.best_solution.best_paths.length} best path${bqe.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqe.best_solution.cost}.`);
+        await println(`Here is the first best path:`);
+        await println(`${bqe.best_solution.best_paths[0].map(({ entry_dir }) => entry_dir.ch).join('')}`);
     }
+    await println();
+    await ocx.render_text(`The final map with the first best path shown:`);
+    await bqe.render_map(ocx, bqe.best_solution.best_paths[0]);
 }
 
 // scroll answer_element into view, but after a delay to let other rendering finish
@@ -875,8 +875,7 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-0f6276a7-6146-448d-803c-0623864d97e7" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
 
-// note that the best_paths returned do not contain the end cell...
-const answer = new Set((bqe?.best_solution?.best_paths ?? [ [] ]).flatMap(path => [ ...path, bqe.end_cell ].map(({ cell }) => cell))).size;
+const answer = new Set((bqe?.best_solution?.best_paths ?? [ [] ]).flatMap(path => path.map(({ cell }) => cell))).size;
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
