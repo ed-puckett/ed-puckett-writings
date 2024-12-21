@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-8c53dc72-acd7-48b6-8f10-e673749dd635" data-type="javascript">
+bqe.output_options = {
+    style: {
+        overflow:      'auto',
+        'font-family': 'monospace',
+    },
+};
+</bq-cell>
+<bq-cell id="id-1e2ce351-220c-4e78-9295-8017250c91a6" data-type="markdown">
+# Convert digit string to groups of three separated by _
+### operation performed by a single regular expression
+### no leading _ or trailing _
+### a single group of two or three may only appear at the beginning
+
+~~~ javascript $!
+
+function group_digits(s) {
+    if (!s.match(/^[\d]*$/)) {
+        throw new Error('s must contain only digits');
+    }
+
+    return s.replaceAll(/((?<=^[\d]{1,3}(?:[\d]{3})*)[\d]{3}(?=(?:[\d]{3})*$))/g, '_$1');
+
+    // (?<=^[\d]{1,3}(?:[\d]{3})*) prevents leading _
+    // (?=(?:[\d]{3})*$) prevents trailing [\d]{1,2}
+}
+
+const output_options = { style: { 'white-space': 'nowrap', 'white-space-collapse': 'preserve', 'font-family': 'monospace' } };
+
+const s = '287489635647236424520391130742';
+
+for (let i = 0; i <= s.length; i++) {
+    const t     = s.slice(0, i);
+    const t_    = group_digits(t);
+    const valid = !!t_.match(/^[\d]{0,3}(?:_[\d]{3})*$/);
+    const same  = (t === t_.replaceAll('_', ''));
+    const output = sprintf(
+        '%2d %s %s "%s" %s "%s"\n',
+        t.length,
+        valid.toString(),
+        same.toString(),
+        t,
+        '-->'.padStart(s.length-t.length+3, '-'),
+        t_,
+    );
+    await ocx.render_text(output, output_options);
+    if (!valid || !same) {
+        throw new Error('conversion failed');
+    }
+}
+
+~~~
+</bq-cell>
+</body>
+</html>
