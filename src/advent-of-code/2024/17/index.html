@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-cd37e083-e721-48c7-a3c2-78219f79c8f0" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/17
+`);
+const description = `
+--- Day 17: Chronospatial Computer ---
+
+The Historians push the button on their strange device, but this time, you all just feel like you're falling.
+
+"Situation critical", the device announces in a familiar voice. "Bootstrapping process failed. Initializing debugger...."
+
+The small handheld device suddenly unfolds into an entire computer! The Historians look around nervously before one of them tosses it to you.
+
+This seems to be a 3-bit computer: its program is a list of 3-bit numbers (0 through 7), like 0,1,2,3. The computer also has three registers named A, B, and C, but these registers aren't limited to 3 bits and can instead hold any integer.
+
+The computer knows eight instructions, each identified by a 3-bit number (called the instruction's opcode). Each instruction also reads the 3-bit number after it as an input; this is called its operand.
+
+A number called the instruction pointer identifies the position in the program from which the next opcode will be read; it starts at 0, pointing at the first 3-bit number in the program. Except for jump instructions, the instruction pointer increases by 2 after each instruction is processed (to move past the instruction's opcode and its operand). If the computer tries to read an opcode past the end of the program, it instead halts.
+
+So, the program 0,1,2,3 would run the instruction whose opcode is 0 and pass it the operand 1, then run the instruction having opcode 2 and pass it the operand 3, then halt.
+
+There are two types of operands; each instruction specifies the type of its operand. The value of a literal operand is the operand itself. For example, the value of the literal operand 7 is the number 7. The value of a combo operand can be found as follows:
+
+    Combo operands 0 through 3 represent literal values 0 through 3.
+    Combo operand 4 represents the value of register A.
+    Combo operand 5 represents the value of register B.
+    Combo operand 6 represents the value of register C.
+    Combo operand 7 is reserved and will not appear in valid programs.
+
+The eight instructions are as follows:
+
+The adv instruction (opcode 0) performs division. The numerator is the value in the A register. The denominator is found by raising 2 to the power of the instruction's combo operand. (So, an operand of 2 would divide A by 4 (2^2); an operand of 5 would divide A by 2^B.) The result of the division operation is truncated to an integer and then written to the A register.
+
+The bxl instruction (opcode 1) calculates the bitwise XOR of register B and the instruction's literal operand, then stores the result in register B.
+
+The bst instruction (opcode 2) calculates the value of its combo operand modulo 8 (thereby keeping only its lowest 3 bits), then writes that value to the B register.
+
+The jnz instruction (opcode 3) does nothing if the A register is 0. However, if the A register is not zero, it jumps by setting the instruction pointer to the value of its literal operand; if this instruction jumps, the instruction pointer is not increased by 2 after this instruction.
+
+The bxc instruction (opcode 4) calculates the bitwise XOR of register B and register C, then stores the result in register B. (For legacy reasons, this instruction reads an operand but ignores it.)
+
+The out instruction (opcode 5) calculates the value of its combo operand modulo 8, then outputs that value. (If a program outputs multiple values, they are separated by commas.)
+
+The bdv instruction (opcode 6) works exactly like the adv instruction except that the result is stored in the B register. (The numerator is still read from the A register.)
+
+The cdv instruction (opcode 7) works exactly like the adv instruction except that the result is stored in the C register. (The numerator is still read from the A register.)
+
+Here are some examples of instruction operation:
+
+    If register C contains 9, the program 2,6 would set register B to 1.
+    If register A contains 10, the program 5,0,5,1,5,4 would output 0,1,2.
+    If register A contains 2024, the program 0,1,5,4,3,0 would output 4,2,5,6,7,7,7,7,3,1,0 and leave 0 in register A.
+    If register B contains 29, the program 1,7 would set register B to 26.
+    If register B contains 2024 and register C contains 43690, the program 4,0 would set register B to 44354.
+
+The Historians' strange device has finished initializing its debugger and is displaying some information about the program it is trying to run (your puzzle input). For example:
+
+Register A: 729
+Register B: 0
+Register C: 0
+
+Program: 0,1,5,4,3,0
+
+Your first task is to determine what the program is trying to output. To do this, initialize the registers to the given values, then run the given program, collecting any output produced by out instructions. (Always join the values produced by out instructions with commas.) After the above program halts, its final output will be 4,6,3,5,6,3,5,2,1,0.
+
+Using the information provided by the debugger, initialize the registers to the given values, then run the program. Once it halts, what do you get if you use commas to join the values it output into a single string?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-58673230-c5ad-42c7-b331-9247b4ae2939" data-type="javascript" class="show-full show-in-presentation">// input_data is a long string of lines separated by newlines.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+bqe.input_data = input_data.trim();</bq-cell>
+<bq-cell id="id-3b4b7ef2-2604-42fb-8e00-80f188ba6ae2" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+globalThis.bqe = bqe;//!!!
+
+keepalive();
+
+const map_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const information_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'max-height':           '80ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const register_names = [ 'PC', 'A', 'B', 'C' ];
+
+let registers;
+let program;
+let output;
+
+const perform_output = (...values) => {
+    output.push(values.join(','));
+};
+
+const reset = () => {
+    registers = { PC: 0 };
+    program   = undefined;
+    output    = [];
+
+    const input_lines = bqe.input_data.split('\n');
+
+    // parse input
+    for (let line_index = 0, empty_line_seen = false; line_index < input_lines.length; line_index++) {
+        const line = input_lines[line_index];
+        if (line.length === 0) {
+            empty_line_seen = true;
+        } else {
+            if (!empty_line_seen) {
+                // parsing registers
+                const match = line.match(/^Register[ ]([A-C])[:][ ]([\d]+)$/);
+                if (!match) {
+                    throw new Error(`error parsing registers at line ${line_index+1}`);
+                } else {
+                    const register = match[1];
+                    const value    = +match[2];
+                    if (register in registers) {
+                        throw new Error(`register ${register} specified more than once at line ${line_index+1}`);
+                    } else {
+                        registers[register] = value;
+                    }
+                }
+            } else {
+                // parsing program
+
+                const match = line.match(/^Program[:][ ]([\d]+(?:[,][\d]+)*)$/);
+                if (program) {
+                    throw new Error(`extra input after program specification at line ${line_index+1}`);
+                } else {
+                    if (!match) {
+                        throw new Error(`program not specified after blank line following register specification at line ${line_index+1}`);
+                    } else {
+                        program = match[1].split(',').map(number_string => +number_string);
+                    }
+                }
+            }
+        }
+    }
+
+    registers.PC = 0;
+
+    if (register_names.some(r => !(r in registers))) {
+        throw new Error(`only registers "${register_names.join('", "')}" can be specified in input_data`);
+    }
+    if (!register_names.every(r => (r in registers))) {
+        throw new Error(`not all registers "${register_names.join('", "')}" initialized`);
+    }
+
+    if (!program) {
+        throw new Error('program not specified');
+    }
+
+    vars({
+        registers,
+        program,
+        output,
+    });
+};
+
+// define operands and opcodes as given in problem statement
+const operand_type_literal  = 'literal';
+const operand_type_register = 'register';
+const operand_type_combo    = 'combo';
+const operand_type_reserved = 'reserved';
+
+const combo_operand_defs = {
+    0: { name: '#0',       underlying_type: operand_type_literal,  eval: (operand) => +operand },
+    1: { name: '#1',       underlying_type: operand_type_literal,  eval: (operand) => +operand },
+    2: { name: '#2',       underlying_type: operand_type_literal,  eval: (operand) => +operand },
+    3: { name: '#3',       underlying_type: operand_type_literal,  eval: (operand) => +operand },
+    4: { name: 'rA',       underlying_type: operand_type_register, eval: (operand) => registers.A },
+    5: { name: 'rB',       underlying_type: operand_type_register, eval: (operand) => registers.B },
+    6: { name: 'rC',       underlying_type: operand_type_register, eval: (operand) => registers.C },
+    7: { name: 'RESERVED', underlying_type: operand_type_reserved, eval: (operand) => { throw new Error(`reserved operand ${operand}`); } },
+};
+
+const parse_operand = (operand, type, aux=undefined) => {
+    switch (type) {
+    case operand_type_literal: {
+        return +operand;
+    }
+    case operand_type_register: {
+        if (!(aux in registers)) {
+            throw new Error(`unknown register ${aux}`);
+        } else {
+            return registers[aux];
+        }
+    }
+    case operand_type_combo: {
+        if (!(operand in combo_operand_defs)) {
+            throw new Error(`illegal combo operand ${operand}`);
+        } else {
+            return combo_operand_defs[operand].eval(operand);
+        }
+    }
+    default: throw new Error(`parse_operand: unsupported operand type ${type}`);
+    }
+};
+
+const opcode_defs = {
+    0: { opcode: 0, mnemonic: 'adv', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'rA = trunc(rA / 2**operand)',
+         eval: (operand_value) => {
+             registers.A = Math.trunc(registers.A / (2**operand_value));
+         },
+       },
+    1: { opcode: 1, mnemonic: 'bxl', operand_types: [ operand_type_literal ],
+         format: function (operands) {
+             return `${this.mnemonic} #${operands[0]}`;
+         },
+         comment: 'rB = (rB ^ operand)',
+         eval: (operand_value) => {
+             registers.B = registers.B ^ operand_value;
+         },
+       },
+    2: { opcode: 2, mnemonic: 'bst', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'rB = (operand % 8)',
+         eval: (operand_value) => {
+             registers.B = operand_value % 8;
+         },
+       },
+    3: { opcode: 3, mnemonic: 'jnz', operand_types: [ operand_type_literal ],
+         format: function (operands) {
+             return `${this.mnemonic} #${operands[0]}`;
+         },
+         comment: 'if rA != 0 then: PC = operand',
+         eval: (operand_value) => {
+             if (registers.A !== 0) {
+                 registers.PC = operand_value;
+             }
+         },
+       },
+    4: { opcode: 4, mnemonic: 'bxc', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'rB = (rB ^ rC)',
+         eval: (operand_value) => {
+             registers.B = registers.B ^ registers.C;
+         },
+       },
+    5: { opcode: 5, mnemonic: 'out', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'output (operand % 8)',
+         eval: (operand_value) => {
+             perform_output(operand_value % 8)
+         },
+       },
+    6: { opcode: 6, mnemonic: 'bdv', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'rB = trunc(rA / 2**operand)',
+         eval: (operand_value) => {
+             registers.B = Math.trunc(registers.A / (2**operand_value));
+         },
+       },
+    7: { opcode: 7, mnemonic: 'cdv', operand_types: [ operand_type_combo ],
+         format: function (operands) {
+             return `${this.mnemonic} @${operands[0]} (${combo_operand_defs[operands[0]].name})`;
+         },
+         comment: 'rC = trunc(rA / 2**operand)',
+         eval: (operand_value) => {
+             registers.C = Math.trunc(registers.A / (2**operand_value));
+         },
+       },
+};
+
+const format_number = (v) => {
+    if (Math.abs(v) < 10) {
+        return `${v}`;
+    } else {
+        return `${v}=0x${v.toString(16)}`
+    }
+}
+
+const registers_to_string = () => {
+    return register_names
+        .map(r => [ r, registers[r] ])
+        .map(([ r, v ]) => `${r}:${(r === 'PC') ? `${v}` : format_number(v)}`)
+        .join('    ');
+};
+
+const format_instruction = (pc_start, opcode, operands, operand_types, operand_values) => {
+    const lines = [];
+    const opcode_def = opcode_defs[opcode];
+    const instruction_info = [
+        `opcode:${opcode}`,
+        `operands:${operands.join(',')}`,
+        `operand_types:${operand_types.join(',')}`,
+        `operand_values:${operand_values.map(v => `${format_number(v)}`).join(',')}`,
+    ].join(', ');
+    lines.push(`${`${pc_start}:`.padStart(3)} ${opcode_def.format(operands).padEnd(16)}; ${opcode_def.comment}`);
+    lines.push(`                    ; ${instruction_info}`);
+    lines.push(`                    ; ${registers_to_string()}`);
+    return lines.join('\n');
+};
+
+const step_program = async (trace_outputter=null) => {
+    if (registers.PC < 0 || registers.PC >= program.length) {
+        return false;
+    } else {
+        const pc_start = registers.PC;
+        const opcode = program[registers.PC++];
+        if (!(opcode in opcode_defs)) {
+            throw new Error(`illegal opcode ${opcode} in instruction at location ${pc_start}`);
+        } else {
+            const opcode_def = opcode_defs[opcode];
+            const { mnemonic, operand_types, eval } = opcode_def;
+            if (operand_types.some(type => type == operand_type_register)) {
+                throw new Error('step_program: operand_type_register not supported for opcode (use operand_type_combo)');
+            }
+            const operands = operand_types.map(operand_type => program[registers.PC++]);
+            const operand_values = operands.map((operand, i) => parse_operand(operand, operand_types[i]));
+            eval(...operand_values);
+            if (trace_outputter) {
+                await trace_outputter(format_instruction(pc_start, opcode, operands, operand_types, operand_values));
+            }
+            return true;
+        }
+    }
+};
+
+const run_program = async (trace_outputter=null) => {
+    while (await step_program(trace_outputter)) {
+        // continue running
+    }
+    return output;
+};
+
+vars({
+    map_output_options,
+    information_output_options,
+    register_names,
+    reset,
+    output,
+    perform_output,
+    operand_type_literal,
+    operand_type_register,
+    operand_type_combo,
+    operand_type_reserved,
+    combo_operand_defs,
+    parse_operand,
+    opcode_defs,
+    format_number,
+    registers_to_string,
+    format_instruction,
+    step_program,
+    run_program,
+});
+</bq-cell>
+<bq-cell id="id-e5e44175-8cc4-402f-8df6-cd8bb3908889" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+const input_data_examples = [
+// 0:
+`
+Register A: 729
+Register B: 0
+Register C: 0
+
+Program: 0,1,5,4,3,0
+`,
+];
+const input_data_example_to_use = undefined;
+if (typeof input_data_example_to_use === 'number') {
+    if (!(input_data_example_to_use in input_data_examples)) {
+        throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+    }
+    bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+}
+
+//keepalive();
+
+bqe.reset();
+
+await ocx.println(`registers: ${bqe.registers_to_string()}`);
+await ocx.println(`program: ${bqe.program.join(',')}`);
+await ocx.println();
+await ocx.println('Program trace:');
+
+const instruction_output_ocx = ocx.create_child_ocx(bqe.information_output_options);
+
+const trace_outputter = async (instruction_info) => {
+    await instruction_output_ocx.print__();
+    await instruction_output_ocx.render_text(instruction_info);
+}
+
+const result = await bqe.run_program(trace_outputter);
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+The program output is: **${bqe.output.join(',')}**
+`);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.1).then(() => answer_element.scrollIntoView(false));</bq-cell>
+<bq-cell id="id-a42df1ef-3b94-4bc7-a458-e2639046a33c" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+Digging deeper in the device's manual, you discover the problem: this program is supposed to output another copy of the program! Unfortunately, the value in register A seems to have been corrupted. You'll need to find a new value to which you can initialize register A so that the program's output instructions produce an exact copy of the program itself.
+
+For example:
+
+Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0
+
+This program outputs a copy of itself if register A is instead initialized to 117440. (The original initial value of register A, 2024, is ignored.)
+
+What is the lowest positive initial value for register A that causes the program to output a copy of itself?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-5db28ae2-6b44-40f9-a362-0491e87c94fc" data-type="markdown">## Analysis of Program from Part One
+
+### Loop:
+* B = (A % 8) ^ 7
+* C = trunc(A / 2**B) = trunc(A / 2**((A % 8) ^ 7))
+* B = (B ^ 7)  ; note: reverse prior ^ 7
+* B = (B ^ C) = (B ^ trunc(A / 2**((A % 8) ^ 7))) = ((A % 8) ^ trunc(A / 2**((A % 8) ^ 7)))
+* A = trunc(A / 2**3)
+* output (B % 8) = (((A % 8) ^ trunc(A / 2**((A % 8) ^ 7))) % 8)
+* loop if A != 0
+
+### Equivalent JavaScript code:
+~~~ javascript $!
+const test_equiv = async (N, out_ocx=ocx) => {
+    const output = [];
+    await out_ocx?.println(`A = ${N}:`);
+    for (let A = N; A !== 0; A = Math.trunc(A / 2**3)) {
+        const out = (((A % 8) ^ Math.trunc(A / 2**((A % 8) ^ 7))) % 8);
+        output.push(out);
+        await out_ocx?.println(`out: ${out};  A: ${A}`);
+    }
+    return output;
+};
+
+await test_equiv(66245665);
+
+await println();
+const bad_case = 100000000000000000000;
+const bad_case_results = await test_equiv(bad_case);
+if (bad_case_results.some(out => out < 0)) {
+    await render_error(`OOPS, there were negative outputs for ${bad_case}, and that should not happen!`);
+}
+
+keepalive();
+vars({ test_equiv, bad_case });
+~~~
+
+The problem is that the JavaScript ^ (XOR) operator, along with other bit-wise operators converts its arguments to 320bit integers before performing the operation.
+But that can be avoided by moving the overall % 8 before the ^ and therefore the operation will be occurring on 3-bit numbers.
+
+#### Define a fixed version and make the new version matches the old version on some test cases for which the old version does not return negative outputs:
+
+~~~ javascript $!
+
+const test_equiv_fixed = async (N, out_ocx=ocx) => {
+    const output = [];
+    await out_ocx?.println(`A = ${N}:`);
+    for (let A = N; A !== 0; A = Math.trunc(A / 2**3)) {
+        const out = ((A % 8) ^ (Math.trunc(A / 2**((A % 8) ^ 7)) % 8));  // ^ now operates on 3-bit numbers only
+        output.push(out);
+        await out_ocx?.println(`out: ${out};  A: ${A}`);
+    }
+    return output;
+};
+
+const out_ocx = ocx.create_child_ocx({
+    style: {
+        'max-width':  '100ch',
+        'max-height': '20ch',
+        overflow:     'auto',
+        border:       '1px solid grey',
+        padding:      '1em',
+    }
+});
+
+let mismatches_found = false;
+for (const test_value of [
+    66245665,  // from Part One
+    bqe.bad_case,
+    ...(new Array(100).fill().map((_, i) => i)),
+    ...(new Array(100).fill().map((_, i) => 10000+i)),
+    ...(new Array(100).fill().map((_, i) => 1000000000+i)),
+]) {
+    const original_result = await bqe.test_equiv(test_value, null);
+    const fixed_result    = await test_equiv_fixed(test_value, null);
+    if (original_result.some(out => out < 0)) {
+        await out_ocx.println(`${test_value}: (some outputs of original_result were negative, so not comparing to fixed_result.)`);
+    } else {
+        if (original_result.join(',') !== fixed_result.join(',')) {
+            mismatches_found = true;
+            await out_ocx.println(`${test_value}: ERROR: original_result and fixed_result do not match.`);
+        } else {
+            await out_ocx.println(`${test_value}: GOOD: the ${fixed_result.length} output${fixed_result.length === 1 ? '' : 's'} of original_result and fixed_result match.`);
+        }
+    }
+}
+
+if (mismatches_found) {
+    await render_error('Sonme tests failed for test_equiv_fixed()');
+} else {
+    await markdown('#### All tests for test_equiv_fixed() PASSED!');
+}
+
+await print__();
+~~~
+
+### Experimentation with generating some desired sequences...
+
+~~~ javascript $!
+const out_ocx = ocx.create_child_ocx({
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+ //       'max-height':           '80ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+});
+
+const group_digits = (s) => {
+    if (typeof s !== 'string' || !s.match(/^[\d]*$/)) {
+        throw new Error('s must be a string containing only digits');
+    }
+    return s.replaceAll(/((?<=^[\d]{1,3}(?:[\d]{3})*)[\d]{3}(?=(?:[\d]{3})*$))/g, '_$1');
+};
+
+const test = async (N, abbreviated=false, test_ocx=out_ocx) => {
+    await test_ocx?.print__();
+    const N_digit_count        = N.toString().length;
+    const N_binary_digit_count = N.toString(2).length;
+    const N_hex_digit_count    = N.toString(16).length;
+    const N_string = (pad_length=24) => `0b${group_digits(N.toString(2).padStart(pad_length, '0'))}`;
+    if (!abbreviated) {
+        await test_ocx?.println(`A = ${N}`);
+        await test_ocx?.println(`A = ${N_string()}`);
+    }
+    const outputs = [];
+    for (let A = N; A !== 0; A = Math.trunc(A / 2**3)) {
+        const lower_3_bits          = (A % 8);
+        const lower_3_bits_inverted = (lower_3_bits ^ 7);
+        const out = (lower_3_bits ^ (Math.trunc(A / 2**lower_3_bits_inverted) % 8))
+        outputs.push(out);
+        if (!abbreviated) {
+            await test_ocx?.println([
+                `out: ${out};`,
+                `  l3b: ${lower_3_bits};  inv: ${lower_3_bits_inverted};`,
+                `  A: ${A.toString().padEnd(N_digit_count)}`,
+                `  ${A.toString(16).padEnd(N_hex_digit_count)}`,
+                `  ${group_digits(A.toString(2))}`,
+            ].join(''));
+        }
+    }
+    if (abbreviated) {
+        await test_ocx?.println(`await test(${N_string()}, true);  // ${outputs.join(',')}`);
+    }
+    return outputs;
+};
+
+keepalive();
+vars({ out_ocx, group_digits, test });
+~~~
+
+~~~ javascript !
+// Enter a new javascript section, but without outputting the source code...
+keepalive();
+const { out_ocx, group_digits, test } = bqe;  // carry over from prior eval environment
+
+const bad_case_results = await test(bqe.bad_case);
+if (bad_case_results.some(out => out < 0)) {
+    await out_ocx.render_error(`test(${bqe.bad_case}) for the "bad case" has negative outputs`);
+} else {
+    await out_ocx.println();
+    await out_ocx.println(`test(${bqe.bad_case}) for the "bad case" had no negative outputs!`);
+}
+
+await out_ocx.print__();
+await out_ocx.println(`// input from Part One; N = 66245665, correct answer = 1,4,6,1,6,4,3,0,3`);
+await test(66245665);
+
+await test(0b100011010);  // 2,1,4
+await test(0b110100001);  // 7,2,5
+
+await out_ocx.print__();
+await out_ocx.println(`// try to build 5,1,7 up, starting in reverse:`);
+await out_ocx.println(`// start with 7:`);
+await test(0b111);  // not so easy: 0
+await test(0b101);  // not so easy: 4
+await out_ocx.println(`// turns out you can't output just a single 7....`);
+
+await out_ocx.print__();
+await out_ocx.println(`// try to output something ending in 7:`);
+await test(0b0);  // nothing
+await test(0b110000001);  // 7,0,5
+await test(0b010100010);  // 7,6,2
+await test(0b001000011);  // 7,0,1
+await test(0b001011100);  // 7,3,1
+await test(0b001011101);  // 2,3,1 !
+await test(0b001011110);  // 1,3,1 !
+await test(0b001011111);  // 0,3,1 !
+
+await test(0b110000001);  // 7,0,5
+await test(0b010100010);  // 7,6,2
+await test(0b001000011);  // 7,0,1
+await test(0b000011100);  // 7,3
+await test(0b000000101);  // 4 !
+await test(0b000000110);  // 5 !
+await test(0b000000111);  // 0 !
+
+await out_ocx.print__();
+await out_ocx.println(`// try to output 2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0 (this is the Part Two program)`);
+await test(0b000000000111);  // 0
+await test(0b000000111011);  // 0,0
+await test(0b000000110011);  // 0,5
+
+await out_ocx.print__();
+await out_ocx.println(`// try to output 2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0 building from the left:`);
+await test(0b000_000_000_000_000_000_000_010, true);  // 2
+await test(0b000_000_000_000_000_000_100_011, true);  // 1,4
+await test(0b000_000_000_000_000_000_110_011, true);  // 0,5
+await test(0b000_000_000_000_000_000_010_011, true);  // 2,2
+await test(0b000_000_000_000_011_000_010_011, true);  // 2,4,0,3
+await test(0b000_000_000_000_011_001_010_011, true);  // 6,4,1,3
+await test(0b000_000_000_010_011_000_010_011, true);  // 2,4,1,2,2
+await test(0b000_000_001_000_011_000_010_011, true);  // 2,4,4,7,0,1
+await test(0b000_000_001_000_011_011_010_011, true);  // 6,4,2,7,0,1
+await test(0b000_000_001_000_011_110_010_011, true);  // 2,5,1,7,0,1
+await test(0b000_000_001_000_011_010_010_011, true);  // 2,4,2,7,0,1
+await test(0b000_000_001_001_111_010_010_011, true);  // 2,4,1,0,1,1
+await test(0b000_000_001_001_111_110_010_011, true);  // 2,5,1,0,1,1
+await test(0b000_000_001_001_111_110_011_011, true);  // 2,4,1,0,1,1
+await test(0b000_000_001_001_111_010_011_011, true);  // 2,6,1,0,1,1
+await test(0b000_000_001_001_011_110_011_011, true);  // 2,4,1,7,1,1
+await test(0b000_110_001_001_011_110_011_011, true);  // 2,4,1,7,7,1,5
+
+await test(0b000_100_110_001_001_011_110_011_011, true);  // 2,4,1,7,7,5,5,4
+await test(0b000_111_110_001_001_011_110_011_011, true);  // 2,4,1,7,7,6,1,0
+
+await test(0b000_111_110_101_001_011_110_011_011, true);  // 2,4,1,7,7,0,1,0
+await test(0b000_111_110_110_001_011_110_011_011, true);  // 2,4,1,3,7,5,1,0
+
+await test(0b000_111_110_110_001_101_110_011_011, true);  // 2,4,1,6,7,5,1,0
+
+await out_ocx.print__();
+await out_ocx.println(`// try to output 2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0 :`);
+await out_ocx.println(`// note that number will start with 111 in a block of three positions because last output needs to be 0`);
+await out_ocx.println(`// note that number will have 16 blocks of three because there are 16 numbers in the desired output`);
+await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011);
+await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011, true);  // 2,4,1,6,7,5,1,0,0,0,0,0,4,3,0,0
+await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011, true);  // 2,4,1,6,7,5,1,0,0,0,0,0,4,3,0,0
+~~~
+
+### Conclusions after experimentation with generating some desired sequences...
+
+* the given program (2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0) has 16 numbers.
+* the number that will generate the program as output will start with 111 in a block of three positions because last output needs to be 0.
+* the number will have 16 blocks of three because there are 16 numbers in the desired output.
+* generating a desired sequence is difficult, and will probably require some kind of search.
+* the search space is huge, potentiall 2**45 in size!
+* trying to extend a successful subsequence often perturbs the earlier subsequence significantly.
+* a given output number can be affected by at most 10 bits prior to the block that generated it (call it the "window" for that output).
+* extending from the left, a given sequence potentially has a "first guarded digit" that cannot be affected by extending, and a "window" from that digit.
+
+#### Strategy for finding a solution
+
+* search for solutions in some range, recording first guarded digit and window
+* maintain a work queue
+* choose next work item based on first guarded digit and window
+
+~~~ javascript !
+keepalive();
+~~~
+</bq-cell>
+<bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-full show-in-presentation">// utility functions for answer to Part Two
+
+const find_solution = async (options) => {
+    const {
+        trace_fn,
+        trace_fn_mod = 1000,
+    } = (options ?? {});
+
+    class WorkQueue {
+        #queue = [];
+
+        get length (){ return this.#queue.length; }
+
+        add( N,
+           ) {
+            this.#queue.push({ N });
+        }
+
+        // returns first best entry; returns undefined if nothing left
+        // selector: (best_so_far, another_work_item) => choose_another?
+        pop(selector) {
+            let result;
+            for (const work_item of this.#queue) {
+                if (!result || selector(result, work_item)) {
+                    result = work_item;
+                }
+            }
+            if (result) {
+                // remove result
+                this.#queue = this.#queue.filter(work_item => (work_item !== result));
+            }
+            return result;
+        }
+    }
+    const work_queue = new WorkQueue();
+
+    const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
+
+    // --- the main work loop ---
+//!!!    work_queue.add();  // add initial work
+    for (let attempt_count = 0, work_item; work_item = work_queue.pop(work_item_selector); attempt_count++) {
+
+        break;//!!!
+
+        if (attempt_count % trace_mod === 0) {
+            await trace_fn?.({
+                attempt_count,
+                work_item,
+                work_queue,
+            });
+        }
+    }
+};</bq-cell>
+<bq-cell id="id-ce512a31-1c3e-435c-a5df-9c28222481ad" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+
+const trace_label = ocx.create_child({
+    tag: 'label',
+    children: [
+        'Trace',
+        {
+            tag: 'style',
+            innerText: 'input[type="checkbox"]:checked + .trace-output-indicator { display: inline !important; }',
+        },
+        {
+            tag: 'input',
+            attrs: {
+                type: 'checkbox',
+            },
+        },
+        {
+            innerText: '(outputting to console)',
+            attrs: {
+                class: 'trace-output-indicator',
+            },
+            style: {
+                display:      'none',
+                color:        'grey',
+                'font-style': 'italic',
+            },
+        },
+    ],
+});
+const trace_checkbox = trace_label.querySelector('input[type="checkbox"]');
+
+const wait_ocx = ocx.create_child_ocx({
+    style: {
+        'line-break': 'anywhere',
+        'max-width':  '100ch',
+        border:       '1px solid grey',
+        padding:      '1em',
+    }
+});
+const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
+sleep(0.3).then(() => waiting_element.scrollIntoView());//!!!
+
+const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
+const trace_iterations_mod = 100;  // calls to trace_fn between trace outputs
+
+let trace_iterations = 0;
+const trace_fn = async (data) => {
+    if (trace_iterations++ % trace_iterations_mod === 0) {
+        if (trace_checkbox.checked) {
+            const { attempt_count, work_item, work_queue } = data;
+            console.log(data);
+        }
+        let waiting_innerText = waiting_element.innerText;
+        if (waiting_innerText.length > 1000) {
+            waiting_innerText = waiting_innerText.replace(/(?:[[][\d]+][ ])?[.]*$/, '') + `[${Math.floor((trace_iterations-1) / trace_iterations_mod)}] `;
+        }
+        waiting_element.innerText = waiting_innerText + '.';
+        if (waiting_element.getBoundingClientRect().y <= window.innerHeight) {
+            // only scroll back into view if already at least partially showing
+            waiting_element.scrollIntoView();
+        }
+    }
+    await next_tick();
+};
+
+return;//!!!
+
+bqe.solution = await bqe.find_solution({
+    trace_fn,
+    trace_mod,
+});
+
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+!!!
+`);</bq-cell>
+</body>
+</html>
