@@ -725,28 +725,59 @@ await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011, tr
 await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011, true);  // 2,4,1,6,7,5,1,0,0,0,0,0,4,3,0,0
 ~~~
 
+Arrgh!  Nightware!
+
 ### Conclusions after experimentation with generating some desired sequences...
 
-* the given program (2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0) has 16 numbers.
-* the number that will generate the program as output will start with 111 in a block of three positions because last output needs to be 0.
-* the number will have 16 blocks of three because there are 16 numbers in the desired output.
-* generating a desired sequence is difficult, and will probably require some kind of search.
-* the search space is huge, potentiall 2**45 in size!
-* trying to extend a successful subsequence often perturbs the earlier subsequence significantly.
-* a given output number can be affected by at most 10 bits prior to the block that generated it (call it the "window" for that output).
-* extending from the left, a given sequence potentially has a "first guarded digit" that cannot be affected by extending, and a "window" from that digit.
+#### Sequence creation
+
+* The input number $N$ should be viewed as blocks of 3 bits, from least significant to most significant.
+* Let ${bitsize}(N)$ denote $3 \times i_{max}$ where $i_{max}$ is the largest index before which more significant blocks of three bits of $N$ are all 000.
+* Each output number $O_i$ is generated one-for-one from each 3-bit block at the i-th stage.
+* At each stage $i$, $N$ is shifted down by 3 bits until $N$ reaches 0.
+* Each $O_i$ is the current least significant 3 bits ($X_i$) of $N$ XOR-ed with 3 bits of $N$ $s$ bits up ($Y_i$) where $s$ is ~$X_i$; $O_i$ = $X_i$ ^ $Y_i$.
+  * As a consequence, each $O_i$ is in the range from 0 to 7.
+* Bits from each $Y_i$ (where $i \lt {maximum}$) will affect some other $O_j$ where $j \ge i$.
+* Also, the lower the value of $X_i$, the further up $N$ $O_i$ depends.
+* The same $O_i$ can be generated in multiple ways, for example, both the following generate the output 0,0:
+  * $N$ = 0b111_000 generates its first 0 from 000^000 where the that second 000 is from $N$ is at offset $s$ = ~000 = 7 bits up from the current least significant 000.
+  * $N$ = 0b111_111 generates its first 0 from 111^111 where both 111s are the least significant 111 because the offset $s$ = ~111 = 0.
+  * Note that the output of 0b111_000 depends on $N$ much further up than that of 0b111_111, and therefore extending 0b111_000 to output a third number will likely perturb the first 0,0 output.
+
+#### Generating the desired sequence for Part Two
+
+* The given program (2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0) that is to be generated in Part Two has 16 numbers.
+* The 3-bit block that will generate the program as output must have its most significant block be 111 because last output needs to be 0.
+  * Any other possibility will require nonzero bits further up to XOR out to 0, but that will in turn generate additional output.
+* The number will have 16 blocks of three because there are 16 numbers in the desired output.
+* Generating a desired sequence is difficult, and will probably require some kind of search.
+  * because trying to extend a successful subsequence often perturbs the earlier subsequence significantly.
+* The search space is huge, potentially 2**45 in size!
+* The $i$-th output number $O_i$ can be affected by at most 7 bits higher up than the block that generated it.
+  * Call this the "extent" for that output.
+* Extending from the left, a given sequence potentially has a "first guarded position" before which output cannot be affected by extending, and an "extent" from that number.
+* For a given $N$, define its "window" as follows:
+  * Note that we are dealing with a fixed ${bitsize}(N)$ for the problem in Part Two (as argued above).
+  * Let $O_i$ be the last correctly-output number in an initial subsequence of entirely correct output numbers.
+    * $O_i$ may not exist in which case the "first guarded position" is 0
+  * Let $w_{start}$ be the maximum bit position in $N$ of the extents for each output number including and before $O_i$.
+  * Counting from least to most significant, the "window" for $N$ starts at $w_{start}$ and continues up to the first most-significant fixed part of $N$.
+    * For Part Two, the most significant part of $N$ is fixed at 111 (as argued above).
+  * Therefore, for a given $N$, the window of $N$ is $w_{start}$ to $bitsize(N)-3$.
 
 #### Strategy for finding a solution
 
-* search for solutions in some range, recording first guarded digit and window
-* maintain a work queue
-* choose next work item based on first guarded digit and window
+* Search for solutions in some range, recording first guarded position and window.
+* Maintain a work queue.
+* Choose next work item based on first guarded position and window.
+* Search sequentially within the window.
+* Split the work up so that we don't get stuck too long within a particular window.
 
 ~~~ javascript !
-keepalive();
+keepalive(); sleep(0.3).then(() => ocx.element.scrollIntoView(false));//!!!
 ~~~
 </bq-cell>
-<bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-full show-in-presentation">// utility functions for answer to Part Two
+<bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-full show-in-presentation">// utility definitions for answer to Part Two
 
 const find_solution = async (options) => {
     const {
@@ -840,7 +871,6 @@ const wait_ocx = ocx.create_child_ocx({
     }
 });
 const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
-sleep(0.3).then(() => waiting_element.scrollIntoView());//!!!
 
 const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
 const trace_iterations_mod = 100;  // calls to trace_fn between trace outputs
