@@ -614,7 +614,7 @@ const test = async (N, abbreviated=false, test_ocx=out_ocx) => {
     for (let A = N; A !== 0; A = Math.trunc(A / 2**3)) {
         const lower_3_bits          = (A % 8);
         const lower_3_bits_inverted = (lower_3_bits ^ 7);
-        const out = (lower_3_bits ^ (Math.trunc(A / 2**lower_3_bits_inverted) % 8))
+        const out = (lower_3_bits ^ (Math.trunc(A / 2**lower_3_bits_inverted) % 8));
         outputs.push(out);
         if (!abbreviated) {
             await test_ocx?.println([
@@ -747,20 +747,20 @@ Arrgh!  Nightware!
 #### Generating the desired sequence for Part Two
 
 * The given program (2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0) that is to be generated in Part Two has 16 numbers.
-* The 3-bit block that will generate the program as output must have its most significant block be 111 because last output needs to be 0.
-  * Any other possibility will require nonzero bits further up to XOR out to 0, but that will in turn generate additional output.
+* The most significant 3-bit block of the number $N$ that will generate the program as output must be 111 because last output number must be 0.
+  * Any other possibility will require nonzero bits further up to XOR out to 0, but that would in turn generate additional output.
 * The number will have 16 blocks of three because there are 16 numbers in the desired output.
 * Generating a desired sequence is difficult, and will probably require some kind of search.
   * because trying to extend a successful subsequence often perturbs the earlier subsequence significantly.
 * The search space is huge, potentially 2**45 in size!
-* The $i$-th output number $O_i$ can be affected by at most 7 bits higher up than the block that generated it.
-  * Call this the "extent" for that output.
-* Extending from the left, a given sequence potentially has a "first guarded position" before which output cannot be affected by extending, and an "extent" from that number.
+* The $i$-th output number $O_i$ can be affected by at most 7 bit-positions higher up than the block that generated it.
+  * Call this the "extent" for that output number $O_i$.
+* A given output sequence has a "first guarded position" before which output will not be affected by attempting to extend it by adding more significant digits to $N$.
 * For a given $N$, define its "window" as follows:
   * Note that we are dealing with a fixed ${bitsize}(N)$ for the problem in Part Two (as argued above).
   * Let $O_i$ be the last correctly-output number in an initial subsequence of entirely correct output numbers.
     * $O_i$ may not exist in which case the "first guarded position" is 0
-  * Let $w_{start}$ be the maximum bit position in $N$ of the extents for each output number including and before $O_i$.
+  * Let $w_{start}$ be the maximum bit-position in $N$ of the extents for each output number including and before $O_i$.
   * Counting from least to most significant, the "window" for $N$ starts at $w_{start}$ and continues up to the first most-significant fixed part of $N$.
     * For Part Two, the most significant part of $N$ is fixed at 111 (as argued above).
   * Therefore, for a given $N$, the window of $N$ is $w_{start}$ to $bitsize(N)-3$.
@@ -771,55 +771,133 @@ Arrgh!  Nightware!
 * Maintain a work queue.
 * Choose next work item based on first guarded position and window.
 * Search sequentially within the window.
-* Split the work up so that we don't get stuck too long within a particular window.
-
-~~~ javascript !
-keepalive(); sleep(0.3).then(() => ocx.element.scrollIntoView(false));//!!!
-~~~
+* Split the work up so that we will not get stuck too long within a particular window.
 </bq-cell>
 <bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-full show-in-presentation">// utility definitions for answer to Part Two
+
+const generate_outputs = (N, include_stepwise_info=false) => {
+    const outputs = [];
+    for (let A = N; A !== 0; A = Math.trunc(A / 2**3)) {
+        const l3b   = (A % 8);    // lower 3 bits
+        const shift = (l3b ^ 7);  // shift = lower 3 bits inverted
+        const out   = (l3b ^ (Math.trunc(A / 2**shift) % 8));
+        if (include_stepwise_info) {
+            outputs.push({ l3b, shift, out });
+        } else {
+            outputs.push(out);
+        }
+    }
+    return outputs;
+};
+
+const desired_outputs_string = '2,4,1,7,7,5,1,7,4,6,0,3,5,5,3,0';
+
+const N_min = 0b111_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000;  // 16 3-bit groups
+const N_max = 0b111_111_111_111_111_111_111_111_111_111_111_111_111_111_111_111;
+
+N_min_bits = Math.ceil(Math.log2(N_min));
+N_max_bits = Math.ceil(Math.log2(N_max));
+
+if (N_min_bits !== N_max_bits || 3*desired_outputs_string.split(',').length !== N_min_bits) {
+    throw new Error('configuration error with desired_outputs_string, N_min and N_max');
+}
 
 const find_solution = async (options) => {
     const {
         trace_fn,
-        trace_fn_mod = 1000,
+        trace_mod = 1000,
     } = (options ?? {});
 
     class WorkQueue {
-        #queue = [];
+        get size (){ return this.#work_items.size; }
 
-        get length (){ return this.#queue.length; }
+        add(N) {
+            if (typeof N !== 'number') {
+                throw new Error(`attempting to add() with non-numeric N`);
+            }
+            if (this.#work_items.has(N)) {
+                throw new Error(`attempting to add() existent N = ${N}`);
+            }
+            const work_item = { N };
+            this.#update_info(work_item);
+            this.#work_items.set(work_item.N, work_item);
+        }
 
-        add( N,
-           ) {
-            this.#queue.push({ N });
+        update(from_N, new_N) {
+            if (typeof from_N !== 'number') {
+                throw new Error(`attempting to update() with non-numeric from_N`);
+            }
+            if (typeof new_N !== 'number') {
+                throw new Error(`attempting to update() with non-numeric new_N`);
+            }
+            if (from_N >= new_N) {
+                throw new Error(`attempting to update() with from_N = ${from_N} >= new_N (= ${new_N})`);
+            }
+            if (!this.#work_items.has(from_N)) {
+                throw new Error(`attempting to update() with nonexistent from_N = ${from_N}`);
+            }
+            if (this.#work_items.has(new_N)) {
+                throw new Error(`attempting to update() with existent new_N = ${new_N}`);
+            }
+            this.#remove(from_N);
+            this.#work_items.add(new_N);
         }
 
         // returns first best entry; returns undefined if nothing left
-        // selector: (best_so_far, another_work_item) => choose_another?
-        pop(selector) {
-            let result;
-            for (const work_item of this.#queue) {
-                if (!result || selector(result, work_item)) {
-                    result = work_item;
+        pop() {
+            let best_results = [];
+            let best_rank;
+            for (const work_item of this.#work_items.values()) {
+                if (!best_rank || work_item.rank >= best_rank) {
+                    best_results.push(work_item);
                 }
             }
-            if (result) {
-                // remove result
-                this.#queue = this.#queue.filter(work_item => (work_item !== result));
+            // randomly pick a result from best_results
+            const selected_result = (best_results.length > 0) ? best_results[Math.trunc(best_results.length * Math.random())] : undefined;
+            if (selected_result) {
+                this.#remove(selected_result);
             }
-            return result;
+            return selected_result;
+        }
+
+        // internal:
+
+        static #desired_outputs = desired_outputs_string.split(',').map(n_string => +n_string);
+
+        #work_items = new Map();
+
+        #remove(work_item_to_remove) {
+            this.#work_items.delete(work_item_to_remove.N);
+        }
+
+        #update_info(work_item) {  // adds or updates additional fields in work_item
+            return;//!!!
+            const desired_outputs = this.constructor.#desired_outputs;
+            work_item.outputs = generate_outputs(work_item.N, true);
+            let absolute_extent = 0;
+            const limit = Math.min(desired_outputs.length, work_item.outputs.length);
+            for (let i = 0; i < limit; i++) {
+                const { l3b, shift, out } = work_item.outputs[i];
+                if (out !== desired_outputs[i]) {
+                    const this_absolute_extent = 3*i + shift;
+//                    if (this_absolute_extent > absolute_extent)
+//                    first_divergent_output_number_index = i;
+                    console.log({ first_divergent_output_number_index });//!!!
+                    break;
+                }
+            }
+            work_item.w_start = 3*(first_divergent_output_number_index);  // bit index starting at 0 from least-significant proceeding to most-significant
+            work_item.w_value_inc = 2**work_item.w_start;
+            work_item.w_value_limit = N_max;  // for now, may be modified by this.split()
+            work_item.rank = work_item.w_start;
         }
     }
     const work_queue = new WorkQueue();
 
-    const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
-
     // --- the main work loop ---
-//!!!    work_queue.add();  // add initial work
-    for (let attempt_count = 0, work_item; work_item = work_queue.pop(work_item_selector); attempt_count++) {
-
-        break;//!!!
+//    work_queue.add(0b111_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000);  // add initial work  //!!!
+    work_queue.add(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011);//!!! generates 2,4,1,6,7,5,1,0,0,0,0,0,4,3,0,0
+    for (let attempt_count = 0, work_item; work_item = work_queue.pop(); attempt_count++) {
 
         if (attempt_count % trace_mod === 0) {
             await trace_fn?.({
@@ -829,7 +907,9 @@ const find_solution = async (options) => {
             });
         }
     }
-};</bq-cell>
+};
+
+vars({ generate_outputs, desired_outputs_string, find_solution });</bq-cell>
 <bq-cell id="id-ce512a31-1c3e-435c-a5df-9c28222481ad" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
 
 
@@ -874,13 +954,16 @@ const waiting_element = await wait_ocx.render_text('Part Two: working ', { inlin
 
 const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
 const trace_iterations_mod = 100;  // calls to trace_fn between trace outputs
+trace_checkbox.checked = true;//!!!
+sleep(0.3).then(() => wait_ocx.element.scrollIntoView(false));//!!!
 
 let trace_iterations = 0;
 const trace_fn = async (data) => {
     if (trace_iterations++ % trace_iterations_mod === 0) {
         if (trace_checkbox.checked) {
             const { attempt_count, work_item, work_queue } = data;
-            console.log(data);
+            const info = `${attempt_count}: ${bqe.group_digits(work_item.N.toString(2))}`;
+            console.log(info, data);
         }
         let waiting_innerText = waiting_element.innerText;
         if (waiting_innerText.length > 1000) {
@@ -895,7 +978,27 @@ const trace_fn = async (data) => {
     await next_tick();
 };
 
-return;//!!!
+const desired_outputs = bqe.desired_outputs_string.split(',').map(n_string => +n_string);
+
+const find_solution = (base_N=0, i=0) => {
+    const candidates = [];
+    for (let b = 0; b <= 7; b++) {
+        const N = 8*base_N + b;
+        const generated = bqe.generate_outputs(N);
+        if (generated[0] === desired_outputs[desired_outputs.length-1-i]) {
+            candidates.push(N);
+        }
+    }
+    if (i < desired_outputs.length-1) {
+        return candidates.flatMap(N => find_solution(N, i+1));
+    } else {
+        return candidates;
+    }
+};
+
+console.log({ solution: find_solution() });
+
+//return;//!!!
 
 bqe.solution = await bqe.find_solution({
     trace_fn,
