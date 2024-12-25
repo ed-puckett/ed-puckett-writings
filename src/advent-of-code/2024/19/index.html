@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-ba454bb1-8a7d-4e38-85ee-16ee20b1bda6" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/19
+`);
+const description = `
+--- Day 19: Linen Layout ---
+
+Today, The Historians take you up to the hot springs on Gear Island! Very suspiciously, absolutely nothing goes wrong as they begin their careful search of the vast field of helixes.
+
+Could this finally be your chance to visit the onsen next door? Only one way to find out.
+
+After a brief conversation with the reception staff at the onsen front desk, you discover that you don't have the right kind of money to pay the admission fee. However, before you can leave, the staff get your attention. Apparently, they've heard about how you helped at the hot springs, and they're willing to make a deal: if you can simply help them arrange their towels, they'll let you in for free!
+
+Every towel at this onsen is marked with a pattern of colored stripes. There are only a few patterns, but for any particular pattern, the staff can get you as many towels with that pattern as you need. Each stripe can be white (w), blue (u), black (b), red (r), or green (g). So, a towel with the pattern ggr would have a green stripe, a green stripe, and then a red stripe, in that order. (You can't reverse a pattern by flipping a towel upside-down, as that would cause the onsen logo to face the wrong way.)
+
+The Official Onsen Branding Expert has produced a list of designs - each a long sequence of stripe colors - that they would like to be able to display. You can use any towels you want, but all of the towels' stripes must exactly match the desired design. So, to display the design rgrgr, you could use two rg towels and then an r towel, an rgr towel and then a gr towel, or even a single massive rgrgr towel (assuming such towel patterns were actually available).
+
+To start, collect together all of the available towel patterns and the list of desired designs (your puzzle input). For example:
+
+r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb
+
+The first line indicates the available towel patterns; in this example, the onsen has unlimited towels with a single red stripe (r), unlimited towels with a white stripe and then a red stripe (wr), and so on.
+
+After the blank line, the remaining lines each describe a design the onsen would like to be able to display. In this example, the first design (brwrr) indicates that the onsen would like to be able to display a black stripe, a red stripe, a white stripe, and then two red stripes, in that order.
+
+Not all designs will be possible with the available towels. In the above example, the designs are possible or impossible as follows:
+
+    brwrr can be made with a br towel, then a wr towel, and then finally an r towel.
+    bggr can be made with a b towel, two g towels, and then an r towel.
+    gbbr can be made with a gb towel and then a br towel.
+    rrbgbr can be made with r, rb, g, and br.
+    ubwu is impossible.
+    bwurrg can be made with bwu, r, r, and g.
+    brgr can be made with br, g, and r.
+    bbrgwb is impossible.
+
+In this example, 6 of the eight designs are possible with the available towel patterns.
+
+To get into the onsen as soon as possible, consult your list of towel patterns and desired designs carefully. How many designs are possible?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-3dd4f23a-dc47-4378-b9b9-efa1fb78f43a" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+bqe.input_data = input_data.trim();
+</bq-cell>
+<bq-cell id="id-22b84bb3-c044-45e6-a530-ab8d4a007c8f" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+const data_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const solution_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const colors = {
+    w: 'white',
+    u: 'blue',
+    b: 'black',
+    r: 'red',
+    g: 'green',
+};
+
+const init_data = () => {
+    const input_lines = bqe.input_data.split('\n');
+
+    if (input_lines.length < 3) {
+        throw new Error('too few input lines');
+    }
+
+    if (!input_lines[0].match(new RegExp(String.raw`^[${Object.keys(colors).join('')}]+(?:[,][\s][${Object.keys(colors).join('')}]+)*$`))) {
+        throw new Error('illegal format for available towel patterns in input line 1');
+    }
+
+    const available_towel_patterns = input_lines[0].split(/[,][\s]/);
+
+    if (input_lines[1].length !== 0) {
+        throw new Error('input line 2 is not empty as expected');
+    }
+
+    const designs = [];
+    for (let line_index = 2; line_index < input_lines.length; line_index++) {
+        const line = input_lines[line_index];
+        if (!line.match(new RegExp(`^[${Object.keys(colors).join('')}]+$`))) {
+            throw new Error(`bad design format in input line ${line_index+1}`);
+        }
+        designs.push(line);
+    }
+
+    // This works but only computes whether or not a design can be realized
+    const can_realize_design = (design) => {
+        const extend = (partial='') => {
+            if (partial === design) {
+                return [ partial ];
+            } else {
+                const possible = [];
+                for (const pattern of available_towel_patterns) {
+                    const extension = partial+pattern;
+                    if (design.startsWith(extension)) {
+                        possible.push(extension);
+                    }
+                }
+                return possible.flatMap(extend);
+            }
+        };
+        return (extend().length > 0);
+    };
+
+
+    // THIS WORKS FOR THE SMALL EXAMPLE BUT IS WAAAAY TOO SLOW TO COMPUTE THE ACTUAL PROBLEM.
+    // returns undefined if stopped, or null if design not realizable, or tree as an array of nodes { prefix, pattern, children } where children is an array of nodes or undefined for leaves
+    const find_design_realizations = async (design, trace_fn, trace_mod=1000) => {
+        let stopped = false;
+        let iterations = 0;
+
+        let last_tick_time = Date.now();
+        const tick_interval_ms = 300;
+
+        // extend():
+        // prefix is the current prefix of design being searched
+        // partials is an array of arrays of patterns, and it is assumed that all these arrays of patterns coalesce to prefix
+        // returns undefined if stopped, or null if extend fails, or tree as an array of nodes { prefix, pattern, children } where children is an array of nodes or undefined for leaves
+        const extend = async (prefix='', pattern='', level=0) => {
+            if (stopped) {
+                return undefined;  // indicate: stopped
+            }
+            const new_last_tick_time = Date.now();
+            if (new_last_tick_time-last_tick_time >= tick_interval_ms) {
+                last_tick_time = new_last_tick_time;
+                await next_tick();
+            }
+
+            if (!design.startsWith(prefix)) {
+                return null;  // will not be found, no need to continue; return null
+            } else {
+                // trace
+                if (iterations++ % trace_mod === 0) {
+                    if (!(await trace_fn({ design, prefix, pattern, level, iterations }))) {
+                        // trace_fn returns true iff !stopped
+                        stopped = true;    // for recursive invocations
+                        return undefined;  // indicate: stopped
+                    }
+                }
+
+                if (prefix === design) {
+                    return { prefix, pattern, children: undefined };  // leaf node
+                } else {
+                    const tree = { prefix, pattern, children: [] };
+                    const extended_prefix_and_patterns_that_extend = available_towel_patterns
+                          .map(pattern => [ prefix+pattern, pattern ])
+                          .filter(([ extended_prefix ]) => design.startsWith(extended_prefix));
+                    for (const [ extended_prefix, pattern ] of extended_prefix_and_patterns_that_extend) {
+                        if (stopped) {
+                            return undefined;  // indicate: stopped
+                        }
+                        const subtree = await extend(extended_prefix, pattern, level+1);
+                        if (typeof subtree === 'undefined') {
+                            stopped = true;    // for recursive invocations
+                            return undefined;  // indicate: stopped
+                        } else if (subtree) {
+                            tree.children.push(subtree);
+                        }
+                    }
+                    return (tree.children.length > 0)
+                        ? tree   // return new tree
+                        : null;  // otherwise, indicate: could not extend
+                }
+            }
+        };
+
+        return await extend();
+    };
+
+    // THIS WORKS FOR THE SMALL EXAMPLE BUT IS WAAAAY TOO SLOW TO COMPUTE THE ACTUAL PROBLEM.
+    // returns a number, or undefined if stopped
+    const count_design_realizations_recursive = async (design, trace_fn, trace_mod=1000) => {
+        let stopped = false;
+        let iterations = 0;
+
+        let last_tick_time = Date.now();
+        const tick_interval_ms = 300;
+
+        // extend():
+        // prefix is the current prefix of design being searched
+        // partials is an array of arrays of patterns, and it is assumed that all these arrays of patterns coalesce to prefix
+        // returns undefined if stopped, or null if extend fails, or tree as an array of nodes { prefix, pattern, children } where children is an array of nodes or undefined for leaves
+        const extend = async (prefix='', count=0, level=0) => {
+            if (stopped) {
+                return undefined;  // indicate: stopped
+            }
+            const new_last_tick_time = Date.now();
+            if (new_last_tick_time-last_tick_time >= tick_interval_ms) {
+                last_tick_time = new_last_tick_time;
+                await next_tick();
+            }
+
+            if (!design.startsWith(prefix)) {
+                return count+0;  // will not be found, no need to continue
+            } else {
+                // trace
+                if (iterations++ % trace_mod === 0) {
+                    if (!(await trace_fn({ design, prefix, count, level, iterations }))) {
+                        // trace_fn returns true iff !stopped
+                        stopped = true;    // for recursive invocations
+                        return undefined;  // indicate: stopped
+                    }
+                }
+
+                if (prefix === design) {
+                    return count+1;
+                } else {
+                    let new_count = count;
+                    const extended_prefixes = available_towel_patterns
+                          .map(pattern => prefix+pattern)
+                          .filter(([ extended_prefix ]) => design.startsWith(extended_prefix));
+                    for (const extended_prefix of extended_prefixes) {
+                        if (stopped) {
+                            return undefined;  // indicate: stopped
+                        }
+                        const child_count = await extend(extended_prefix, new_count, level+1);
+                        if (typeof child_count === 'undefined') {
+                            stopped = true;    // for recursive invocations
+                            return undefined;  // indicate: stopped
+                        } else {
+                            new_count = child_count;
+                        }
+                    }
+                    return new_count;
+                }
+            }
+        };
+
+        return await extend();
+    };
+
+    // THIS WORKS, WITH REASONABLE PERFORMANCE!
+    // returns the count of realizable pattern combinations for the design, or undefined if stopped
+    const count_design_realizations = async (design, trace_fn, trace_mod=1000) => {
+        let stopped = false;
+        let iterations = 0;
+
+        // build a map for the design that will hold intermediate values as we walk through the design
+        const design_map = new Array(design.length).fill().map((_, i, the_design_map) => {
+            const ch = design[i];
+            const prefix = design.slice(0, i);
+            const suffix = design.slice(i);
+            const potentials = available_towel_patterns
+                  .filter(pattern => suffix.startsWith(pattern))
+                  .map(pattern => {
+                      const completes = (pattern === suffix);
+                      return {
+                          pattern, completes,
+                          get next (){ return design_map[i+pattern.length]; },  // need to lazy-eval
+                          answer_for_potential: (completes ? 1 : undefined),
+                      };
+                  });
+            return {
+                i, ch, prefix, suffix, potentials,
+                answer_for_position: undefined,  // to be filled in during calculation
+            };
+        });
+
+        let last_tick_time = Date.now();
+        await next_tick();  // just to be sure it happens at least once if this function completes quickly...
+        const check_tick = async (tick_interval_ms=100) => {
+            const new_last_tick_time = Date.now();
+            if (new_last_tick_time-last_tick_time >= tick_interval_ms) {
+                last_tick_time = new_last_tick_time;
+                await next_tick();
+            }
+        };
+
+        // returns the count of realizable pattern combinations for the design, or undefined if stopped
+        const solve = async (position=design_map[0], level=0) => {
+            if (stopped) {
+                return undefined;  // indicate: stopped
+            }
+            await check_tick();
+
+            const { i, ch, prefix, suffix, potentials, answer_for_position } = position;
+
+            // trace
+            if (iterations++ % trace_mod === 0) {
+                if (!(await trace_fn(position))) {
+                    // trace_fn returns true iff !stopped
+                    stopped = true;    // for recursive invocations
+                    return undefined;  // indicate: stopped
+                }
+            }
+
+            if (typeof answer_for_position !== 'undefined') {
+                return answer_for_position;
+            } else {
+                let calculated_answer = 0;
+                for (const potential of potentials) {
+                    if (stopped) {
+                        return undefined;  // indicate: stopped
+                    }
+                    await check_tick();
+                    const { pattern, completes, next, answer_for_potential } = potential;
+                    if (typeof answer_for_potential === 'undefined') {
+                        const new_answer_for_potential = await solve(potential.next, level+1);
+                        if (typeof new_answer_for_potential === 'undefined') {
+                            stopped = true;    // for recursive invocations
+                            return undefined;  // indicate: stopped
+                        }
+                        potential.answer_for_potential = new_answer_for_potential;
+                    }
+                    calculated_answer += potential.answer_for_potential;
+                }
+                position.answer_for_position = calculated_answer;
+                return calculated_answer;
+            }
+        };
+
+        return await solve();
+    };
+
+    vars({
+        available_towel_patterns,
+        designs,
+        can_realize_design,
+        find_design_realizations,
+        count_design_realizations_recursive,
+        count_design_realizations,
+    });
+};
+
+globalThis.bqe = bqe;//!!!
+vars({
+    data_output_options, solution_output_options,
+    colors,
+    init_data,
+});
+keepalive();
+</bq-cell>
+<bq-cell id="id-7d7d759b-8283-47cb-95dc-f55005d17dd7" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+const input_data_examples = [
+// 0:
+`
+r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb
+`,
+];
+const set_test_dataset = (input_data_example_to_use) => {
+    if (typeof input_data_example_to_use === 'number') {
+        if (!(input_data_example_to_use in input_data_examples)) {
+            throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+        }
+        bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+    }
+};
+
+let stopped = false;
+const stop_button = ocx.create_child({
+    tag: 'button',
+    innerText: 'Stop',
+});
+stop_button.onclick = () => { stopped = true; };
+
+await println('Results:')
+
+const solution_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+
+let trace_ocx;
+let trace_checkbox;
+
+const tracing_enabled = true;
+if (tracing_enabled) {
+    const trace_controls = ocx.create_child({
+        children: [
+            {
+                tag: 'label',
+                children: [
+                    'Trace',
+                    {
+                        tag: 'input',
+                        attrs: {
+                            type: 'checkbox',
+                        },
+                    },
+                ],
+            },
+            {
+                tag:       'button',
+                innerText: 'Clear',
+                style: {
+                    'font-size':   'x-small',
+                    'margin-left': '0.5ch',
+                },
+            }
+        ],
+    });
+    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+    trace_checkbox.checked = true;
+
+    const trace_clear_button = trace_controls.querySelector('button');
+    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+    trace_ocx = ocx.create_child_ocx({
+        style: {
+            'font-family':          'monospace',
+            'font-size':            'x-small',
+            'white-space':          'nowrap',
+            'white-space-collapse': 'preserve',
+            'height':               '20ch',
+            'max-width':            'fit-content',
+            padding:                '1em',
+            overflow:               'auto',
+            border:                 '1px solid lightgrey',
+        }
+    });
+}
+
+let trace_iterations = 0;
+const trace_fn = async (position) => {  // returns true iff !stopped
+    if (trace_iterations++ % trace_iterations_mod === 0) {
+        if (tracing_enabled && trace_checkbox.checked) {
+            const { i, ch, prefix, suffix, potentials, answer_for_position } = position;
+            const output_data = sprintf(
+                '%-2d %s %s %s %j %j',
+                i, ch, prefix, suffix, answer_for_position,
+                potentials.map(({ pattern, answer_for_potential }) => {
+                    return [
+                        pattern,
+                        answer_for_potential,
+                    ];
+                }),
+            );
+            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+            const bounding_rect = trace_output_element.getBoundingClientRect();
+            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+            if (bounding_rect.bottom <= parent_bounding_rect.bottom+30 || parent_bounding_rect.y < window.innerHeight) {
+                // only scroll back into view if already at least partially showing
+                trace_output_element.scrollIntoView();
+            }
+        }
+    }
+    return !stopped;
+};
+const trace_mod            = 10;
+const trace_iterations_mod = 10;
+
+
+//----------------------------------------------------------------------
+
+sleep(0.1).then(() => stop_button.scrollIntoView());
+
+set_test_dataset(undefined);
+bqe.init_data();
+
+bqe.results = {};
+for (const design of bqe.designs) {
+    const result = await bqe.count_design_realizations(design, trace_fn, trace_mod);
+    bqe.results[design] = result;
+    const indicator = (typeof result === 'undefined') ? 'XXX:' : ((result > 0) ? 'YES:' : 'NO: ');
+    await solution_ocx.printf(`%s %-80s\n`, indicator, design);
+
+    if (typeof result === 'undefined') {
+        stopped = true;
+        await solution_ocx.println(`STOPPED`);
+    }
+
+    if (stopped) {
+        break;
+    }
+}
+const success_count = Object.values(bqe.results).filter(result => !!result).length;
+
+vars({ stopped, success_count });
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+Of the ${bqe.designs.length} design${bqe.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
+${stopped ? '* However, the search process was stopped before all were tested' : ''}
+`);
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.2).then(() => answer_element.scrollIntoView(false));
+</bq-cell>
+<bq-cell id="id-6530b5cb-fb65-4f4f-bc85-c3449f8e2cbb" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+The staff don't really like some of the towel arrangements you came up with. To avoid an endless cycle of towel rearrangement, maybe you should just give them every possible option.
+
+Here are all of the different ways the above example's designs can be made:
+
+brwrr can be made in two different ways: b, r, wr, r or br, wr, r.
+
+bggr can only be made with b, g, g, and r.
+
+gbbr can be made 4 different ways:
+
+    g, b, b, r
+    g, b, br
+    gb, b, r
+    gb, br
+
+rrbgbr can be made 6 different ways:
+
+    r, r, b, g, b, r
+    r, r, b, g, br
+    r, r, b, gb, r
+    r, rb, g, b, r
+    r, rb, g, br
+    r, rb, gb, r
+
+bwurrg can only be made with bwu, r, r, and g.
+
+brgr can be made in two different ways: b, r, g, r or br, g, r.
+
+ubwu and bbrgwb are still impossible.
+
+Adding up all of the ways the towels in this example could be arranged into the desired designs yields 16 (2 + 1 + 4 + 6 + 1 + 2).
+
+They'll let you into the onsen as soon as you have the list. What do you get if you add up the number of different ways you could make each design?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-1184f9a6-deb3-41df-aefe-52554c1200a8" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+const answer_markup = bqe.stopped
+      ? '**The calculation was stopped before the answer was computed.**'
+      : `The sum of the different ways of making each design is **${Object.values(bqe.results).reduce((total, r) => total+r)}**.`
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+${answer_markup}
+`);</bq-cell>
+</body>
+</html>
