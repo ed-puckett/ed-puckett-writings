@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-f1cb0c53-b379-4aea-b818-1780109426ad" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/20
+`);
+const description = `
+--- Day 20: Race Condition ---
+
+The Historians are quite pixelated again. This time, a massive, black building looms over you - you're right outside the CPU!
+
+While The Historians get to work, a nearby program sees that you're idle and challenges you to a race. Apparently, you've arrived just in time for the frequently-held race condition festival!
+
+The race takes place on a particularly long and twisting code path; programs compete to see who can finish in the fewest picoseconds. The winner even gets their very own mutex!
+
+They hand you a map of the racetrack (your puzzle input). For example:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+The map consists of track (.) - including the start (S) and end (E) positions (both of which also count as track) - and walls (#).
+
+When a program runs through the racetrack, it starts at the start position. Then, it is allowed to move up, down, left, or right; each such move takes 1 picosecond. The goal is to reach the end position as quickly as possible. In this example racetrack, the fastest time is 84 picoseconds.
+
+Because there is only a single path from the start to the end and the programs all go the same speed, the races used to be pretty boring. To make things more interesting, they introduced a new rule to the races: programs are allowed to cheat.
+
+The rules for cheating are very strict. Exactly once during a race, a program may disable collision for up to 2 picoseconds. This allows the program to pass through walls as if they were regular track. At the end of the cheat, the program must be back on normal track again; otherwise, it will receive a segmentation fault and get disqualified.
+
+So, a program could complete the course in 72 picoseconds (saving 12 picoseconds) by cheating for the two moves marked 1 and 2:
+
+###############
+#...#...12....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+Or, a program could complete the course in 64 picoseconds (saving 20 picoseconds) by cheating for the two moves marked 1 and 2:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...12..#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+This cheat saves 38 picoseconds:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.####1##.###
+#...###.2.#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+This cheat saves 64 picoseconds and takes the program directly to the end:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..21...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+Each cheat has a distinct start position (the position where the cheat is activated, just before the first move that is allowed to go through walls) and end position; cheats are uniquely identified by their start position and end position.
+
+In this example, the total number of cheats (grouped by the amount of time they save) are as follows:
+
+    There are 14 cheats that save 2 picoseconds.
+    There are 14 cheats that save 4 picoseconds.
+    There are 2 cheats that save 6 picoseconds.
+    There are 4 cheats that save 8 picoseconds.
+    There are 2 cheats that save 10 picoseconds.
+    There are 3 cheats that save 12 picoseconds.
+    There is one cheat that saves 20 picoseconds.
+    There is one cheat that saves 36 picoseconds.
+    There is one cheat that saves 38 picoseconds.
+    There is one cheat that saves 40 picoseconds.
+    There is one cheat that saves 64 picoseconds.
+
+You aren't sure what the conditions of the racetrack will be like, so to give yourself as many options as possible, you'll need a list of the best cheats. How many cheats would save you at least 100 picoseconds?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+
+// values given in problem
+bqe.input_data = input_data.trim();
+</bq-cell>
+<bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+
+const memory_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+//        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+const solution_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid lightgrey',
+    },
+};
+
+class Direction {
+    // public:
+
+    static {
+        Object.defineProperties(this, {
+            E_ch: { enumerable: true, value: '&gt;' },
+            N_ch: { enumerable: true, value: '^' },
+            W_ch: { enumerable: true, value: '&lt;' },
+            S_ch: { enumerable: true, value: 'v' },
+        });
+    }
+
+    // internal:
+
+    static #directions = {
+        //                     ch         name   dr  dc    left_ch    right_ch   back_ch
+        [this.E_ch]: new this( this.E_ch, 'E',    0,  1,   this.N_ch, this.S_ch, this.W_ch ),
+        [this.N_ch]: new this( this.N_ch, 'N',   -1,  0,   this.W_ch, this.E_ch, this.S_ch ),
+        [this.W_ch]: new this( this.W_ch, 'W',    0, -1,   this.S_ch, this.N_ch, this.E_ch ),
+        [this.S_ch]: new this( this.S_ch, 'S',    1,  0,   this.E_ch, this.W_ch, this.N_ch ),
+    };
+
+    static #permissable_chars    = [ this.E_ch, this.N_ch, this.W_ch, this.S_ch ];
+    static #permissable_chars_re = new RegExp(`^[${this.#permissable_chars.join('')}]*$`);
+
+    // public:
+
+    static {
+        Object.defineProperties(this, {
+            E: { enumerable: true, value: this.#directions[this.E_ch] },
+            N: { enumerable: true, value: this.#directions[this.N_ch] },
+            W: { enumerable: true, value: this.#directions[this.W_ch] },
+            S: { enumerable: true, value: this.#directions[this.S_ch] },
+        });
+    }
+
+    static from(dir_ch) {
+        if (!(dir_ch in this.#directions)) {
+            throw new Error('invalid dir_ch');
+        }
+        return this.#directions[dir_ch];
+    }
+
+    static chars() { return Object.keys(this.#directions); }
+    static dirs()  { return this.chars().map(dir_ch => this.from(dir_ch)); }
+
+    static permissable_chars    (){ return [ ...this.#permissable_chars ]; }
+    static permissable_chars_re (){ return this.#permissable_chars_re; }
+
+    // note: don't call constructor, use static methods to get pre-defined instances
+    // this is here to show the public properties it defines
+    constructor(ch, name, dr, dc, left_ch, right_ch, back_ch) {
+        Object.defineProperties(this, {
+            ch:       { enumerable: true, value: ch },
+            name:     { enumerable: true, value: name },
+            dr:       { enumerable: true, value: dr },
+            dc:       { enumerable: true, value: dc },
+            left_ch:  { enumerable: true, value: left_ch },
+            right_ch: { enumerable: true, value: right_ch },
+            back_ch:  { enumerable: true, value: back_ch },
+        });
+    }
+
+    // Would rather define left, right and back as properties in the constructor
+    // but get error: TypeError: Cannot read private member #directions from
+    // an object whose class did not declare it
+
+    get left  (){ return this.constructor.#directions[this.left_ch]; }
+    get right (){ return this.constructor.#directions[this.right_ch]; }
+    get back  (){ return this.constructor.#directions[this.back_ch]; }
+}
+
+// Generate integer coordinates for l1-norm (taxicab distance) circles
+// spiraling into the center counterclockwise starting from [radius, 0].
+// [0, 0] is not generated unless generate_origin is true..
+function* l1_circle_coordinates(radius, min_radius=1, generate_origin=false) {
+    if (!Number.isInteger(radius) || radius < 0) {
+        throw new Error('radius must be a positive integer');
+    }
+    if (!Number.isInteger(min_radius) || min_radius > radius) {
+        throw new Error('min_radius must be an integer <= radius');
+    }
+    const negate = (n) => (n === 0) ? 0 : -n;  // prevent -0...
+    for (let r = radius; r >= min_radius; r--) {
+        for (const quadrant of [ 1, 2, 3, 4 ]) {
+            for (let t = 0; t < r; t++) {
+                const p = r-t;
+                const q = t;
+                switch (quadrant) {
+                case 1: yield [        p,         q  ]; break;
+                case 2: yield [ negate(q),        p  ]; break;
+                case 3: yield [ negate(p), negate(q) ]; break;
+                case 4: yield [        q,  negate(p) ]; break;
+                }
+            }
+        }
+    }
+    if (generate_origin) {
+        yield [ 0, 0 ];
+    }
+}
+
+// memory cell characters
+const empty_cell_ch = '.';
+const wall_cell_ch  = '#';
+const start_cell_ch = 'S';
+const end_cell_ch   = 'E';
+const path_cell_ch  = '*';
+
+const permissable_memory_chars    = [ empty_cell_ch, wall_cell_ch, start_cell_ch, end_cell_ch ];
+const permissable_memory_chars_re = new RegExp(`^[${permissable_memory_chars.join('')}]*$`);
+
+const init_data = () => {
+    const input_lines = bqe.input_data.split('\n');
+
+    // memory map to be parsed from the input:
+    const memory = [];  // an array of rows, each row an array of { r, c, ch }
+
+    let the_start_cell;
+    let the_end_cell;
+
+    for (let r = 0; r < input_lines.length; r++) {
+        const line = input_lines[r];
+        if (!line.match(permissable_memory_chars_re)) {
+            throw new Error(`illegal memory character at line ${r+1}`);
+        }
+        const row = Array.from(line).map((ch, c) => {
+            const cell = { r, c, ch };
+            if (ch === start_cell_ch) {
+                if (typeof the_start_cell !== 'undefined') {
+                    throw new Error(`second start cell found at line ${r+1}`);
+                }
+                the_start_cell = cell;
+            } else if (ch === end_cell_ch) {
+                if (typeof the_end_cell !== 'undefined') {
+                    throw new Error(`second end cell found at line ${r+1}`);
+                }
+                the_end_cell = cell;
+            }
+            return cell;
+        });
+        memory.push(row);
+    }
+    if (typeof the_start_cell === 'undefined') {
+        throw new Error(`no start cell found`);
+    }
+    if (typeof the_end_cell === 'undefined') {
+        throw new Error(`no end cell found`);
+    }
+    const rows = memory.length;
+    const cols = memory[0].length;  // all rows are expected to be the same length
+    // validate memory row lengths
+    if (!memory.every(row => row.length === cols)) {
+        throw new Error('input_data does not have all memory rows the same length');
+    }
+
+    const get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
+        return memory[r]?.[c];
+    }
+
+    const set_cell = (r, c, ch) => {
+        if (r < 0 || r >= rows || c < 0 || c >= cols) {
+            throw new Error(`(r,c) = (${r},${r}) is out of range`);
+        }
+        memory[r][c].ch = ch;
+    }
+
+    const cell_toward = (cell, dir) => {
+        const { r, c } = cell;
+        const { dr, dc } = dir;
+        return get_cell(r+dr, c+dc);
+    }
+
+    const render_memory = async (ocx, options) => {
+        const {
+            path,
+        } = (options ?? {});
+        const path_cells = path
+              ? new Set(path)
+              : undefined;
+        return ocx.render_text(
+            memory
+                .map(row => {
+                    return row
+                        .map(cell => {
+                            return (cell === the_start_cell || cell === the_end_cell)
+                                ? cell.ch  // use start or end cell ch
+                                : path_cells?.has(cell) ? path_cell_ch : cell.ch;
+                        })
+                        .join('');
+                })
+                .join('\n'),
+            memory_output_options,
+        );
+    };
+
+    const find_best_maze_solution = async (options) => {  // returns { cost, best_paths } or undefined if no solution was found; best_paths is an array of arrays of cells
+        const {
+            start_cell = the_start_cell,
+            end_cell   = the_end_cell,
+            trace_fn,
+            trace_mod = 1000,
+            analyze_cheats,
+        } = (options ?? {});
+
+        const {
+            cheat_steps_max,
+        } = (analyze_cheats ?? {});
+        if (analyze_cheats && !(typeof Number.isInteger(cheat_steps_max) && cheat_steps_max > 0)) {
+            throw new Error('analyze_cheats.cheat_steps_max must be a positive integer');
+        }
+        const cheat_potentials = analyze_cheats ? new Set() : undefined;
+
+        const result = {
+            options: { ...options },  // options passed to function
+            best_solution: undefined  // undefined if none found yet, otherwise { cost }
+        };
+
+        // initialize state for each cell
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = get_cell(r, c);
+                cell.cost_from_start = undefined;  // set during initial search
+                cell.cost_to_end     = undefined;  // computed as a last step after all final cost_from_start values are set
+                cell.cheat_points    = undefined;  // undefined if none, otherwise array of cells that are valid cheat endpoints from this cell
+            }
+        }
+        // set the initial cost_from_start state for the start cell
+        start_cell.cost_from_start = 0;
+
+
+        let last_tick_time = Date.now();
+        await next_tick();  // just to be sure it happens at least once if this function completes quickly...
+        const check_tick = async (tick_interval_ms=200) => {
+            const new_last_tick_time = Date.now();
+            if (new_last_tick_time-last_tick_time >= tick_interval_ms) {
+                last_tick_time = new_last_tick_time;
+                await next_tick();
+            }
+        };
+
+        let work_count = 0;
+        let stopped = false;
+        const check_trace = async (get_info, regardless=false) => {
+            if (work_count++ % trace_mod === 0 || regardless) {
+                if (!(await trace_fn?.(work_count, get_info, regardless))) {
+                    stopped = true;
+                }
+            }
+            if (stopped) {
+                throw new Error('STOPPED');
+            }
+        };
+
+
+        const can_occupy = (test_cell) => {
+            return test_cell && (test_cell === start_cell || test_cell === end_cell || test_cell.ch === empty_cell_ch);
+        };
+
+        // get_cheat_points() returns all valid paths departing from
+        // cheat_departure_cell.  The return value is an array of
+        // arrays of { cell, dir }.  The returned paths do not include
+        // cheat_departure_cell but do include the final cell of the
+        // "cheating" part, which must by occupy-able in the normal
+        // sense.
+        const get_cheat_points = async (cheat_departure_cell) => {
+            const { r: departure_r, c: departure_c } = cheat_departure_cell;
+            return Array.from(l1_circle_coordinates(cheat_steps_max, 2))  // note: no need to look at paths with length < 2
+                .map(([ dr, dc]) => {
+                    const end_cell = get_cell(departure_r+dr, departure_c+dc);
+                    return can_occupy(end_cell) ? end_cell : null;
+                })
+                .filter(cell => !!cell);
+        };
+
+        const check_cheat_departure = async (cheat_departure_cell) => {
+            if (cheat_potentials) {
+                // make sure we're not adding the same thing twice
+                if (!cheat_potentials.has(cheat_departure_cell)) {  // otherwise, we've already done this work earlier
+                    const cheat_points = await get_cheat_points(cheat_departure_cell);
+                    if (cheat_points.length > 0) {
+                        cheat_departure_cell.cheat_points = cheat_points;
+                        cheat_potentials.add(cheat_departure_cell);
+                    }
+                }
+            }
+        };
+
+        // perform_cheat_analysis() must be called after the main work loop
+        // finishes and all cell state values are populated.
+        const perform_cheat_analysis = async () => {
+            if (typeof result.best_solution?.cost !== 'number') {
+                throw new Error('perform_cheat_analysis() called without a valid result.best_solution');
+            }
+            const unique_cheats_map = new Map(
+                Array.from(cheat_potentials)  // each entry is the start of a cheat path
+                    .map(path_start => {
+                        return [
+                            path_start,  // map key
+                            new Map(
+                                path_start.cheat_points  // each entry is the end of a cheat path starting at path_start
+                                    ?.map(path_end => {
+                                        // The cost of a cheat is the "taxicab" distance between the start and the end.
+                                        // This is the least possible value and presumably that is what would be chosen.
+                                        const cheat_cost   = Math.abs(path_end.r - path_start.r) + Math.abs(path_end.c - path_start.c);
+                                        const new_cost     = path_start.cost_from_start + cheat_cost + path_end.cost_to_end;
+                                        const cost_savings = result.best_solution.cost - new_cost;
+                                        return [
+                                            path_end,  // map key
+                                            {
+                                                path_start,
+                                                path_end,
+                                                new_cost,
+                                                cost_savings,
+                                            },
+                                        ];
+                                    })
+                                    ?? []  // in case !path_start.cheat_points
+                            ),
+                        ];
+                    })
+            );
+
+            const data = [];
+            unique_cheats_map.forEach((data_map) => {
+                data_map.forEach(cheat_data => {
+                    data.push(cheat_data);
+                });
+            });
+
+            // sort data by cost_savings descending
+            data.sort((cd1, cd2) => -(cd1.cost_savings-cd2.cost_savings));
+
+            const histogram = {};
+            for (const datum of data) {
+                const { cost_savings } = datum;
+                if (!(cost_savings in histogram)) {
+                    histogram[cost_savings] = 0;
+                }
+                histogram[cost_savings]++;
+            }
+
+            return {
+                unique_cheats_map,
+                data,
+                histogram,
+            };
+        };
+
+        // find_best_paths() must be called after the main work loop
+        // finishes and all cell state values are populated.
+        const find_best_paths = async () => {  // returns array of arrays of cells
+            const best_paths = [];
+
+            const work_queue = [];
+            const add_work_item = (walk_cell, exit_dir=null, path_so_far=[], walked_cells=new Set()) => {
+                work_queue.push({ walk_cell, exit_dir, path_so_far, walked_cells });
+            };
+            const run_work_item = async () => {
+                await check_tick();
+
+                if (work_queue.length <= 0) {
+                    return false;
+                } else {
+                    const { walk_cell, exit_dir, path_so_far, walked_cells } = work_queue.pop();
+
+                    await check_trace(() => {
+                        return sprintf(
+                            'find_best_paths|run_work_item: (%d,%d) "%s" exit:%s',
+                            walk_cell.r, walk_cell.c, walk_cell.ch, (exit_dir?.ch ?? '-'),
+                        );
+                    });
+
+                    if (!walked_cells.has(walk_cell)) {
+                        if (walk_cell === start_cell) {
+                            best_paths.push([ start_cell, ...path_so_far ]);  // found start; done with this path
+                        } else {
+                            let new_walked_cells;  // created below if needed
+                            let best_cost;
+                            const prior_exit_dirs = exit_dir
+                                  ? [ exit_dir, exit_dir.left, exit_dir.right ]  // omit exit_dir; don't return
+                                  : Direction.dirs();
+                            for (const prior_exit_dir of prior_exit_dirs) {
+                                const prior_cell = cell_toward(walk_cell, prior_exit_dir.back);
+                                if (can_occupy(prior_cell)) {
+                                    if (typeof best_cost === 'undefined' || best_cost >= prior_cell.cost_from_start) {
+                                        best_cost = prior_cell.cost_from_start;
+                                        const new_path = [ prior_cell, ...path_so_far ];
+                                        new_walked_cells ??= walked_cells.union(new Set([ walk_cell ]));
+                                        add_work_item(prior_cell, prior_exit_dir, new_path, new_walked_cells);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return (work_queue.length > 0);
+                }
+            };
+
+            add_work_item(end_cell);  // add initial work; proceeding from end back to start
+            while (await run_work_item()) {
+                // keep going
+            }
+
+            return best_paths;
+        };
+
+        // To be run after everything else, when all cell.cost_from_start values are set to their final values.
+        // Sets cell.cost_to_end for all cells for which can_occupy() returns true.
+        set_cost_to_end_values = async () => {
+            const work_queue = [];
+            const add_work_item = (walk_cell, exit_dir=null, walked_cells=new Set()) => {
+                work_queue.push({ walk_cell, exit_dir, walked_cells });
+            };
+            const run_work_item = async () => {
+                await check_tick();
+
+                if (work_queue.length <= 0) {
+                    return false;
+                } else {
+                    const { walk_cell, exit_dir, walked_cells } = work_queue.pop();
+
+                    await check_trace(() => {
+                        return sprintf(
+                            'set_cost_to_end_values|run_work_item: (%d,%d) "%s" exit:%s',
+                            walk_cell.r, walk_cell.c, walk_cell.ch, (exit_dir?.ch ?? '-'),
+                        );
+                    });
+
+                    if (!walked_cells.has(walk_cell)) {
+                        if (walk_cell !== start_cell) {  // don't go any further back than start_cell
+                            const prior_entry_dirs = exit_dir
+                                  ? [ exit_dir, exit_dir.left, exit_dir.right ]
+                                  : Direction.dirs();
+                            for (const prior_entry_dir of prior_entry_dirs) {
+                                const prior_cell = cell_toward(walk_cell, prior_entry_dir.back);
+                                if (can_occupy(prior_cell)) {
+                                    const cost_to_end = walk_cell.cost_to_end + 1;
+                                    if (typeof prior_cell.cost_to_end === 'undefined' || prior_cell.cost_to_end > cost_to_end) {
+                                        prior_cell.cost_to_end = cost_to_end;
+                                    }
+                                    add_work_item(prior_cell, prior_entry_dir, walked_cells.union(new Set([ walk_cell ])));
+                                }
+                            }
+                        }
+                    }
+                    return (work_queue.length > 0);
+                }
+            };
+
+            end_cell.cost_to_end = 0;
+            add_work_item(end_cell);
+            while (await run_work_item()) {
+                // keep going
+            }
+        };
+
+        const recalculate_costs_in_paths_from = async (change_cell, change_entry_dir) => {
+            const work_queue = [];
+            const add_work_item = (walk_cell, walk_entry_dir, walked_cells=new Set()) => {
+                work_queue.push({ walk_cell, walk_entry_dir, walked_cells });
+            };
+            const run_work_item = async () => {
+                await check_tick();
+
+                if (work_queue.length <= 0) {
+                    return false;
+                } else {
+                    const { walk_cell, walk_entry_dir, walked_cells } = work_queue.pop();
+
+                    await check_trace(() => {
+                        return sprintf(
+                            'recalculate_costs_in_paths_from|run_work_item: (%d,%d) "%s" entry:%s',
+                            walk_cell.r, walk_cell.c, walk_cell.ch, walk_entry_dir.ch,
+                        );
+                    });
+
+                    if (!walked_cells.has(walk_cell) && walk_cell !== end_cell) {  // prevent loops and stop at end_cell
+                        let next_walked_cells;  // created below if needed
+                        for ( const next_entry_dir of [
+                            walk_entry_dir,
+                            walk_entry_dir.left,
+                            walk_entry_dir.right,
+                        ] ) {
+                            const next_cell = cell_toward(walk_cell, next_entry_dir);
+                            if (can_occupy(next_cell)) {
+                                const next_cost = walk_cell.cost_from_start + 1;
+                                // will not be populating any cells that are not already populated
+                                if (typeof next_cell.cost_from_start !== 'undefined' && next_cell.cost_from_start >= next_cost) {
+                                    next_cell.cost_from_start = next_cost;
+                                    next_walked_cells ??= walked_cells.union(new Set([ walk_cell ]));
+                                    add_work_item(next_cell, next_entry_dir, next_walked_cells);  // continue
+                                }
+                            }
+                        }
+                    }
+                    return (work_queue.length > 0);
+                }
+            };
+
+            add_work_item(change_cell, change_entry_dir)
+            while (await run_work_item()) {
+                // keep going
+            }
+        };
+
+        class WorkQueue {
+            #queue = [];
+
+            get length (){ return this.#queue.length; }
+
+            add( cell,
+                 entry_dir     = null,
+                 visited_cells = new Set(),
+                 cost          = 0
+            ) {
+                this.#queue.push({ cell, entry_dir, visited_cells, cost });
+            }
+
+            // returns first entry with lowest cost (which will have been removed); returns undefined if nothing left
+            // selector: (best_so_far, another_work_item) => choose_another?
+            pop(selector) {
+                let best_work_item;
+                for (const work_item of this.#queue) {
+                    if (!best_work_item || selector(best_work_item, work_item)) {
+                        best_work_item = work_item;
+                    }
+                }
+                if (best_work_item) {
+                    // remove best_work_item
+                    this.#queue = this.#queue.filter(work_item => (work_item !== best_work_item));
+                }
+                return best_work_item;
+            }
+        }
+        const work_queue = new WorkQueue();
+
+        const work_item_selector = (best_so_far, another) => (best_so_far.cost > another.cost);
+
+        // --- the main work loop ---
+        work_queue.add(start_cell);  // add initial work
+        await check_cheat_departure(start_cell);  // this is not automatically done for the initial cell
+
+        for (let attempt_count = 0, work_item; work_item = work_queue.pop(work_item_selector); attempt_count++) {
+            await check_tick();
+
+            // work_item represents a path being constructed
+            const { cell, entry_dir, visited_cells, cost } = work_item;
+
+            await check_trace(() => {
+                return sprintf(
+                    'main loop: (%d,%d) "%s" entry:%s, qlen:%d',
+                    cell.r, cell.c, cell.ch, (entry_dir?.ch ?? '-'), work_queue.length,
+                );
+            });
+
+            if (cell === end_cell) {
+                // found a new solution
+                if (!result.best_solution || cost < result.best_solution.cost) {
+                    result.best_solution = { cost };
+                }
+            } else {
+                let new_visited_cells;  // created below if needed
+
+                const try_to_extend_path_in_dir = async (new_entry_dir) => {
+                    const new_cell = cell_toward(cell, new_entry_dir);
+                    if (can_occupy(new_cell) && !visited_cells.has(new_cell)) {
+                        await check_cheat_departure(new_cell);
+                        const new_cost = cost + 1;
+                        if (typeof new_cell.cost_from_start === 'undefined' || new_cell.cost_from_start >= new_cost) {
+                            new_cell.cost_from_start = new_cost;
+                            await recalculate_costs_in_paths_from(new_cell, new_entry_dir);
+                            new_visited_cells ??= visited_cells.union(new Set([ cell ]));;
+                            work_queue.add(new_cell, new_entry_dir, new_visited_cells, new_cost);
+                        }
+                    }
+                };
+
+                const new_entry_dirs = entry_dir
+                      ? [ entry_dir, entry_dir.left, entry_dir.right ]  // skip entry_dir.back; no need to go back
+                      : Direction.dirs();
+                for (const new_entry_dir of new_entry_dirs) {
+                    await try_to_extend_path_in_dir(new_entry_dir);
+                }
+            }
+        }
+
+        await set_cost_to_end_values();
+
+        if (result.best_solution) {
+            result.best_paths       = await find_best_paths();
+            result.cheat_potentials = cheat_potentials;
+            result.cheat_analysis   = await perform_cheat_analysis();
+        }
+        return result;
+    };
+
+    vars({
+        memory, rows, cols,
+        the_start_cell, the_end_cell,
+        get_cell, set_cell,
+        cell_toward,
+        render_memory,
+        find_best_maze_solution,
+    });
+};
+
+globalThis.bqe = bqe;//!!!
+vars({
+    memory_output_options, solution_output_options,
+    Direction,
+    l1_circle_coordinates,
+    empty_cell_ch, wall_cell_ch, start_cell_ch, end_cell_ch, path_cell_ch,
+    permissable_memory_chars, permissable_memory_chars_re,
+    init_data,
+});
+keepalive();
+</bq-cell>
+<bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+
+let stopped = false;
+const stop_button = ocx.create_child({
+    tag: 'button',
+    innerText: 'Stop',
+});
+stop_button.onclick = () => { stopped = true; };
+
+let trace_ocx;
+let trace_checkbox;
+
+const tracing_enabled = true;
+if (tracing_enabled) {
+    const trace_controls = ocx.create_child({
+        children: [
+            {
+                tag: 'label',
+                children: [
+                    'Trace',
+                    {
+                        tag: 'input',
+                        attrs: {
+                            type: 'checkbox',
+                        },
+                    },
+                ],
+            },
+            {
+                tag:       'button',
+                innerText: 'Clear',
+                style: {
+                    'font-size':   'x-small',
+                    'margin-left': '0.5ch',
+                },
+            }
+        ],
+    });
+    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+    trace_checkbox.checked = true;
+
+    const trace_clear_button = trace_controls.querySelector('button');
+    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+    trace_ocx = ocx.create_child_ocx({
+        style: {
+            'font-family':          'monospace',
+            'font-size':            'x-small',
+            'white-space':          'nowrap',
+            'white-space-collapse': 'preserve',
+            'height':               '20ch',
+            'max-width':            'fit-content',
+            padding:                '1em',
+            overflow:               'auto',
+            border:                 '1px solid lightgrey',
+        }
+    });
+}
+
+let trace_iterations = 0;
+const trace_fn = async (work_count, get_info, regardless) => {  // returns true iff !stopped
+    if (trace_iterations++ % trace_iterations_mod === 0 || regardless) {
+        if (tracing_enabled && trace_checkbox.checked) {
+            const info = get_info();
+            const output_data = sprintf('%-8d %s', work_count, info);
+            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+            const bounding_rect = trace_output_element.getBoundingClientRect();
+            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+            if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
+                // only scroll back into view if already at least partially showing
+                trace_output_element.scrollIntoView(false);
+            }
+        }
+    }
+    return !stopped;
+};
+const trace_mod            = 10;
+const trace_iterations_mod = 10;
+
+
+//----------------------------------------------------------------------
+
+const input_data_examples = [
+// 0:
+`
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+`,
+// 1:
+`
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######...#.###
+#######...#...#
+#####.....#...#
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+`,
+];
+bqe.using_example_data = false;
+const set_test_dataset = (input_data_example_to_use) => {
+    if (typeof input_data_example_to_use === 'number') {
+        if (!(input_data_example_to_use in input_data_examples)) {
+            throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+        }
+        bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+        bqe.using_example_data = true;
+    }
+};
+
+set_test_dataset(undefined);
+
+bqe.init_data();
+
+await ocx.println(`The initial map (${bqe.rows}x${bqe.cols}):`)
+await bqe.render_memory(ocx);
+
+bqe.result = await bqe.find_best_maze_solution({
+    analyze_cheats: {
+        cheat_steps_max: 2,
+    },
+    trace_fn,
+    trace_mod,
+});
+
+let answer_markdown = bqe.result.best_solution
+    ? `* The best score for getting through the maze is ${bqe.result.best_solution.cost}.`
+    : `* NO SOLUTIONS FOUND!`;
+
+if (bqe.result.best_solution && !bqe.using_example_data) {
+    const target_cheat_saving = 100;  // from problem
+    const cheats_achieving = bqe.result.cheat_analysis.data
+          .reduce((count, datum) => ((datum.cost_savings >= target_cheat_saving) ? count+1 : count), 0);
+    answer_markdown += `\n* **${cheats_achieving}** cheat${cheats_achieving === 1 ? '' : 's'} save${cheats_achieving === 1 ? 's' : ''} at least ${target_cheat_saving} picoseconds.`;
+}
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One
+${answer_markdown}
+`);
+
+const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
+      .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
+      .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
+await ocx.println();
+const analysis_breakdown_markdown_lines = [];
+analysis_breakdown_markdown_lines.push('Cheat cost savings breakdown (only positive results shown):');
+for (const [ cost_savings, count ] of analysis_breakdown) {
+    if (cost_savings > 0) {
+        analysis_breakdown_markdown_lines.push(`* ${count} cheat${count === 1 ? '' : 's'} save${count === 1 ? 's' : ''} ${cost_savings} picosecond${cost_savings === 1 ? '' : 's'}.`);
+    }
+}
+await ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
+
+if (bqe.result.best_solution) {
+    await ocx.println();
+    await ocx.println(`The map with the first best path (${bqe.rows}x${bqe.cols}):`);
+    await bqe.render_memory(ocx, {
+        path: bqe.result.best_paths[0],
+    });
+}
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.2).then(() => answer_element.scrollIntoView());</bq-cell>
+<bq-cell id="id-4cb5cbae-a6c1-4a69-a61b-dfdffd9f1fef" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    }
+});
+
+const description = `
+--- Part Two ---
+
+The programs seem perplexed by your list of cheats. Apparently, the two-picosecond cheating rule was deprecated several milliseconds ago! The latest version of the cheating rule permits a single cheat that instead lasts at most 20 picoseconds.
+
+Now, in addition to all the cheats that were possible in just two picoseconds, many more cheats are possible. This six-picosecond cheat saves 76 picoseconds:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#1#####.#.#.###
+#2#####.#.#...#
+#3#####.#.###.#
+#456.E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+Because this cheat has the same start and end positions as the one above, it's the same cheat, even though the path taken during the cheat is different:
+
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S12..#.#.#...#
+###3###.#.#.###
+###4###.#.#...#
+###5###.#.###.#
+###6.E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+
+Cheats don't need to use all 20 picoseconds; cheats can last any amount of time up to and including 20 picoseconds (but can still only end when the program is on normal track). Any cheat time not used is lost; it can't be saved for another cheat later.
+
+You'll still need a list of the best cheats, but now there are even more to choose between. Here are the quantities of cheats in this example that save 50 picoseconds or more:
+
+    There are 32 cheats that save 50 picoseconds.
+    There are 31 cheats that save 52 picoseconds.
+    There are 29 cheats that save 54 picoseconds.
+    There are 39 cheats that save 56 picoseconds.
+    There are 25 cheats that save 58 picoseconds.
+    There are 23 cheats that save 60 picoseconds.
+    There are 20 cheats that save 62 picoseconds.
+    There are 19 cheats that save 64 picoseconds.
+    There are 12 cheats that save 66 picoseconds.
+    There are 14 cheats that save 68 picoseconds.
+    There are 12 cheats that save 70 picoseconds.
+    There are 22 cheats that save 72 picoseconds.
+    There are 4 cheats that save 74 picoseconds.
+    There are 3 cheats that save 76 picoseconds.
+
+Find the best cheats using the updated cheating rules. How many cheats would save you at least 100 picoseconds?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+
+let trace_iterations = 0;
+const trace_fn = async (work_count, get_info, regardless) => {  // returns true iff !stopped
+    if (trace_iterations++ % trace_iterations_mod === 0 || regardless) {
+        if (tracing_enabled && trace_checkbox.checked) {
+            const info = get_info();
+            const output_data = sprintf('%-8d %s', work_count, info);
+            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+            const bounding_rect = trace_output_element.getBoundingClientRect();
+            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+            if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
+                // only scroll back into view if already at least partially showing
+                trace_output_element.scrollIntoView(false);
+            }
+        }
+    }
+    return !stopped;
+};
+const trace_mod            = 10;
+const trace_iterations_mod = 10;
+
+
+// run the problem again with cheat_steps_max = 20:
+
+bqe.init_data();
+
+await ocx.println(`The initial map (${bqe.rows}x${bqe.cols}):`)
+await bqe.render_memory(ocx);
+
+let stopped = false;
+const stop_button = ocx.create_child({
+    tag: 'button',
+    innerText: 'Stop',
+});
+stop_button.onclick = () => { stopped = true; };
+
+let trace_ocx;
+let trace_checkbox;
+
+const tracing_enabled = true;
+if (tracing_enabled) {
+    const trace_controls = ocx.create_child({
+        children: [
+            {
+                tag: 'label',
+                children: [
+                    'Trace',
+                    {
+                        tag: 'input',
+                        attrs: {
+                            type: 'checkbox',
+                        },
+                    },
+                ],
+            },
+            {
+                tag:       'button',
+                innerText: 'Clear',
+                style: {
+                    'font-size':   'x-small',
+                    'margin-left': '0.5ch',
+                },
+            }
+        ],
+    });
+    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+    trace_checkbox.checked = true;
+
+    const trace_clear_button = trace_controls.querySelector('button');
+    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+    trace_ocx = ocx.create_child_ocx({
+        style: {
+            'font-family':          'monospace',
+            'font-size':            'x-small',
+            'white-space':          'nowrap',
+            'white-space-collapse': 'preserve',
+            'height':               '20ch',
+            'max-width':            'fit-content',
+            padding:                '1em',
+            overflow:               'auto',
+            border:                 '1px solid lightgrey',
+        }
+    });
+}
+
+bqe.result = await bqe.find_best_maze_solution({
+    analyze_cheats: {
+        cheat_steps_max: 20,
+    },
+    trace_fn,
+    trace_mod,
+});
+
+let answer_markdown = bqe.result.best_solution
+    ? `* The best score for getting through the maze is ${bqe.result.best_solution.cost}.`
+    : `* NO SOLUTIONS FOUND!`;
+
+if (bqe.result.best_solution && !bqe.using_example_data) {
+    const target_cheat_saving = 100;  // from problem
+    const cheats_achieving = bqe.result.cheat_analysis.data
+          .reduce((count, datum) => ((datum.cost_savings >= target_cheat_saving) ? count+1 : count), 0);
+    answer_markdown += `\n* **${cheats_achieving}** cheat${cheats_achieving === 1 ? '' : 's'} save${cheats_achieving === 1 ? 's' : ''} at least ${target_cheat_saving} picoseconds.`;
+}
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+${answer_markdown}
+`);
+
+const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
+      .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
+      .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
+await ocx.println();
+const analysis_breakdown_markdown_lines = [];
+analysis_breakdown_markdown_lines.push('Cheat cost savings breakdown (only positive results shown):');
+for (const [ cost_savings, count ] of analysis_breakdown) {
+    if (cost_savings > 0) {
+        analysis_breakdown_markdown_lines.push(`* ${count} cheat${count === 1 ? '' : 's'} save${count === 1 ? 's' : ''} ${cost_savings} picosecond${cost_savings === 1 ? '' : 's'}.`);
+    }
+}
+await ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
+
+if (bqe.result.best_solution) {
+    await ocx.println();
+    await ocx.println(`The map with the first best path (${bqe.rows}x${bqe.cols}):`);
+    await bqe.render_memory(ocx, {
+        path: bqe.result.best_paths[0],
+    });
+}
+
+// scroll answer_element into view, but after a delay to let other rendering finish
+sleep(0.2).then(() => answer_element.scrollIntoView());</bq-cell>
+</body>
+</html>
