@@ -150,7 +150,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
+<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -178,11 +178,11 @@ const memory_output_options = {
 const solution_output_options = {
     style: {
         'font-family':          'monospace',
-        'white-space':          'nowrap',
-        'white-space-collapse': 'preserve',
+//        'white-space':          'nowrap',
+//        'white-space-collapse': 'preserve',
         'max-height':           '20ch',
         'max-width':            'fit-content',
-        padding:                '1em',
+        padding:                '0 1em 0 0',
         overflow:               'auto',
         border:                 '1px solid lightgrey',
     },
@@ -261,11 +261,10 @@ class Direction {
 }
 
 // Generate integer coordinates for l1-norm (taxicab distance) circles
-// spiraling into the center counterclockwise starting from [radius, 0].
-// [0, 0] is not generated unless generate_origin is true..
-function* l1_circle_coordinates(radius, min_radius=1, generate_origin=false) {
+// spiraling into the center counterclockwise starting from [ radius, 0 ].
+function* l1_circle_coordinates(radius, min_radius=0) {
     if (!Number.isInteger(radius) || radius < 0) {
-        throw new Error('radius must be a positive integer');
+        throw new Error('radius must be a non-negative integer');
     }
     if (!Number.isInteger(min_radius) || min_radius > radius) {
         throw new Error('min_radius must be an integer <= radius');
@@ -285,7 +284,7 @@ function* l1_circle_coordinates(radius, min_radius=1, generate_origin=false) {
             }
         }
     }
-    if (generate_origin) {
+    if (min_radius <= 0) {
         yield [ 0, 0 ];
     }
 }
@@ -863,6 +862,7 @@ if (tracing_enabled) {
             border:                 '1px solid lightgrey',
         }
     });
+    sleep(0.1).then(() => stop_button.scrollIntoView());
 }
 
 let trace_iterations = 0;
@@ -876,7 +876,8 @@ const trace_fn = async (work_count, get_info, regardless) => {  // returns true 
             const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
             if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
                 // only scroll back into view if already at least partially showing
-                trace_output_element.scrollIntoView(false);
+                // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
+                trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
             }
         }
     }
@@ -970,18 +971,20 @@ const answer_element = await ocx.markdown(`
 ${answer_markdown}
 `);
 
+// analysis breakdown
 const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
       .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
       .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
-await ocx.println();
 const analysis_breakdown_markdown_lines = [];
-analysis_breakdown_markdown_lines.push('Cheat cost savings breakdown (only positive results shown):');
 for (const [ cost_savings, count ] of analysis_breakdown) {
     if (cost_savings > 0) {
         analysis_breakdown_markdown_lines.push(`* ${count} cheat${count === 1 ? '' : 's'} save${count === 1 ? 's' : ''} ${cost_savings} picosecond${cost_savings === 1 ? '' : 's'}.`);
     }
 }
-await ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
+await ocx.println();
+await ocx.println('Cheat cost savings breakdown (only positive results shown):');
+const ab_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
 
 if (bqe.result.best_solution) {
     await ocx.println();
@@ -1085,7 +1088,8 @@ const trace_fn = async (work_count, get_info, regardless) => {  // returns true 
             const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
             if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
                 // only scroll back into view if already at least partially showing
-                trace_output_element.scrollIntoView(false);
+                // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
+                trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
             }
         }
     }
@@ -1098,9 +1102,6 @@ const trace_iterations_mod = 10;
 // run the problem again with cheat_steps_max = 20:
 
 bqe.init_data();
-
-await ocx.println(`The initial map (${bqe.rows}x${bqe.cols}):`)
-await bqe.render_memory(ocx);
 
 let stopped = false;
 const stop_button = ocx.create_child({
@@ -1183,28 +1184,19 @@ const answer_element = await ocx.markdown(`
 ${answer_markdown}
 `);
 
+// analysis breakdown
 const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
       .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
       .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
-await ocx.println();
 const analysis_breakdown_markdown_lines = [];
-analysis_breakdown_markdown_lines.push('Cheat cost savings breakdown (only positive results shown):');
 for (const [ cost_savings, count ] of analysis_breakdown) {
     if (cost_savings > 0) {
         analysis_breakdown_markdown_lines.push(`* ${count} cheat${count === 1 ? '' : 's'} save${count === 1 ? 's' : ''} ${cost_savings} picosecond${cost_savings === 1 ? '' : 's'}.`);
     }
 }
-await ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
-
-if (bqe.result.best_solution) {
-    await ocx.println();
-    await ocx.println(`The map with the first best path (${bqe.rows}x${bqe.cols}):`);
-    await bqe.render_memory(ocx, {
-        path: bqe.result.best_paths[0],
-    });
-}
-
-// scroll answer_element into view, but after a delay to let other rendering finish
-sleep(0.2).then(() => answer_element.scrollIntoView());</bq-cell>
+await ocx.println();
+await ocx.println('Cheat cost savings breakdown (only positive results shown):');
+const ab_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));</bq-cell>
 </body>
 </html>
