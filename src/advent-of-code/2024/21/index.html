@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-a76e5a79-aa09-463e-a1d7-308a230d4ff7" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/21
+`);
+const description = `
+--- Day 21: Keypad Conundrum ---
+
+As you teleport onto Santa's Reindeer-class starship, The Historians begin to panic: someone from their search party is missing. A quick life-form scan by the ship's computer reveals that when the missing Historian teleported, he arrived in another part of the ship.
+
+The door to that area is locked, but the computer can't open it; it can only be opened by physically typing the door codes (your puzzle input) on the numeric keypad on the door.
+
+The numeric keypad has four rows of buttons: 789, 456, 123, and finally an empty gap followed by 0A. Visually, they are arranged like this:
+
++---+---+---+
+| 7 | 8 | 9 |
++---+---+---+
+| 4 | 5 | 6 |
++---+---+---+
+| 1 | 2 | 3 |
++---+---+---+
+    | 0 | A |
+    +---+---+
+
+Unfortunately, the area outside the door is currently depressurized and nobody can go near the door. A robot needs to be sent instead.
+
+The robot has no problem navigating the ship and finding the numeric keypad, but it's not designed for button pushing: it can't be told to push a specific button directly. Instead, it has a robotic arm that can be controlled remotely via a directional keypad.
+
+The directional keypad has two rows of buttons: a gap / ^ (up) / A (activate) on the first row and &lt; (left) / v (down) / > (right) on the second row. Visually, they are arranged like this:
+
+    +---+---+
+    | ^ | A |
++---+---+---+
+| &lt; | v | > |
++---+---+---+
+
+When the robot arrives at the numeric keypad, its robotic arm is pointed at the A button in the bottom right corner. After that, this directional keypad remote control must be used to maneuver the robotic arm: the up / down / left / right buttons cause it to move its arm one button in that direction, and the A button causes the robot to briefly move forward, pressing the button being aimed at by the robotic arm.
+
+For example, to make the robot type 029A on the numeric keypad, one sequence of inputs on the directional keypad you could use is:
+
+    &lt; to move the arm from A (its initial position) to 0.
+    A to push the 0 button.
+    ^A to move the arm to the 2 button and push it.
+    >^^A to move the arm to the 9 button and push it.
+    vvvA to move the arm to the A button and push it.
+
+In total, there are three shortest possible sequences of button presses on this directional keypad that would cause the robot to type 029A: &lt;A^A>^^AvvvA, &lt;A^A^>^AvvvA, and &lt;A^A^^>AvvvA.
+
+Unfortunately, the area containing this directional keypad remote control is currently experiencing high levels of radiation and nobody can go near it. A robot needs to be sent instead.
+
+When the robot arrives at the directional keypad, its robot arm is pointed at the A button in the upper right corner. After that, a second, different directional keypad remote control is used to control this robot (in the same way as the first robot, except that this one is typing on a directional keypad instead of a numeric keypad).
+
+There are multiple shortest possible sequences of directional keypad button presses that would cause this robot to tell the first robot to type 029A on the door. One such sequence is v&lt;&lt;A>>^A&lt;A>AvA&lt;^AA>A&lt;vAAA>^A.
+
+Unfortunately, the area containing this second directional keypad remote control is currently -40 degrees! Another robot will need to be sent to type on that directional keypad, too.
+
+There are many shortest possible sequences of directional keypad button presses that would cause this robot to tell the second robot to tell the first robot to eventually type 029A on the door. One such sequence is &lt;vA&lt;AA>>^AvAA&lt;^A>A&lt;v&lt;A>>^AvA^A&lt;vA>^A&lt;v&lt;A>^A>AAvA^A&lt;v&lt;A>A>^AAAvA&lt;^A>A.
+
+Unfortunately, the area containing this third directional keypad remote control is currently full of Historians, so no robots can find a clear path there. Instead, you will have to type this sequence yourself.
+
+Were you to choose this sequence of button presses, here are all of the buttons that would be pressed on your directional keypad, the two robots' directional keypads, and the numeric keypad:
+
+&lt;vA&lt;AA>>^AvAA&lt;^A>A&lt;v&lt;A>>^AvA^A&lt;vA>^A&lt;v&lt;A>^A>AAvA^A&lt;v&lt;A>A>^AAAvA&lt;^A>A
+v&lt;&lt;A>>^A&lt;A>AvA&lt;^AA>A&lt;vAAA>^A
+&lt;A^A>^^AvvvA
+029A
+
+In summary, there are the following keypads:
+
+    One directional keypad that you are using.
+    Two directional keypads that robots are using.
+    One numeric keypad (on a door) that a robot is using.
+
+It is important to remember that these robots are not designed for button pushing. In particular, if a robot arm is ever aimed at a gap where no button is present on the keypad, even for an instant, the robot will panic unrecoverably. So, don't do that. All robots will initially aim at the keypad's A key, wherever it is.
+
+To unlock the door, five codes will need to be typed on its numeric keypad. For example:
+
+029A
+980A
+179A
+456A
+379A
+
+For each of these, here is a shortest sequence of button presses you could type to cause the desired code to be typed on the numeric keypad:
+
+029A: &lt;vA&lt;AA>>^AvAA&lt;^A>A&lt;v&lt;A>>^AvA^A&lt;vA>^A&lt;v&lt;A>^A>AAvA^A&lt;v&lt;A>A>^AAAvA&lt;^A>A
+980A: &lt;v&lt;A>>^AAAvA^A&lt;vA&lt;AA>>^AvAA&lt;^A>A&lt;v&lt;A>A>^AAAvA&lt;^A>A&lt;vA>^A&lt;A>A
+179A: &lt;v&lt;A>>^A&lt;vA&lt;A>>^AAvAA&lt;^A>A&lt;v&lt;A>>^AAvA^A&lt;vA>^AA&lt;A>A&lt;v&lt;A>A>^AAAvA&lt;^A>A
+456A: &lt;v&lt;A>>^AA&lt;vA&lt;A>>^AAvAA&lt;^A>A&lt;vA>^A&lt;A>A&lt;vA>^A&lt;A>A&lt;v&lt;A>A>^AAvA&lt;^A>A
+379A: &lt;v&lt;A>>^AvA^A&lt;vA&lt;AA>>^AAvA&lt;^A>AAvA^A&lt;vA>^AA&lt;A>A&lt;v&lt;A>A>^AAAvA&lt;^A>A
+
+The Historians are getting nervous; the ship computer doesn't remember whether the missing Historian is trapped in the area containing a giant electromagnet or molten lava. You'll need to make sure that for each of the five codes, you find the shortest sequence of button presses necessary.
+
+The complexity of a single code (like 029A) is equal to the result of multiplying these two values:
+
+    The length of the shortest sequence of button presses you need to type on your directional keypad in order to cause the code to be typed on the numeric keypad; for 029A, this would be 68.
+    The numeric part of the code (ignoring leading zeroes); for 029A, this would be 29.
+
+In the above example, complexity of the five codes can be found by calculating 68 * 29, 60 * 980, 68 * 179, 64 * 456, and 64 * 379. Adding these together produces 126384.
+
+Find the fewest number of button presses you'll need to perform in order to cause the robot in front of the door to type each code. What is the sum of the complexities of the five codes on your list?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-d7f5dc52-0ca6-4b0d-bda0-efbf7cf03980" data-type="javascript" class="show-in-presentation">// utility class definitions
+
+class Direction {
+    // public:
+
+    static {
+        Object.defineProperties(this, {  // make these properties immutable
+            E_ch: { enumerable: true, value: '&gt;' },
+            N_ch: { enumerable: true, value: '^' },
+            W_ch: { enumerable: true, value: '&lt;' },
+            S_ch: { enumerable: true, value: 'v' },
+        });
+    }
+
+    // internal:
+
+    static #directions = {
+        //                     ch         name   dr  dc    left_ch    right_ch   back_ch
+        [this.E_ch]: new this( this.E_ch, 'E',    0,  1,   this.N_ch, this.S_ch, this.W_ch ),
+        [this.N_ch]: new this( this.N_ch, 'N',   -1,  0,   this.W_ch, this.E_ch, this.S_ch ),
+        [this.W_ch]: new this( this.W_ch, 'W',    0, -1,   this.S_ch, this.N_ch, this.E_ch ),
+        [this.S_ch]: new this( this.S_ch, 'S',    1,  0,   this.E_ch, this.W_ch, this.N_ch ),
+    };
+
+    static #permissable_chars    = [ this.E_ch, this.N_ch, this.W_ch, this.S_ch ];
+    static #permissable_chars_re = new RegExp(`^[${this.#permissable_chars.join('')}]*$`);
+
+    // public:
+
+    static {
+        Object.defineProperties(this, {  // make these properties immutable
+            E: { enumerable: true, value: this.#directions[this.E_ch] },
+            N: { enumerable: true, value: this.#directions[this.N_ch] },
+            W: { enumerable: true, value: this.#directions[this.W_ch] },
+            S: { enumerable: true, value: this.#directions[this.S_ch] },
+        });
+    }
+
+    static from(dir_ch) {
+        if (!(dir_ch in this.#directions)) {
+            throw new Error('invalid dir_ch');
+        }
+        return this.#directions[dir_ch];
+    }
+
+    static from_offsets(offset_r, offset_c) {
+        // linear search, but over a small number of elements...
+        return this.dirs().find(dir => (dir.dr === Math.sign(offset_r) && dir.dc === Math.sign(offset_c)));
+    }
+
+    static chars() { return Object.keys(this.#directions); }
+    static dirs()  { return this.chars().map(dir_ch => this.from(dir_ch)); }
+
+    static permissable_chars    (){ return [ ...this.#permissable_chars ]; }
+    static permissable_chars_re (){ return this.#permissable_chars_re; }
+
+    // note: don't call constructor, use static methods to get pre-defined instances
+    // this is here to show the public properties it defines
+    constructor(ch, name, dr, dc, left_ch, right_ch, back_ch) {
+        Object.defineProperties(this, {  // make these properties immutable
+            ch:       { enumerable: true, value: ch },
+            name:     { enumerable: true, value: name },
+            dr:       { enumerable: true, value: dr },
+            dc:       { enumerable: true, value: dc },
+            left_ch:  { enumerable: true, value: left_ch },
+            right_ch: { enumerable: true, value: right_ch },
+            back_ch:  { enumerable: true, value: back_ch },
+        });
+    }
+
+    // Would rather define left, right and back as properties in the constructor
+    // but get error: TypeError: Cannot read private member #directions from
+    // an object whose class did not declare it
+
+    get left  (){ return this.constructor.#directions[this.left_ch]; }
+    get right (){ return this.constructor.#directions[this.right_ch]; }
+    get back  (){ return this.constructor.#directions[this.back_ch]; }
+}
+
+class SerialDataSource {
+    #subject = new rxjs.Subject();
+
+    subscribe(observerOrNext) {
+        return this.#subject.subscribe(observerOrNext);
+    }
+
+    dispatch(data) {
+        this.#subject.next(data);
+    }
+}
+
+
+class KeypadButton {
+    constructor(label) {
+        if (typeof label !== 'string' || label.length !== 1) {
+            throw new Error('label must be a single-character string');
+        }
+        Object.defineProperties(this, {  // make these properties immutable
+            label: { enumerable: true, value: label },
+        });
+        ;
+    };
+
+    subscribe(observer) {  // observer: data => void (may be async); returns unsubscribe object
+        return this.#emitter.subscribe(observer);
+    }
+
+    press() {
+        this.#emitter.dispatch(this);
+    }
+
+    // internal:
+
+    #emitter = new SerialDataSource();
+}
+
+class Keypad {
+    // spec is { type, keys } where keys is an array of
+    // arrays of labels or null for empty buttons.
+    // All sub-arrays of keys must be the same length.
+    constructor(spec, name='Unnamed') {
+        const { type, keys } = spec;
+        if (typeof type !== 'string') {
+            throw new Error('spec.type must be a string');
+        }
+        if (!Array.isArray(keys) || keys.length < 1) {
+            throw new Error('spec.keys must be an array with at least one row');
+        }
+        const rows = keys.length;
+        this.#cells = [];
+        this.#all_cells = [];
+        this.#nonempty_cells = [];
+        for (let r = 0; r < rows; r++) {
+            const row_keys = keys[r];
+            if (!Array.isArray(row_keys) && row_keys.length < 1) {
+                throw new Error('spec.keys must be an array of arrays with at least one element');
+            }
+            if (!row_keys.every(el => (el === null || (typeof el === 'string' && el.length === 1)))) {
+                throw new Error('spec.keys must be an array of at least one row, each row containing at least one element, and each element either null or a single-character string');
+            }
+            const row = row_keys.map((el, c) => {
+                const cell = {};  // initialized further below
+                const keypad = this;
+                const move_method = (dir_ch) => { return keypad.move_from(r, c, dir_ch); };
+                const button = (el === null) ? null : new KeypadButton(el);
+                const press_method = () => { cell.button?.press(); return !!cell.button; }
+                if (button) {
+                    button.subscribe(this.#button_observer.bind(this));  // never unsubscribed
+                    if (this.#cell_from_label.get(button.label)) {
+                        throw new Error(`button with duplicate label specified: "${button.label}"`);
+                    }
+                    this.#cell_from_label.set(button.label, cell);
+                }
+                Object.defineProperties(cell, {  // make these properties immutable
+                    keypad: { enumerable: true, value: keypad },
+                    r:      { enumerable: true, value: r },
+                    c:      { enumerable: true, value: c },
+                    move:   { enumerable: true, value: move_method },
+                    press:  { enumerable: true, value: press_method },
+                    button: { enumerable: true, value: button },
+                });
+                this.#all_cells.push(cell);
+                if (button) {
+                    this.#cell_from_button.set(button, cell);
+                    this.#nonempty_cells.push(cell);
+                }
+                return cell;
+            });
+            this.#cells.push(row);
+        }
+        const cols = keys[0].length;
+        if (!this.#cells.every(row => row.length === cols)) {
+            throw new Error('spec.keys must be an array with at least one row and every row an array of uniform length');
+        }
+        // set up this.#paths and this.#direct_paths
+        this.#paths        = {};
+        this.#direct_paths = {};
+        for (const from_cell of this.#nonempty_cells) {
+            const paths_row        = this.#paths[from_cell.button.label]        = {}
+            const direct_paths_row = this.#direct_paths[from_cell.button.label] = {};
+            for (const to_cell of this.#nonempty_cells) {
+                paths_row[to_cell.button.label]        = this.constructor.paths_between(from_cell, to_cell);
+                direct_paths_row[to_cell.button.label] = this.constructor.direct_paths_between(from_cell, to_cell);
+            }
+        }
+        Object.defineProperties(this, {  // make these properties immutable
+            type: { enumerable: true, value: type },
+            name: { enumerable: true, value: name },
+            rows: { enumerable: true, value: rows },
+            cols: { enumerable: true, value: cols },
+        });
+    }
+
+    // return the button cell at (r,c).
+    // note: button_cells are essentially read-only (existing properties cannot be changed)
+    get(r, c) {  // returns undefined if (r, c) out of bounds
+        return this.#cells[r]?.[c];
+    }
+
+    // returns a copy of this.#cells
+    get_button_cell_matrix() {
+        return this.#cells.map(row => row.map(button_cell => button_cell));
+    }
+
+    // returns an array of all (including empty) button cells in the keypad, ordered row-by-row, column-by-column
+    get_all_button_cells() {
+        return this.#all_cells.map(button_cell => button_cell);
+    }
+
+    // returns an array of the non-empty button cells in the keypad, ordered row-by-row, column-by-column
+    get_button_cells() {
+        return this.#nonempty_cells.map(button_cell => button_cell);
+    }
+
+    // returns an array of the labels of buttons in the keypad, ordered row-by-row, column-by-column
+    get_labels() {
+        return this.#nonempty_cells.map(button_cell => button_cell.button.label);
+    }
+
+    paths_between(from_label, to_label) {
+        return this.#paths_between_using_mapping(from_label, to_label, this.#paths);
+    }
+
+    direct_paths_between(from_label, to_label) {
+        return this.#paths_between_using_mapping(from_label, to_label, this.#direct_paths);
+    }
+
+    // returns boolean indicating success
+    press(r, c) {
+        const cell = this.get(r, c);
+        if (!cell || !cell.button) {
+            return false;
+        } else {
+            cell.button.press();  // will fire event back through this.#emitter
+            return true;
+        }
+    }
+
+    press_label(label) {
+        const cell = this.find(label);
+        if (!cell) {
+            return false;
+        } else {
+            return this.press(cell.r, cell.c);
+        }
+    }
+
+    find(label) {
+        return this.#cell_from_label.get(label);
+    }
+
+    move_from(r, c, dir_ch) {
+        switch (dir_ch) {
+        case Direction.E.ch:
+        case Direction.E.name: return this.get( r,   c+1 );
+
+        case Direction.N.ch:
+        case Direction.N.name: return this.get( r-1, c   );
+
+        case Direction.W.ch:
+        case Direction.W.name: return this.get( r,   c-1 );
+
+        case Direction.S.ch:
+        case Direction.S.name: return this.get( r+1, c   );
+
+        default: throw new Error(`unrecognized dir_ch "${dir_ch}"`);
+        }
+    }
+
+    subscribe(observer) {  // observer: data => void; returns unsubscribe object
+        return this.#emitter.subscribe(observer);
+    }
+
+
+    // returns an array of all paths from from_button_cell to to_button_cell
+    // paths are arrays of { cell, dir }
+    // paths do not have an element for to_button_cell
+    static paths_between(from_button_cell, to_button_cell) {
+        if (from_button_cell === to_button_cell) {
+            return [ [] ];  // one single empty path
+        }
+        if (from_button_cell.keypad !== to_button_cell.keypad) {
+            throw new Error('from_button_cell and to_button_cell must be from the same keypad');
+        }
+        const paths = [];
+        const walk = (cell, entry_dir=null, path_so_far=[], visited=new Set()) => {
+            if (!visited.has(cell)) {
+                if (cell === to_button_cell) {
+                    paths.push(path_so_far);
+                } else {
+                    let next_visited;  // created if needed below
+                    const test = (dir) => {
+                        if (!entry_dir || dir !== entry_dir.back) {  // prevent doubling back
+                            const next_cell = cell.move(dir.ch);
+                            if (next_cell && next_cell.button) {  // next cell exists and is not empty
+                                const next_path_element = {};
+                                Object.defineProperties(next_path_element, {  // make these properties immutable
+                                    cell: { enumerable: true, value: cell },
+                                    dir:  { enumerable: true, value: dir },
+                                });
+                                const next_path_so_far = [ ...path_so_far, next_path_element ];
+                                next_visited ??= visited.union(new Set([ cell ]));
+                                walk(next_cell, dir, next_path_so_far, next_visited);
+                            }
+                        }
+                    };
+                    for (const dir of Direction.dirs()) {
+                        test(dir);
+                    }
+                }
+            }
+        };
+        walk(from_button_cell);
+        return paths;
+    }
+
+    // returns a Set() of all paths from from_button_cell to to_button_cell
+    static direct_paths_between(from_button_cell, to_button_cell) {
+        if (from_button_cell === to_button_cell) {
+            return [ [] ];  // one single empty path
+        }
+        const all_paths = this.paths_between(from_button_cell, to_button_cell);
+        // error was thrown if from_button_cell and to_button_cell are not compatible
+        const offset_r = to_button_cell.r - from_button_cell.r;
+        const offset_c = to_button_cell.c - from_button_cell.c;
+        const direct_directions = [];
+        if (offset_r !== 0) {
+            direct_directions.push(Direction.from_offsets(offset_r, 0));
+        }
+        if (offset_c !== 0) {
+            direct_directions.push(Direction.from_offsets(0, offset_c));
+        }
+        return all_paths
+            .filter(path => path.every(({ dir }) => direct_directions.includes(dir)));
+    }
+
+    static path_to_dir_string(path) {
+        return path.map(path_element => path_element.dir.ch).join('');
+    }
+
+    // internal:
+
+    #cells;           // set up in constructor; r -> c -> button_cell
+    #all_cells;       // set up in constructor; array of nonempty button_cells
+    #nonempty_cells;  // set up in constructor; array of all button_cells
+    #paths;           // set up in constructor; from_label -> to_label -> array of paths
+    #direct_paths;    // set up in constructor; from_label -> to_label -> array of paths
+    #emitter = new SerialDataSource();
+    #cell_from_button = new Map();
+    #cell_from_label  = new Map();
+
+    #button_observer(button) {
+        const cell = this.#cell_from_button.get(button);
+        if (!cell) {
+            throw new Error('unexpected: cell not found for button');
+        }
+        this.#emitter.dispatch({
+            keypad: this,
+            cell,
+        });
+    }
+
+    #paths_between_using_mapping(from_label, to_label, mapping) {
+        const row_mapping = mapping[from_label];
+        if (!row_mapping) {
+            throw new Error(`from_label "${from_label}" not found`);
+        }
+        const paths = row_mapping[to_label];
+        if (!paths) {
+            throw new Error(`to_label "${to_label}" not found`);
+        }
+        // copy to prevent caller from modifying internal structure:
+        return paths.map(path => path.map(path_element => path_element));
+    }
+}
+
+class Robot {
+    constructor(controller, controlled, name='Unnamed') {
+        if (!(controller instanceof Keypad)) {
+            throw new Error('controller must be an instance of Keypad');
+        }
+        if (!(controlled instanceof Keypad)) {
+            throw new Error('controlled must be an instance of Keypad');
+        }
+
+        Object.defineProperties(this, {  // make these properties immutable
+            name:       { enumerable: true, value: name },
+            controller: { enumerable: true, value: controller },
+            controlled: { enumerable: true, value: controlled },
+        });
+
+        this.controller.subscribe(this.#contoller_response.bind(this));
+
+        this.reset();
+    }
+
+    reset() {
+        const previous_state = this.#state;
+        const A_cell = this.controlled.find('A');
+        if (!A_cell) {
+            throw new Error('cannot find "A" button in controlled keypad');
+        }
+        this.#state = A_cell;
+        const message = 'robot reset';
+        this.#dispatch(this.constructor.event_type_reset, message, previous_state);
+
+    }
+
+    get state (){ return this.#state; }
+
+    subscribe(observer) {  // observer: data => void (may be async); returns unsubscribe object
+        return this.#emitter.subscribe(observer);
+    }
+
+    static event_type_reset = 'reset';
+    static event_type_move  = 'move';
+    static event_type_press = 'press';
+    static event_type_error = 'error';
+
+    // internal:
+
+    #state;  // button cell currently being looked at on this.controlled, or null if robot is inoperable
+
+    #emitter = new SerialDataSource();
+
+    #dispatch(type, message, previous_state, button_cell=undefined) {
+        this.#emitter.dispatch({
+            type,
+            message,
+            previous_state,
+            new_state: this.#state,
+            robot: this,
+            button_cell,
+        });
+    }
+
+    #contoller_response(data) {
+        const { cell } = data;
+        const cell_label = cell.button?.label;
+        const cell_description = (typeof cell_label === 'string') ? `"${cell_label}"` : cell_label;
+        const previous_state = this.#state;
+        if (!this.#state) {
+            const message = `robot recieved ${cell_description} but is in inoperable state`;
+            this.#dispatch(this.constructor.event_type_error, message, previous_state, cell);
+        } else {
+            switch (cell_label) {
+            case Direction.E.ch:
+            case Direction.N.ch:
+            case Direction.W.ch:
+            case Direction.S.ch: {
+                const new_cell = this.#state.move(cell_label);
+                if (!new_cell || !new_cell.button) {
+                    this.#state = null;  // robot is now inoperable
+                    const message = `robot attempted to move "${cell_label}" to ${!new_cell ? 'nonexistent' : 'empty'} button; robot is now inoperable`;
+                    this.#dispatch(this.constructor.event_type_error, message, previous_state, cell);
+                } else {
+                    this.#state = new_cell;
+                    const message = `moved ${cell_label} to "${this.#state.button.label}"`;
+                    this.#dispatch(this.constructor.event_type_move, message, previous_state, cell);
+                }
+                break;
+            }
+            case 'A': {
+                this.#state.press();
+                const message = `pressed "${this.#state.button.label}"`;
+                this.#dispatch(this.constructor.event_type_press, message, previous_state, cell);
+                break;
+            }
+            default: {
+                this.#state = null
+                const message = `unexpected button press received from controller: ${cell_description}; robot is now inoperable`;
+                this.#dispatch(this.constructor.event_type_error, message, previous_state, cell);
+                break;
+            }
+            }
+        }
+    }
+}
+
+const create_keypad_css = (keypad) => `
+.keypad {
+    display: grid;
+    max-width: fit-content;    
+    grid-template-columns: ${new Array(keypad.cols).fill('1fr').join(' ')};
+    gap: 0.25em;
+
+    & button {
+        background-color: var(--keypad-color-bg);
+        color:            var(--keypad-color-fg);
+
+        &.highlighted {
+            background-color: yellow;
+        }
+    }
+}
+`;
+
+class KeypadDisplay {
+    constructor(keypad, embedded=false) {
+        if (!(keypad instanceof Keypad)) {
+            throw new Error('keypad must be an instance of Keypad');
+        }
+        Object.defineProperties(this, {  // make these properties immutable
+            keypad:   { enumerable: true, value: keypad },
+            embedded: { enumerable: true, value: embedded },
+        });
+    }
+
+    async render(ocx) {
+        const child_ocx = ocx.create_child_ocx({
+            style: {
+                '--keypad-color-bg': 'var(--theme-ui-bg)',
+                '--keypad-color-fg': 'var(--theme-ui-fg)',
+                padding:             '0.5em',
+                margin:              '0.25em',
+                'max-width':         'fit-content',
+                border:              '2px solid var(--theme-ou-rc)',
+                'border-radius':     '5px',
+                'background-color':  'var(--keypad-color-bg)',
+                color:               'var(--keypad-color-fg)',
+            },
+        });
+        await child_ocx.render_text(this.keypad.name, {
+            style: {
+                'font-weight': 'bold',
+                'font-size':   this.embedded ? 'small' : 'initial',
+            },
+        });
+        const inner_child_ocx = child_ocx.create_child_ocx();
+        inner_child_ocx.create_child({
+            tag: 'style',
+            innerText: create_keypad_css(this.keypad),
+        });
+        const child_buttons = [];
+        for (let r = 0; r < this.keypad.rows; r++) {
+            for (let c = 0; c < this.keypad.cols; c++) {
+                const cell = this.keypad.get(r, c);
+                if (!cell.button) {
+                    child_buttons.push({});  // empty div element
+                } else {
+                    child_buttons.push({
+                        _key: `${r},${c}`,
+                        tag: 'button',
+                        innerText: cell.button.label,
+                    });
+                }
+            }
+        }
+        const keypad_element_mapping = inner_child_ocx.create_child_mapping({
+            _key: 'keypad_element',
+            attrs: {
+                class: 'keypad',
+            },
+            children: child_buttons,
+        });
+        const keypad_element = keypad_element_mapping.keypad_element;
+        keypad_element.querySelectorAll('button').forEach(button => {
+            button.onclick = () => {
+                this.keypad.find(button.innerText).press();
+                button.animate({ 'backgroundColor': 'red', easing: 'ease-out' }, 200);
+                
+            };
+        });
+
+        const controls = {
+            get_button_element: (r, c) => {
+                return keypad_element_mapping[`${r},${c}`];  // kludgey...
+            },
+            get_keypad_element: () => keypad_element,
+            highlight: (target_button=null) => {
+                for (let r = 0; r < this.keypad.rows; r++) {
+                    for (let c = 0; c < this.keypad.cols; c++) {
+                        const button_cell = this.keypad.get(r, c);
+                        if (button_cell) {
+                            const button_element = controls.get_button_element(r, c);
+                            if (button_element) {
+                                if (target_button === button_cell.button) {
+                                    button_element.classList.add('highlighted');
+                                } else {
+                                    button_element.classList.remove('highlighted');
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            reset: () => controls.highlight(null),
+        };
+        return controls;
+    }
+}
+
+class RobotDisplay {
+    constructor(robot) {
+        if (!(robot instanceof Robot)) {
+            throw new Error('robot must be an instance of Robot');
+        }
+        Object.defineProperties(this, {  // make these properties immutable
+            robot: { enumerable: true, value: robot },
+        });
+
+        this.#keypad_display = new KeypadDisplay(this.robot.controlled, true);
+    }
+
+    async render(ocx) {
+        const child_ocx = ocx.create_child_ocx({
+            style: {
+                '--robot-display-color-bg': 'var(--theme-ui-bg)',
+                '--robot-display-color-fg': 'var(--theme-ui-fg)',
+                overflow:                   'visible',
+                display:                    'flex',
+                'flex-direction':           'column',
+                padding:                    '0.5em',
+                margin:                     '0.25em',
+                'max-width':                'fit-content',
+                'max-height':               'fit-content',
+                border:                     '2px solid var(--theme-ou-rc)',
+                'border-radius':            '5px',
+                'background-color':         'var(--robot-display-color-bg)',
+                color:                      'var(--robot-display-color-fg)',
+            },
+        });
+        await child_ocx.render_text(this.robot.name, { style: { 'font-weight': 'bold' } });
+        const keypad_controls = await this.#keypad_display.render(child_ocx);
+        const current_state_display_element = child_ocx.create_child_mapping({
+            tag: 'label',
+            children: [
+                'State: ',  // text node
+                {
+                    _key:      'display_element',
+                    tag:       'span',
+                    innerText: this.robot.state?.button.label ?? 'null',
+                },
+            ],
+        }).display_element;
+        // The goal is for the robot displays to be uniform in size regardless
+        // of the size of their keypad.  I think I don't know enough CSS to do
+        // this in CSS, so here we go:
+        const display_desired_height = `calc(20ch - ${keypad_controls.get_keypad_element().getBoundingClientRect().height}px)`;
+        const display_ocx = child_ocx.create_child_ocx({
+            style: {
+                'font-family':          'monospace',
+                'font-size':            'small',
+                'white-space':          'nowrap',
+                'white-space-collapse': 'preserve',
+                'max-width':            '30ch',
+                'min-width':            '30ch',
+                'min-height':           display_desired_height,
+                'max-height':           display_desired_height,
+                padding:                '1em',
+                border:                 '1px solid var(--theme-ou-rc)',
+                overflow:               'auto',
+                'background-color':     'var(--theme-ui-bg)',
+                color:                  'var(--theme-ui-fg)',
+            },
+        });
+        const display = async (data) => {
+            const {
+                type,
+                message,
+                previous_state,
+                new_state,
+                robot,
+                button_cell,
+            } = data;
+            await display_ocx.println(message);
+            display_ocx.element.scrollTo(0, display_ocx.element.scrollHeight);
+        };
+        keypad_controls.highlight(this.robot.state?.button ?? null);
+        const robot_unsubscribe_object = this.robot.subscribe(async (data) => {  // never unsubscribed...
+            current_state_display_element.innerText = data.new_state ? data.new_state.button.label : 'inoperable';
+            if (data.new_state?.button) {
+                keypad_controls.highlight(data.new_state.button);
+            } else {
+                keypad_controls.highlight(null);
+            }
+            switch (data.type) {
+            case Robot.event_type_reset: {
+                await display(data);
+                break;
+            }
+            case Robot.event_type_move: {
+                await display(data);
+                break;
+            }
+            case Robot.event_type_press: {
+                await display(data);
+                break;
+            }
+            case Robot.event_type_error: {
+                await display({ ...data, message: `*** ${data.message}` });
+                break;
+            }
+            default: {
+                await display_ocx.render_error(`unexpected: unknown event type "${data.type}" received\n${data.message}`);
+                break;
+            }
+            }
+        });
+
+        return {
+            reset: async () => {
+                await display_ocx.clear();
+                this.robot.reset();
+            }
+        };
+    }
+
+    // internal:
+
+    #keypad_display;  // set in constructor
+}
+
+keepalive();
+vars({
+    SerialDataSource,
+    Direction,
+    KeypadButton,
+    Keypad,
+    Robot,
+    KeypadDisplay,
+    RobotDisplay,
+});
+
+</bq-cell>
+<bq-cell id="id-e1419adc-0b1f-410e-9817-4bb3f3cbe9c1" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+bqe.input_data = input_data.trim();
+globalThis.bqe = bqe;//!!!
+</bq-cell>
+<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// utility definitions
+
+const {
+    Direction,
+    KeypadButton,
+    Keypad,
+    Robot
+} = bqe;
+
+const solution_output_options = {
+    style: {
+        'font-family':          'monospace',
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'max-height':           '20ch',
+        'max-width':            'fit-content',
+        padding:                '1em',
+        overflow:               'auto',
+        border:                 '1px solid var(--theme-ou-rc)',
+    },
+};
+
+const input_lines = bqe.input_data.split('\n');
+
+const codes = [];
+
+for (const line of input_lines) {
+    if (!line.match(/^[\d]{3}A$/)) {
+        throw new Error(`bad input line: "${line}"`);
+    }
+    codes.push(line);
+}
+
+// Mechanism to yield for long computations:
+// make_check_tick() returns an aync function such that when that function
+// is called (and awaited), will await a call to next_tick() if the the
+// specified time has elapsed since the last time this function called
+// next_tick() and return true.  Otherwise, if the specified time has
+// not elapsed, the function returns false immediately.
+const make_check_tick = (the_tick_interval_ms=200) => {
+    let last_tick_time = Date.now();
+    return (tick_interval_ms=the_tick_interval_ms) => {
+        // Return a promise only if next_tick() is to be called.
+        // Otherwise, return a simple false value.
+        const new_last_tick_time = Date.now();
+        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
+            return false;
+        } else {
+            last_tick_time = new_last_tick_time;
+            return new Promise(resolve => {
+                next_tick()
+                    .then(() => resolve(true));
+            });
+        }
+    }
+};
+
+const numeric_keypad_spec = {
+    type: 'numeric',
+    keys: [
+        [  '7', '8', '9' ],
+        [  '4', '5', '6' ],
+        [  '1', '2', '3' ],
+        [ null, '0', 'A' ],
+    ],
+};
+
+const directional_keypad_spec = {
+    type: 'directional',
+    keys: [
+        [ null, '^', 'A' ],
+        [  '<', 'v', '>' ],
+    ],
+};
+
+const create_numeric_keypad = (name=undefined) => {
+    return new Keypad(numeric_keypad_spec, name);
+};
+
+const create_directional_keypad = (name=undefined) => {
+    return new Keypad(directional_keypad_spec, name);
+};
+
+const create_configuration = (intermediate_keypad_count) => {
+    const user_keypad = create_directional_keypad('User keypad');
+    const intermediate_keypads = new Array(intermediate_keypad_count).fill().map((_, i) => {
+        return create_directional_keypad(`Intermediate keypad ${i}`);
+    });
+    const door_keypad = create_numeric_keypad('Door keypad');
+
+    const door_robot = new Robot( intermediate_keypads[intermediate_keypads.length - 1],
+                                  door_keypad,
+                                  `Door robot` );
+
+    const intermediate_robots = intermediate_keypads
+          .map((keypad, keypad_index) => {
+              const controller = (keypad_index === 0) ? user_keypad : intermediate_keypads[keypad_index - 1];
+              const controlled = intermediate_keypads[keypad_index];
+              return new Robot(controller, controlled, `Intermediate robot ${keypad_index}`);
+          });
+
+    const keypads = [ user_keypad, ...intermediate_keypads, door_keypad ];
+    const robots  = [ ...intermediate_robots, door_robot ];
+
+    // check some assumptions:
+    // (1) all keypads are connected to some robot, either as a controller
+    //     or controlled:
+    {
+        const robot_keypads_set = new Set(
+            robots.flatMap(robot => {
+                return [ robot.controller, robot.controlled ];
+            })
+        );
+        for (const keypad of keypads) {
+            if (!robot_keypads_set.has(keypad)) {
+                throw new Error(`some robot is not controlled by or controlling keypad named "${keypad.name}"`);
+            }
+        }
+    }
+    // (2) all intermediate keypads are exactly once a robot controller
+    //     and exactly once a controlled by a robot:
+    {
+        const all_intermediate_keypads_set = new Set(intermediate_keypads);
+        const controller_check_set         = new Set(intermediate_keypads);
+        const controlled_check_set         = new Set(intermediate_keypads);
+        const check = (robot_keypad, keypad_check_set) => {
+            if (all_intermediate_keypads_set.has(robot_keypad)) {
+                if (!keypad_check_set.has(robot_keypad)) {
+                    throw new Error(`keypad named "${robot_keypad.name}" is a controller for more than one robot"`);
+                } else {
+                    keypad_check_set.delete(robot_keypad);
+                }
+            }
+        };
+        for (const robot of robots) {
+            check(robot.controller, controller_check_set);
+            check(robot.controlled, controlled_check_set);
+        }
+    }
+    // (3) user_keypad is the controller for the first robot in robots:
+    if (user_keypad !== robots[0].controller) {
+        throw new Error('user_keypad is not the controller for the first robot');
+    }
+    // (4) the last robot in robots controls door_keypad:
+    if (robots[robots.length-1].controlled !== door_keypad) {
+        throw new Error('last robot does not control door_keypad');
+    }
+    // (5) all intermediate robots in order form a controller -> controlled chain:
+    for (let i = 1; i < intermediate_robots.length; i++) {
+        if (intermediate_robots[i-1].controlled !== intermediate_robots[i].controller) {
+            throw new Error('intermediate robots are not correctly chained controlled -> controller');
+        }
+    }
+    // if we get here, all the assumptions are satisfied....
+
+    const keypad_to_robot_controlled_map = new Map();
+    const keypad_to_robot_controller_map = new Map();
+    for (const robot of robots) {
+        keypad_to_robot_controlled_map.set(robot.controlled, robot);
+        keypad_to_robot_controller_map.set(robot.controller, robot);
+    }
+
+    const next_robot_map = new Map();
+    for (const robot of robots) {
+        const next_robot = keypad_to_robot_controller_map.get(robot.controlled);
+        if (next_robot) {
+            next_robot_map.set(robot, next_robot);
+        }
+    }
+    const next_robot = (robot) => next_robot_map.get(robot);
+
+    const next_keypad_map = new Map();
+    for (const robot of robots) {
+        next_keypad_map.set(robot.controller, robot.controlled);
+    }
+    const next_keypad = (keypad) => next_keypad_map.get(keypad);
+
+    const reset_robots = () => {
+        for (const robot of robots) {
+            robot.reset();
+        }
+    }
+
+    return {
+        intermediate_keypad_count,
+        user_keypad,
+        intermediate_keypads,
+        door_keypad,
+        door_robot,
+        intermediate_robots,
+        keypads,
+        robots,
+        reset_robots,
+        keypad_to_robot_controlled_map,
+        keypad_to_robot_controller_map,
+        next_robot_map,
+        next_robot,
+        next_keypad_map,
+        next_keypad,
+    };
+};
+
+const init_data = (intermediate_keypad_count=2) => {  // intermediate_keypad_count = 2 given in problem Part One
+    vars(  // export to bqe
+        create_configuration(intermediate_keypad_count)
+    );
+};
+
+keepalive();
+vars({
+    solution_output_options,
+    codes,
+    make_check_tick,
+    create_numeric_keypad,
+    create_directional_keypad,
+    create_configuration,
+    init_data,
+});
+</bq-cell>
+<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// define a simulator
+
+const create_simulator_ui = async (ocx, send_interval=0.05) => {
+    const {
+        robots,
+        KeypadDisplay,
+        RobotDisplay,
+    } = bqe;
+
+    if (!robots) {
+        throw new Error('init_data() must have been called before calling this function');
+    }
+
+    const door_robot  = robots[robots.length-1];
+    const user_keypad = robots[0].controller;
+
+    const input_controls_ocx = ocx.create_child_ocx({
+        style: {
+            display:            'flex',
+            'flex-direction':   'row',
+            margin:             '0.25em 0.25em 0.75em 0.25em',
+            padding:            '0.5em',
+            'max-width':        'fit-content',
+            'max-height':       'fit-content',
+            border:             '2px solid var(--theme-ou-rc)',
+            'border-radius':    '5px',
+            'background-color': 'var(--theme-ui-bg)',
+            color:              'var(--theme-ui-fg)',
+        },
+    });
+
+    const reset_button = input_controls_ocx.create_child({
+        tag: 'button',
+        style: {
+            margin: '0.5em',
+        },
+        innerText: 'Reset',
+    });
+
+    const manual_input_element = input_controls_ocx.create_child({
+        tag: 'input',
+        attrs: {
+            type: 'text',
+            size: 50,
+        },
+        style: {
+            margin: '0.5em 0 0.5em 1.5em',
+        },
+        innerText: 'Reset',
+    });
+
+    const manual_input_button = input_controls_ocx.create_child({
+        tag: 'button',
+        style: {
+            margin: '0.5em 0.5em 0.5em 0',
+        },
+        innerText: 'send',
+    });
+
+    const manual_input_status_element = input_controls_ocx.create_child({
+        style: {
+            margin: '0.5em',
+        },
+    });
+
+    let just_sent_input = false;
+    let send_input_controls;
+    const send_input = async () => {
+        just_sent_input = true;
+        await send_input_controls?.stop();
+        let stop = false;
+        let has_stopped = false;
+        const input_value = manual_input_element.value;
+        const first_illegal_character_index = input_value.search(/[^\s^<>vVaA]/);
+        if (first_illegal_character_index !== -1) {
+            manual_input_status_element.innerText = 'illegal character';
+            manual_input_element.selectionStart = first_illegal_character_index;
+            manual_input_element.selectionEnd   = first_illegal_character_index+1;
+            send_input_controls = undefined;
+        } else {
+            send_input_controls = {
+                stop: async () => {
+                    stop = true;  // this is the stop variable in the outer scope...
+                    while (!has_stopped) {
+                        await sleep(0.001);
+                    }
+                },
+            };
+            const value = input_value.replaceAll(/[\s]/g, '').toLowerCase();
+            if (value.length > 0) {
+                manual_input_status_element.innerText = 'sending input';
+                await reset_all();
+                manual_input_status_element.value = '';
+                for (const ch of value) {
+                    if (ch !== ' ') {
+                        const adjusted_ch = (ch === 'a') ? 'A' : ch;
+                        user_keypad_controls.highlight(user_keypad.find(adjusted_ch).button);
+                        // Note: this will still not work if the user goes crazy and "sends" many times quickly.
+                        // A true semaphore would be required to make this 100% reliable.
+                        // However, for now this is fine....
+                        if (stop) {
+                            has_stopped = true;
+                            break;
+                        }
+                        if (!user_keypad.press_label(adjusted_ch)) {
+                            throw new Error(`unexpected: failed to send "${adjusted_ch}"`);
+                        }
+                        manual_input_status_element.innerText = `sent "${adjusted_ch}"`;
+                        if (send_interval > 0) {
+                            await sleep(send_interval);
+                        }
+                    }
+                }
+                user_keypad_controls.highlight(null);
+                manual_input_status_element.innerText = has_stopped ? 'stopped' : 'input sent';
+                send_input_controls = undefined;
+                has_stopped = true;
+            }
+        }
+    };
+
+    manual_input_button.onclick = send_input;
+
+    manual_input_element.onkeydown = (event) => {
+        if (just_sent_input) {
+            manual_input_status_element.innerText = '';
+            just_sent_input = false;
+        }
+        if (event.key === 'Enter') {
+            event.stopPropagation();
+            send_input();
+        }
+    };
+
+
+    const user_keypad_controls = await (new KeypadDisplay(user_keypad)).render(ocx);
+
+    const robot_group_ocx = await ocx.create_child_ocx({
+        style: {
+            display:  'inline-flex',
+            margin:   '0.25em 0 0.25em',
+            gap:      '0.25em',
+            overflow: 'auto',
+        },
+    });
+    const robot_display_controls = [];
+    for (const robot of robots) {
+        const controls = await (new RobotDisplay(robot)).render(robot_group_ocx);
+        robot_display_controls.push(controls);
+    }
+
+    await ocx.printf()
+    const door_keypad_output_ocx = await ocx.create_child_ocx({
+        style: {
+            margin:             '0.25em',
+            padding:            '0.5em 1em 1em',
+            'max-width':        'fit-content',
+            'max-height':       'fit-content',
+            border:             '2px solid var(--theme-ou-rc)',
+            'border-radius':    '5px',
+            'background-color': 'var(--theme-ui-bg)',
+            color:              'var(--theme-ui-fg)',
+        },
+    });
+    await door_keypad_output_ocx.render_text('Door keypad output:', { style: { 'font-weight': 'bold' } });
+    const door_keypad_output_element = await door_keypad_output_ocx.create_child({
+        style: {
+            'font-family':          'monospace',
+            'font-size':            'x-large',
+            'white-space':          'nowrap',
+            'white-space-collapse': 'preserve',
+            'min-width':            '20ch',
+            'max-width':            'fit-content',
+            'min-height':           '1.5em',
+            'max-height':           'fit-content',
+            color:                  'darkblue',
+            'background-color':     'white',
+            padding:                '0.25em 0.5em',
+            margin:                 '0.5em 0 0 0',
+            overflow:               'auto',
+            border:                 '1px solid var(--theme-ou-rc)',
+        },
+    });
+
+    const door_robot_unsubscribe_object = door_robot.controlled.subscribe((data) => {
+        door_keypad_output_element.innerText = door_keypad_output_element.innerText + data.cell.button.label;
+    });
+
+    const reset_all = async () => {
+        for (const control of robot_display_controls) {
+            await control.reset();
+        }
+        door_keypad_output_element.innerText = '';
+    };
+
+    reset_button.onclick = async () => {
+        await send_input_controls?.stop();
+        reset_all();
+    }
+
+    return {
+        reset_button,
+        manual_input_element,
+        manual_input_button,
+        get_send_input_controls: () => send_input_controls,
+    };
+};
+
+// returns { input, output, outputs }
+// example: cfg = bqe.create_configuration(2); bqe.simulate('<vA<AA>>^AvA^<A>AvA^A<v<A>A>^AvA^<A>A<v<A>>^AAAvA^A<v<A>A>^AAAvA^A<A>A', cfg.robots)
+const simulate = (input, robots=bqe.robots, quiet=false) => {
+    const {
+        Robot,
+    } = bqe;
+
+    if (!Array.isArray(robots) && !robots.every(element => element instanceof Robot) ) {
+        throw new Error('robots must be an array of Robot instances');
+    }
+
+    const user_keypad = robots[0].controller;
+    const door_keypad = robots[robots.length-1].controlled;
+
+    const reset_robots = () => {
+        for (const robot of robots) {
+            robot.reset();
+        }
+    }
+
+    const illegal_input_char_re  = /[^\s^<>vVaA]/;
+
+    if (input.match(illegal_input_char_re)) {
+        throw new Error('bad input');
+    }
+
+    const make_conformant = (ch) => {
+        switch (ch) {
+            case 'a': return 'A';
+            case 'V': return 'v';
+            case ' ': return null;
+            default:  return ch;
+        }
+    };
+
+    const output_watchers = robots.map(robot => {
+        const keypad = robot.controlled;
+        let output = '';
+        const keypad_subscribe_object = keypad.subscribe((data) => {
+            output = output + data.cell.button.label;
+        });
+        return {
+            get_output: () => output,
+            keypad_subscribe_object,
+        };
+    });
+
+    reset_robots();
+    for (let i = 0; i < input.length; i++) {
+        const input_ch = input[i];
+        const ch = make_conformant(input_ch);
+        if (ch) {
+            if (!user_keypad.press_label(ch)) {
+                throw new Error(`unexpected: failed to send "${input_ch}" at input index ${i}`);
+            }
+            for (const robot of robots) {
+                if (!robot.state) {
+                    if (!quiet) {
+                        console.log(`robot "${robot.name}" became inoperable at input index ${i}`);
+                    }
+                    return null;
+                }
+            }
+        }
+    }
+
+    const outputs = output_watchers.map(w => { w.keypad_subscribe_object.unsubscribe(); return w.get_output() });
+    const output = outputs[outputs.length-1];
+    return { input, output, outputs };
+};
+
+
+keepalive();
+vars({
+    create_simulator_ui,
+    simulate,
+});
+</bq-cell>
+<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// recursive solution (slow but correct)
+
+// returns array of solutions sorted shortest to longest
+// first entry is optimal in terms of length
+const recursive_solve = (output, options=null) => {
+    const {
+        robots = bqe.robots,
+    } = (options ?? {});
+
+    return robots
+        .toReversed()  // work from last to first
+        .reduce(  // produce an array of alternative output elements built up in each robot stage
+            (outputs, robot) => {  // outputs: array of output elements, each a string
+                return outputs
+                    .flatMap(output => {  // output: string
+                        return Array.from(output)
+                            .reduce(  // produce an array of alternative input elements that will produce each output element
+                                ({ robot_state, inputs }, output_state) => {  // each character of output is a desired output_state
+                                    return {
+                                        robot_state: output_state,
+                                        inputs: inputs
+                                            .flatMap((input) => {
+                                                return robot.controlled.direct_paths_between(robot_state, output_state)
+                                                    .map((path) => {
+                                                        const path_states = path.map(({ dir }) => dir.ch);
+                                                        const extended_input = [ input, ...path_states, 'A' ].join('');  // each expanded path is terminated with an 'A'
+                                                        return extended_input;
+                                                    });
+                                            }),
+                                    };
+                                },
+                                { robot_state: 'A', inputs: [ '' ] },  // reduce initializer; each robot starts in state 'A', one single empty string input
+                            )
+                            .inputs  // pull out final inputs array as the resulting outputs array
+                            .flat(1);
+                    });
+            },
+            [ output ],  // reduce initializer; outputs: initially one single output (a string)
+        )
+        .toSorted((a, b) => (a.length - b.length));
+};
+
+// returns array of solutions sorted shortest to longest
+// first entry is optimal in terms of length
+const async_recursive_solve = async (output, options=null) => {
+    const {
+        make_check_tick,
+    } = bqe;
+
+    const {
+        robots    = bqe.robots,
+        trace_mod = 1,
+        trace_fn  = null,
+    } = (options ?? {});
+
+    const check_tick = make_check_tick(200);
+    let work_count = 0;
+
+    trace_fn?.(work_count, () => `begin solve "${output}"`, true);
+
+    // iterate robots in reverse, outputs is the alternative outputs from subsequent stages
+    let outputs = [ output ];
+    for (let robot_index = robots.length; --robot_index >= 0; ) {
+        const stage = robot_index;
+        const robot = robots[robot_index];
+        const outputs_arrays = [];
+        for (const output of outputs) {
+            await check_tick();
+            if (work_count++ % trace_mod === 0) {
+                trace_fn?.(work_count, () => `stage ${stage}| output: ${output}`);
+            }
+            // iterate output, inputs is the inputs fragments that will produce output in subsequent stage, robot starts in state 'A' at each stage
+            let inputs = [ '' ], robot_state = 'A';
+            for (const output_state of output) {
+                const inputs_arrays = [];
+                for (const input of inputs) {
+                    inputs_arrays.push(
+                        robot.controlled.direct_paths_between(robot_state, output_state)
+                            .map((path) => {
+                                const path_states = path.map(({ dir }) => dir.ch);
+                                const extended_input = [ input, ...path_states, 'A' ].join('');  // each expanded path is terminated with an 'A'
+                                return extended_input;
+                            })
+                    );
+                }
+                inputs = inputs_arrays.flat(1);
+                robot_state = output_state;
+            }
+            outputs_arrays.push(inputs.flat(1));
+        }
+        outputs = outputs_arrays.flat(1);
+    }
+    return outputs?.
+        toSorted((a, b) => (a.length - b.length));
+
+    // return robots
+    //     .toReversed()  // work from last to first
+    //     .reduce(  // produce an array of alternative output elements built up in each robot stage
+    //         (outputs, robot) => {  // outputs: array of output elements, each a string
+    //             return outputs
+    //                 .flatMap(output => {  // output: string
+    //                     return Array.from(output)
+    //                         .reduce(  // produce an array of alternative input elements that will produce each output element
+    //                             ({ robot_state, inputs }, output_state) => {  // each character of output is a desired output_state
+    //                                 return {
+    //                                     robot_state: output_state,
+    //                                     inputs: inputs
+    //                                         .flatMap((input) => {
+    //                                             return robot.controlled.direct_paths_between(robot_state, output_state)
+    //                                                 .map((path) => {
+    //                                                     const path_states = path.map(({ dir }) => dir.ch);
+    //                                                     const extended_input = [ input, ...path_states, 'A' ].join('');  // each expanded path is terminated with an 'A'
+    //                                                     return extended_input;
+    //                                                 });
+    //                                         }),
+    //                                 };
+    //                             },
+    //                             { robot_state: 'A', inputs: [ '' ] },  // reduce initializer; each robot starts in state 'A', one single empty string input
+    //                         )
+    //                         .inputs  // pull out final inputs array as the resulting outputs array
+    //                         .flat(1);
+    //                 });
+    //         },
+    //         [ output ],  // reduce initializer; outputs: initially one single output (a string)
+    //     )
+    //     .toSorted((a, b) => (a.length - b.length));
+};
+
+keepalive();
+vars({
+    recursive_solve,
+    async_recursive_solve,
+});
+</bq-cell>
+<bq-cell id="id-1079ba0b-4e88-4845-8bd3-5d30788595e9" data-type="markdown"># Some thoughts on performance and implementation
+
+The implementation of solve() above is fairly slow even for 2 intermediate robots.  Additionally, it is synchronous and blocks the browser while calculation.  The calculation for each code takes many seconds.  So one thing that should be done is to reimplement solve() is be asynchronous.  This will require unrolling all the map/reduce logic that it currently uses.
+
+But even so, now that I've seen the problem for Part Two (25 intermediate robots!), I know I need a different approach.
+
+Thninking about the particulars of the directional keypads, and the way each additional intermediate robot adds steps, I have come to the following conclusions:
+* Because the intermediate keypads are just the simple directional keypads, there is only a limited set of steps that can (need to) occur before each A.
+* It takes at most three movements to get from any key to any other key.
+* Those movements:
+  * are none in case the desired next key is the same as the current key
+  * need at most one vertical movement because the keypad has only two rows
+  * need at most three horizontal moves because the keypad has only three columns
+  * in the case of three required movements, it is better to have two of the same horizontal move in a row rather than spliting them up in a zigzag movement
+    * the reason it is better is because if another prior robot is controlling that keypad, then that prior robot will require more steps
+    * for example, '>>^' can be implemented easier than '>^>' by some robot controlling the one for which these results are intended.  In the first case, that robot would have to perform |{moves to get next robot to >} A A {moves to get next robot to ^} A|  whereas for the second case that robot would have to perform |{moves to get next robot to >} A {moves to get next robot to ^} A {moves to get next robot to >} A|
+  * there is only one best choice when the number of movements is 0 or 1
+  * because of the dead space at (1,1), there is only one choice for non-zigzag movements for each of the three-movement paths
+  * that leaves only the two-movement paths as ambiguous...
+* There is no need to optimize the final position of each sequence with regard to a prior robot because:
+  * the A key is always pressed after at most three direction keys, and therefore the position is always reset here
+  * when the A key is "entered" from a direction, that same direction cannot be used again because of the A key's location in a corner.
+  * Considering all these points, I think it should be possible to just expand the output for each directional keypad-using robot working from door toward user by a simple scan of each line.  This can be applied to a shortest path that has no "zigzags".
+    * Given all these considerations, the optimal transition paths for directional keypads are:
+      * "A" to:
+        * "A": nothing
+        * "^": "<"
+        * ">": "v"
+        * "v": "v<" **or** "&lt;v"
+        * "<": "v<<"
+      * "^" to:
+        * "A": ">"
+        * "^": nothing
+        * ">": "v>" **or** ">v"
+        * "v": "v"
+        * "<": "v<"
+      * ">" to:
+        * "A": "^"
+        * "^": "<^" **or** "^<"
+        * ">": nothing
+        * "v": "<"
+        * "<": "<<"
+      * "v" to:
+        * "A": ">^" **or** "^>"
+        * "^": "^"
+        * ">": ">"
+        * "v": nothing
+        * "<": "<"
+      * "<" to:
+        * "A": ">>^"
+        * "^": ">^"
+        * ">": ">>"
+        * "v": ">"
+        * "<": nothing
+    * **HOWEVER**: note that there are four ambiguous transition paths for the directional keypads, and this will be explored next....
+</bq-cell>
+<bq-cell id="id-964c0b95-5170-4108-a27d-d16bca7dbacb" data-type="javascript" class="show-in-presentation">// determine best paths among the ambiguous ones for keypads
+
+const changes_char_to_char = (str) => Array.from(str)  // used in best path determination
+      .reduce(
+          ({ last_char, change_count }, char) => {
+              return {
+                  last_char:    char,
+                  change_count: (char === last_char) ? change_count : change_count+1,
+              };
+          },
+          { last_char: null, change_count: 0 }  // reduce initializer
+      ).change_count;
+
+
+// get_best_paths_matrix() needs a directional_best_paths_matrix to compute
+// transforms past stage 1.  This is set as soon as possible below, but
+// requires that get_best_paths_matrix() be called with 'directional' first.
+let directional_best_paths_matrix;
+
+const get_best_paths_data = (keypad_type) => {
+    const get_example_keypad = (keypad_type) => {
+        switch (keypad_type) {
+        case 'numeric':     return bqe.create_numeric_keypad();
+        case 'directional': return bqe.create_directional_keypad();
+        default:            throw new Error(`unknown keypad_type ${keypad_type}`);
+        }
+    };
+
+    const example_keypad     = get_example_keypad(keypad_type);
+    const directional_keypad = get_example_keypad('directional');
+
+    const keypad_best_paths = {};
+    for (const from_state of example_keypad.get_labels()) {
+        const best_paths_row = keypad_best_paths[from_state] = {};
+        for (const to_state of example_keypad.get_labels()) {
+            best_paths_row[to_state] = example_keypad.direct_paths_between(from_state, to_state)
+                .reduce(
+                    ({ best }, path) => {
+                        if (!best) {
+                            best = [ path ];  // first one found
+                        } else {
+                            // note: all elements of best have the same length
+                            const length_cmp = (best[0].length - path.length);
+                            // First, prefer shortest over longest, but for the same length
+                            // prefer fewer changes from character to character.
+                            // The reason is that, for example, '>>^' can be implemented
+                            // easier than '>^>' by some robot controlling the one for which
+                            // these results are intended.  In the first case, that robot
+                            // would have to perform:
+                            //     {moves to get next robot to >} A A {moves to get next robot to ^} A
+                            // whereas for the second case that robot would have to perform:
+                            //     {moves to get next robot to >} A {moves to get next robot to ^} A
+                            //     {moves to get next robot to >} A
+                            if (length_cmp > 0) {  // prefer shorter path
+                                best = [ path ];
+                            } else if (length_cmp === 0) {  // ...do nothing if length_cmp < 0
+                                // note: all elements of best return the same result from changes_char_to_char()
+                                const best_dirs = best[0].map(path_element => path_element.dir.ch);
+                                const path_dirs = path.map(path_element => path_element.dir.ch);
+                                const changes_cmp = changes_char_to_char(best_dirs) - changes_char_to_char(path_dirs);
+                                if (changes_cmp > 0) {  // prefer fewer changes
+                                    best = [ path ];
+                                } else if (changes_cmp === 0) {  // do nothing if changes_cmp < 0
+                                    best = [ ...best, path ];
+                                }
+                            }
+                        }
+                        return { best };
+                    },
+                    { best: null },  // reduce initializer
+                )
+                .best;
+        }
+    }
+
+    const unexpected_empty_path_locations = Object.entries(keypad_best_paths)
+          .flatMap(([ from_state, to_mapping ]) =>
+              Object.entries(to_mapping)
+                  .map(([ to_state, paths ]) => (!paths || paths.length !== 0) ? null : { from_state, to_state, paths })
+          )
+          .filter(result => !!result);
+    if (unexpected_empty_path_locations.length > 0) {
+        throw new Error('unexpected: keypad_best_paths has empty entries');
+    }
+
+    // ambiguous_path_data is an array of entries in keypad_best_paths
+    // that still have more than one path for a given (from, to) pair.
+    const ambiguous_path_data = Object.entries(keypad_best_paths)
+          .flatMap(([ from_state, to_mapping ]) =>
+              Object.entries(to_mapping)
+                  .map(([ to_state, paths ]) => {
+                      return (paths.length <= 1)
+                          ? null
+                          : {
+                              from_state,
+                              to_state,
+                              paths,
+                              mitigated: false,
+                          };
+                  })
+          )
+          .filter(result => !!result);
+
+    // make a copy of keypad_best_paths with unambiguous entries set to
+    // the single unambiguous path and ambiguous entries set to undefined.
+    const best_paths_matrix =
+          Object.fromEntries(
+              Object.entries(keypad_best_paths).map(([ from_state, to_mapping ]) => [
+                  from_state,
+                  Object.fromEntries(
+                      Object.entries(to_mapping).map(([ to_state, paths ]) => [
+                          to_state,
+                          ambiguous_path_data.find(({ from_state: fs, to_state: ts }) => (fs === from_state && ts === to_state ))
+                              ? null
+                              : paths[0]
+                      ])
+                  ),
+              ])
+          );
+
+    const reset_patches = () => {
+        for (const { from_state, to_state, mitigated } of ambiguous_path_data) {
+            if (!mitigated) {
+                best_paths_matrix[from_state][to_state] = null;
+            }
+        }
+    }
+
+    if (keypad_type === 'directional' && !directional_best_paths_matrix) {
+        // bootstrap, a little kludgey...
+        directional_best_paths_matrix = best_paths_matrix;
+    }
+
+    // Now fix the ambiguous paths, if any.
+    // Note that no ambiguous_path_data entries yet have
+    // their "mitigated" field set to true.
+    if (ambiguous_path_data.length > 0) {
+        const transform = (output, stage) => {
+            const result_array = [];
+            const output_array = Array.from(output);
+            for (let output_state_index = 0; output_state_index < output_array.length; output_state_index++) {
+                const output_state = output_array[output_state_index];
+                const previous_output_state = (output_state_index === 0) ? 'A' : output_array[output_state_index-1];  // keypads start in state 'A'
+                const matrix = (stage > 0) ? directional_best_paths_matrix : best_paths_matrix;
+                const best_path = matrix[previous_output_state][output_state];
+                if (!best_path) {
+                    return null;  // indicate: null entry in best_paths_matrix accessed
+                }
+                const path_states = best_path.map(path_element => path_element.dir.ch);
+                path_states.push('A');  // each sequence is terminated with 'A'
+                result_array.push(path_states.join(''));
+            }
+            return result_array.join('');
+        };
+
+        const get_transformations_stages = (keypad_type === 'directional') ? 2 : 4;
+
+        const get_transformations = (output, stages=get_transformations_stages) => {
+            const transformations = [ output ];  // 0-th transformation is the given output
+            for (let stage = 0, current = output; stage < stages; stage++) {
+                current = transform(current, stage);
+                if (!current) {
+                    return null;  // indicate: null entry in best_paths_matrix accessed
+                }
+                transformations.push(current);
+            }
+            return transformations;
+        };
+
+        const max_unmitigated_ambiguous_path_data = 20;
+
+        if (ambiguous_path_data.length > max_unmitigated_ambiguous_path_data) {
+            // try a simple fix for at least some of the entries of ambiguous_path_data
+            let updated;
+            do {
+                updated = false;
+
+                const unmitigated_path_data = ambiguous_path_data.filter(entry => !entry.mitigated);
+                for (let data_index = 0; data_index < unmitigated_path_data.length; data_index++) {
+                    const path_data_entry = unmitigated_path_data[data_index];
+                    const { from_state, to_state, paths } = path_data_entry;
+
+                    const test_case = `${from_state}${to_state}`;
+
+                    const apply_simple_patch = (path_index) => {
+                        for (let patch_index = 0; patch_index < unmitigated_path_data.length; patch_index++) {
+                            const { from_state: patch_fs, to_state: patch_ts, paths: patch_paths } = unmitigated_path_data[patch_index];
+                            // use the first path except for the data_index entry, then use path_index
+                            const path = patch_paths[(patch_index === data_index) ? path_index : 0];
+                            best_paths_matrix[patch_fs][patch_ts] = path;
+                        }
+                    };
+
+                    reset_patches();
+
+                    const successful_path_transformations = [];
+                    for (let path_index = 0; path_index < paths.length; path_index++) {
+                        apply_simple_patch(path_index);
+                        best_paths_matrix[from_state][to_state] = paths[path_index];
+                        const transformations = get_transformations(test_case);
+                        if (transformations !== null) {  // null is returned if other unpatched unmitigated entries were involved
+                            const final_transformation = transformations[transformations.length-1];
+                            successful_path_transformations.push({
+                                path_index,
+                                transformations,
+                                final_transformation,
+                            });
+                        }
+                    }
+                    if (successful_path_transformations.length > 0) {
+                        const lengths = successful_path_transformations.map(({ final_transformation }) => final_transformation.length);
+                        const max_length = Math.max(...lengths);
+                        const min_length = Math.min(...lengths);
+                        if (max_length > min_length) {
+                            const best = successful_path_transformations.filter(({ final_transformation }) => final_transformation.length === min_length);
+                            if (best.length === 1) {
+                                const {
+                                    path_index,
+                                    transformations,
+                                    final_transformation,
+                                } = best[0];
+
+                                path_data_entry.mitigated = true;
+                                updated = true;
+                            }
+                        }
+                    }
+                }
+            } while (updated);
+        }
+
+        // Find and apply the best "patch" for the ambiguous paths.
+        // Only the entries of ambiguous_path_data for which "mitigated"
+        // is still false are acted upon.
+        // This tries all possible combinations of alternative
+        // paths and chooses the best combination.  This will
+        // not work if the number of ambiguous paths is too large.
+        // For example, the numeric keypad originally has 48 ambiguous
+        // paths and this technique will not finish in our lifetimes
+        // for that many!
+        const unmitigated_path_data = ambiguous_path_data.filter(entry => !entry.mitigated);
+        if (unmitigated_path_data.length > max_unmitigated_ambiguous_path_data) {
+            throw new Error(`unable to find a patch for unmitigated ambiguous_path_data, too many unmitigated entries still exist (${unmitigated_path_data.length})`);
+        }
+        const apply_best_patch = () => {
+            // build a test case that includes all pairs (from, to) so
+            // that all ambiguous casees will be tested at once.
+            const test_case = unmitigated_path_data.map(({ from_state, to_state }) => `${from_state}${to_state}`).join('');
+
+            const apply_patch = (path_selectors) => {
+                if (path_selectors.length !== unmitigated_path_data.length) {
+                    throw new Error('unexpected: path_selectors.length !== unmitigated_path_data.length');
+                }
+                for (let data_index = 0; data_index < unmitigated_path_data.length; data_index++) {
+                    const { from_state, to_state, paths } = unmitigated_path_data[data_index];
+                    const path = paths[path_selectors[data_index]];
+                    if (!path) {
+                        throw new Error( `unexpected: bad path from paths[path_selectors[data_index]]` +
+                                         `; data_index=${data_index}, path_selectors[data_index]=${path_selectors[data_index]}, paths.length=${paths.length}` );
+                    }
+                    best_paths_matrix[from_state][to_state] = path;
+                }
+            };
+
+            let best_result = null;
+
+            // simulate arbitrary number of nested loops via recursion:
+            const walk = (loop_selector=0, path_selectors=[]) => {
+                if (loop_selector < unmitigated_path_data.length) {
+                    const loop_path_datum = unmitigated_path_data[loop_selector];
+                    for (let path_selector = 0; path_selector < loop_path_datum.paths.length; path_selector++) {
+                        walk(loop_selector+1, [ ...path_selectors, path_selector ]);
+                    }
+                } else {
+                    // reached innermost "loop"
+                    // path_selectors contains the index to use for successive path in unmitigated_path_data
+
+                    apply_patch(path_selectors);
+                    const transformations = get_transformations(test_case);
+                    const final_transformation = transformations[transformations.length-1];
+
+                    if (!best_result || best_result.final_transformation.length > final_transformation.length) {
+                        best_result = {
+                            path_selectors,
+                            transformations,
+                            final_transformation,
+                        };
+                    }
+                }
+            };
+            walk();
+
+            if (!best_result?.path_selectors) {
+                throw new Error('unexpected: could not find best patch for unmitigated ambiguous_path_data');
+            }
+            apply_patch(best_result.path_selectors);
+        };
+        apply_best_patch();
+    }
+
+    return {
+        keypad_type,
+        best_paths_matrix,
+        keypad_best_paths,
+        ambiguous_path_data,
+    };
+};
+
+const best_paths_data = Object.fromEntries(
+    [ 
+        'directional',  // 'directional' must be first (see directional_best_paths_matrix above)
+        'numeric',
+    ].map(keypad_type => [
+        keypad_type,
+        get_best_paths_data(keypad_type),
+    ])
+);
+
+const get_best_path_for_keypad_type_between = (keypad_type, from_state, to_state) => {
+    // assuming all entries have a single element after computation above...
+    return best_paths_data[keypad_type]?.best_paths_matrix?.[from_state]?.[to_state]
+        ?.map(path_element => path_element);  // copy to prevent caller from modifying internal structure
+};
+
+vars({
+    changes_char_to_char,
+    get_best_path_for_keypad_type_between,
+});
+
+</bq-cell>
+<bq-cell id="id-c604ae51-7c3b-42b0-b567-2342727635bd" data-type="markdown">
+The final optimal transition paths for directional keypads are:
+* "A" to:
+  * "A": nothing
+  * "^": "<"
+  * ">": "v"
+  * "v": "v<" **or** "&lt;v"  **!!!**
+  * "<": "v<<"
+* "^" to:
+  * "A": ">"
+  * "^": nothing
+  * ">": "v>" **or** ">v"  **!!!**
+  * "v": "v"
+  * "<": "v<"
+* ">" to:
+  * "A": "^"
+  * "^": "<^" **or** "^<"  **!!!**
+  * ">": nothing
+  * "v": "<"
+  * "<": "<<"
+* "v" to:
+  * "A": ">^" **or** "^>"  **!!!**
+  * "^": "^"
+  * ">": ">"
+  * "v": nothing
+  * "<": "<"
+* "<" to:
+  * "A": ">>^"
+  * "^": ">^"
+  * ">": ">>"
+  * "v": ">"
+  * "<": nothing
+</bq-cell>
+<bq-cell id="id-782f212a-de10-4ce9-8c93-a8a40d0b317e" data-type="javascript" class="show-in-presentation">// define a new solver
+
+const validate_requirements_for_solve = () => {
+    if (!bqe.keypads) {
+        throw new Error('init_data() must have been called before calling this function');
+    }
+
+    if (bqe.keypads.length < 3) {
+        throw new Error(`at least three keypads are expected (user, intermediates..., door) but found ${bqe.keypads.length}`);
+    }
+
+    // it is assumed that all keypads are of type 'directional' except the last which is of type 'numeric':
+    if ( !bqe.keypads.every((keypad, keypad_index) => {
+        return ( (keypad_index === bqe.keypads.length-1 && keypad.type === 'numeric') ||
+                 (keypad.type === 'directional') );
+    }) ) {
+        throw new Error('all keypads must be of type "directional" except the last which must be of type "numeric"');
+    }
+};
+
+// THIS IS FAST BUT GIVES CORRECT BUT NONOPTIMAL ANSWERS....
+const greedy_solve = async (output, options=null) => {
+    const {
+        make_check_tick,
+        get_best_path_for_keypad_type_between,
+    } = bqe;
+
+    const {
+        keypads   = bqe.keypads,
+        trace_mod = 1,
+        trace_fn  = null,
+    } = (options ?? {});
+
+    validate_requirements_for_solve();
+
+    let work_count = 0;
+
+    if (typeof output !== 'string') {
+        throw new Error('output must be a string');
+    }
+
+    const check_tick = make_check_tick(100);
+
+    const door_keypad = keypads[keypads.length-1];
+    const processing_keypads = keypads.slice(1);  // leave out user keypad
+    const door_keypad_button_labels = door_keypad.get_labels();
+    const adjusted_output = output.replaceAll('a', 'A');  // permit 'a' for 'A' in specified output
+    if (!Array.from(adjusted_output).every(output_state => door_keypad_button_labels.includes(output_state))) {
+        throw new Error(`output contains characters not handled by the door keypad`);
+    }
+    // working last to first...
+    const transform = async (output, keypad) => {
+        const result_array = [];
+        const output_array = Array.from(output);
+        for (let output_state_index = 0; output_state_index < output_array.length; output_state_index++) {
+            await check_tick();
+            const output_state = output_array[output_state_index];
+            const previous_output_state = (output_state_index === 0) ? 'A' : output_array[output_state_index-1];  // keypads start in state 'A'
+            const best_path = get_best_path_for_keypad_type_between(keypad.type, previous_output_state, output_state);
+            // best_path will always be found
+            const path_states = best_path.map(path_element => path_element.dir.ch);
+            path_states.push('A');  // each path is terminated with 'A'
+            result_array.push(path_states.join(''));
+        }
+        return result_array.join('');
+    };
+    const iteration_results = [
+        adjusted_output,  // for the last keypad; working last to first
+    ];
+    for (let processing_keypad_index = processing_keypads.length; --processing_keypad_index >= 0; ) {
+        const keypad = processing_keypads[processing_keypad_index];
+        await check_tick();
+        if (work_count++ % trace_mod === 0) {
+            if (await trace_fn?.(work_count, () => `working...`)) {
+                return 'STOPPED';
+            }
+        }
+        const current_output = iteration_results[0];
+        iteration_results.unshift(await transform(current_output, keypad));  // add to beginning
+    }
+    return iteration_results;
+};
+
+vars({
+    greedy_solve,
+});
+
+</bq-cell>
+<bq-cell id="id-bc0a54ea-bc81-43b0-8e2c-57a0c7b74756" data-type="javascript" class="show-in-presentation">// define a yet another new solver
+
+// THIS IS SLOW AND MEMORY HUNGRY...
+// example: cfg = bqe.create_configuration(2); stop = false; bqe.iterative_solve('029A', { robots: cfg.robots, trace_fn: (work_count, get_info, regardless) => { console.log('TRACE:', work_count, get_info()); return stop; }, trace_mod: 1 }).then(result => console.log('>>> RESULT:', result));
+const iterative_solve = async (output, options=null) => {
+    const {
+        make_check_tick,
+        simulate,
+    } = bqe;
+
+    const {
+        robots    = bqe.robots,
+        trace_mod = 1,
+        trace_fn,
+    } = (options ?? {});
+
+    if (typeof output !== 'string' || !output.match(/^[0-9aA]*$/)) {
+        throw new Error('improper output specified');
+    }
+
+    if (output === '') {
+        return '';  // trivial case
+    }
+
+    const check_tick = make_check_tick(100);
+
+    let work_queue = null;
+    const add_work = async (input, output, work_count) => {
+        work_queue ??= new Map();
+        const key0 = output.length, key1 = input.length;
+        const work_queue_keys = Array.from(work_queue.keys());
+        if (key0 >= Math.max( ...work_queue_keys )) {  // otherwise, don't add this work
+            for (const key of work_queue_keys) {
+                if (key < key0) {
+                    await trace_fn?.(work_count, () => `deleting shorter key from work_queue: ${key}`, true);
+                    work_queue.delete(key);
+                }
+            }
+            let work_queue_item = work_queue.get(key0);
+            if (!work_queue_item) {
+                work_queue_item = new Map();
+                work_queue.set(key0, work_queue_item);
+            }
+            let work_items = work_queue_item.get(key1);
+            if (!work_items) {
+                work_items = [];
+                work_queue_item.set(key1, work_items);
+            }
+//            work_items.unshift({ input, output });
+            work_items.push({ input, output });
+        }
+    };
+    const get_work = () => {
+        const key_selector0 = Math.max, key_selector1 = Math.min;
+        if (!work_queue) {
+            return null;
+        } else {
+            const work_queue_item_key = key_selector0( ...work_queue.keys() );
+            const work_queue_item = work_queue.get(work_queue_item_key);
+            const work_items_key = key_selector1( ...work_queue_item.keys() );
+            const work_items = work_queue_item.get(work_items_key);
+            const result = work_items.pop();
+            if (work_items.length === 0) {
+                work_queue_item.delete(work_items_key);
+                if (work_queue_item.size === 0) {
+                    work_queue.delete(work_queue_item_key);
+                    if (work_queue.size === 0) {
+                        work_queue = null;
+                    }
+                }
+            }
+            return result;
+        }
+    };
+    get_work_queue_size = () => {
+        return work_queue?.values().reduce(
+            (total, submap) => {
+                return total + submap.values().reduce(
+                    (subtotal, work_items) => {
+                        return subtotal + work_items.reduce(
+                            (total_inputs_length, { input }) => {
+                                return total_inputs_length + input.length;
+                            },
+                            0,  // reduce initializer
+                        );
+                    },
+                    0,  // reduce initializer
+                );
+            },
+            0,  // reduce initializer
+        )
+        ?? 0;
+    };
+
+    const fragments = [
+        '',
+
+        '<', '>', '^', 'v',
+
+        '>^',
+        '>v',
+
+//        '<^', 
+        '<v',
+
+        '^>',
+        'v>',
+
+        '^<',
+        'v<',
+
+        '>>^', 'v<<',
+        '<v<', '>^>',
+    ];
+
+    await add_work('', '', 0);
+    for (let work_count = 0, work, largest_output_size = 0; !!(work = get_work()); work_count++) {
+        const { input: work_input, output: work_output } = work;
+
+        largest_output_size = Math.max(largest_output_size, work_output.length);
+
+        await check_tick();
+        if (work_count % trace_mod === 0) {
+            if (await trace_fn?.(work_count, () => `{${get_work_queue_size()}}[${largest_output_size}] input: "${work_input}" -> "${work_output}"`)) {
+                return '(STOPPED)';
+            }
+        }
+
+        for (const fragment of fragments) {
+            const new_input  = `${work_input}${fragment}A`;
+            const new_result = simulate(new_input, robots, true);
+            if (new_result !== null) {
+                const new_result_output = new_result.output;
+                if (new_result_output === output) {
+                    await trace_fn?.(work_count, () => `found solution: ${new_input}`, true);
+                    return new_input;
+                } else if (output.startsWith(new_result_output)) {
+                    await add_work(new_input, new_result_output, work_count);
+                }
+            }
+        }
+    }
+    return null;  // nothing found
+};
+
+keepalive();
+vars({
+    iterative_solve,
+});
+</bq-cell>
+<bq-cell id="id-7535bd75-6c95-4c0a-8811-8b97f866964a" data-type="javascript" class="show-in-presentation">// define a trace mechanism
+
+const create_trace_mechanism = (ocx, options=null) => {
+    const {
+        trace_enabled       = true,
+        trace_initially_on  = true,
+        trace_fn_mod        = 10,
+        height              = 20,  // ch units
+    } = (options ?? {});
+
+    let trace_ocx;
+    let trace_checkbox;
+
+    let stopped = false;
+
+    let trace_iterations = 0;
+    let trace_fn;
+
+    if (!trace_enabled) {
+        trace_fn = async () => { return stopped; };
+    } else {
+        const stop_button = ocx.create_child({
+            tag: 'button',
+            innerText: 'Stop',
+        });
+        stop_button.onclick = () => { stopped = true; };
+
+        const trace_controls = ocx.create_child({
+            children: [
+                {
+                    tag: 'label',
+                    children: [
+                        'Trace',
+                        {
+                            tag: 'input',
+                            attrs: {
+                                type: 'checkbox',
+                            },
+                        },
+                    ],
+                },
+                {
+                    tag:       'button',
+                    innerText: 'Clear',
+                    style: {
+                        'font-size':   'x-small',
+                        'margin-left': '0.5ch',
+                    },
+                }
+            ],
+        });
+        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+        if (trace_initially_on) {
+            trace_checkbox.checked = true;
+        }
+
+        const trace_clear_button = trace_controls.querySelector('button');
+        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+        trace_ocx = ocx.create_child_ocx({
+            style: {
+                'font-family':          'monospace',
+                'font-size':            'x-small',
+                'white-space':          'nowrap',
+                'white-space-collapse': 'preserve',
+                'height':               `${height}ch`,
+                'max-width':            'fit-content',
+                padding:                '1em',
+                overflow:               'auto',
+                border:                 '1px solid var(--theme-ou-rc)',
+            },
+        });
+
+        let trace_iterations = 0;
+        trace_fn = async (work_count=0, get_info=undefined, regardless=false) => {  // returns true iff !stopped
+            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
+                if (trace_enabled && trace_checkbox.checked) {
+                    const info = get_info?.() ?? '(no information given)';
+                    const output_data = sprintf('%-8d %s', work_count, info);
+                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+                    const bounding_rect = trace_output_element.getBoundingClientRect();
+                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
+                        // only scroll back into view if already at least partially showing
+                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
+                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
+                    }
+                }
+            }
+            return stopped;
+        };
+    }
+
+    // return controls
+    return {
+        trace_fn,             // async (work_count, get_info, regardless) => stopped; no-op async function if !trace_enabled
+        trace_fn_mod,         // from options
+        trace_ocx,            // undefined if !trace_enabled
+        trace_checkbox,       // undefined if !trace_enabled
+        stop:                 () => { stopped = true; },
+        get_stopped:          () => stopped,
+        get_trace_iterations: () => trace_iterations,
+    };
+};
+
+keepalive();
+vars({
+    create_trace_mechanism,
+});
+</bq-cell>
+<bq-cell id="id-62cffdf5-1205-4880-9070-403903223087" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
+keepalive();
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:       true,
+    trace_initially_on:  true,
+    trace_fn_mod:        1,
+    height:              30,
+});
+const trace_mod = 1;
+bqe.trace_fn = trace_fn;//!!!
+
+
+
+//----------------------------------------------------------------------
+
+const message_ocx = ocx.create_child_ocx({
+    style: {
+        'white-space':          'nowrap',
+        'white-space-collapse': 'preserve',
+        'min-width':            '100%',
+    },
+});
+await message_ocx.print__();
+await message_ocx.render_text('Computing results', {
+    style: {
+        'font-weight':   'bold',
+        'font-size':     'large',
+        'margin-bottom': '1em',
+    },
+});
+
+const solve = bqe.async_recursive_solve;
+
+sleep(0.01).then(async () => {
+    (trace_ocx?.element ?? message_ocx._element).scrollIntoView();
+
+    bqe.results = [];
+    for (const code of bqe.codes) {
+        await message_ocx.println(`computing sequence for "${code}"...`);
+        await next_tick();
+
+        await trace_ocx?.print__();
+
+        const cfg = bqe.create_configuration(bqe.intermediate_keypad_count);  // match global configuration
+        const solutions = await solve(code, { robots: cfg.robots, trace_fn, trace_mod })
+        const result = {
+            code,
+            solutions: solutions.filter(solution => solution.length === solutions[0].length),
+            sequence:  solutions[0],
+        };
+        bqe.results.push(result);
+
+        await message_ocx.println(`    ${result.sequence}`);
+        await message_ocx.println();
+    }
+    await trace_ocx?.print__();
+    await trace_ocx?.println('DONE');
+    trace_ocx?.element.scrollTo(0, trace_ocx?.element.scrollHeight);  // scroll to the last line ("DONE")
+
+    const sum_of_complexities = bqe.results
+          .map(({ code, sequence }) => parseInt(code)*sequence.length)
+          .reduce((total, n) => total+n);
+
+    await message_ocx.print__();
+    const answer_element = await message_ocx.markdown(`
+# Answer to Part One
+The sum of the complexities of the given codes is **${sum_of_complexities}**.
+`);
+
+    // finally, scroll answer_element into view
+    answer_element.scrollIntoView();
+});
+
+
+//----------------------------------------------------------------------
+
+bqe.init_data();
+//bqe.init_data(25);
+
+await ocx.println();
+await ocx.print__();
+await ocx.markdown('# Simulator');
+const {
+    reset_button,
+    manual_input_element,
+    manual_input_button,
+} = await bqe.create_simulator_ui(ocx, 0.01);
+
+sleep(0.1).then(() => { ocx.element.scrollIntoView(); manual_input_element.focus(); });
+
+</bq-cell>
+<bq-cell id="id-b0d4d967-4550-4c08-8de0-e1fd1359c0f9" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+const description = `
+--- Part Two ---
+
+Just as the missing Historian is released, The Historians realize that a second member of their search party has also been missing this entire time!
+
+A quick life-form scan reveals the Historian is also trapped in a locked area of the ship. Due to a variety of hazards, robots are once again dispatched, forming another chain of remote control keypads managing robotic-arm-wielding robots.
+
+This time, many more robots are involved. In summary, there are the following keypads:
+
+    One directional keypad that you are using.
+    25 directional keypads that robots are using.
+    One numeric keypad (on a door) that a robot is using.
+
+The keypads form a chain, just like before: your directional keypad controls a robot which is typing on a directional keypad which controls a robot which is typing on a directional keypad... and so on, ending with the robot which is typing on the numeric keypad.
+
+The door codes are the same this time around; only the number of robots and directional keypads has changed.
+
+Find the fewest number of button presses you'll need to perform in order to cause the robot in front of the door to type each code. What is the sum of the complexities of the five codes on your list?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-f58b167f-e5e0-42b4-bb95-4264f9dd5f9d" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+
+return;//!!!
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two
+!!!
+`);
+
+</bq-cell>
+</body>
+</html>
