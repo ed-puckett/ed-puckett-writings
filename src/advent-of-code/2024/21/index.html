@@ -5,7 +5,7 @@
     <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
 </head>
 <body>
-<bq-cell id="id-a76e5a79-aa09-463e-a1d7-308a230d4ff7" data-type="javascript">
+<bq-cell id="id-ad75d5e4-4089-4d8f-894f-4bc56c7001ca" data-type="javascript">
 const ccx = ocx.create_child_ocx({
     style: {
         'max-width': '100ch',
@@ -122,7 +122,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-d7f5dc52-0ca6-4b0d-bda0-efbf7cf03980" data-type="javascript" class="show-in-presentation">// utility class definitions
+<bq-cell id="id-678a7c25-8a1f-444f-81de-0a4fd2d7d786" data-type="javascript" class="show-in-presentation">// utility class definitions
 
 class Direction {
     // public:
@@ -847,7 +847,7 @@ vars({
 });
 
 </bq-cell>
-<bq-cell id="id-e1419adc-0b1f-410e-9817-4bb3f3cbe9c1" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
+<bq-cell id="id-6b15bd46-5d9e-4dc7-b652-b2a4188509b5" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -856,7 +856,7 @@ if (typeof input_data !== 'string') {
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
 </bq-cell>
-<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// utility definitions
+<bq-cell id="id-ad11a0e7-f7e2-404c-a2bd-e12f1d33d0db" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const {
     Direction,
@@ -912,6 +912,17 @@ const make_check_tick = (the_tick_interval_ms=200) => {
         }
     }
 };
+
+const changes_char_to_char = (str) => Array.from(str)  // used in best path determination
+      .reduce(
+          ({ last_char, change_count }, char) => {
+              return {
+                  last_char:    char,
+                  change_count: (char === last_char) ? change_count : change_count+1,
+              };
+          },
+          { last_char: null, change_count: 0 }  // reduce initializer
+      ).change_count;
 
 const numeric_keypad_spec = {
     type: 'numeric',
@@ -1069,13 +1080,14 @@ vars({
     solution_output_options,
     codes,
     make_check_tick,
+    changes_char_to_char,
     create_numeric_keypad,
     create_directional_keypad,
     create_configuration,
     init_data,
 });
 </bq-cell>
-<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// define a simulator
+<bq-cell id="id-2da69ef8-32ab-4833-a4af-89702050a0d0" data-type="javascript" class="show-in-presentation">// define a simulator
 
 const create_simulator_ui = async (ocx, send_interval=0.05) => {
     const {
@@ -1361,7 +1373,7 @@ vars({
     simulate,
 });
 </bq-cell>
-<bq-cell id="id-d6674f65-03bb-46ac-8df3-09baf963648c" data-type="javascript" class="show-in-presentation">// recursive solution (slow but correct)
+<bq-cell id="id-a46dc0db-02b5-47c4-913c-42e0552a2724" data-type="javascript" class="show-in-presentation">// recursive solution (slow but correct)
 
 // returns array of solutions sorted shortest to longest
 // first entry is optimal in terms of length
@@ -1405,7 +1417,7 @@ const recursive_solve = (output, options=null) => {
 
 // returns array of solutions sorted shortest to longest
 // first entry is optimal in terms of length
-const async_recursive_solve = async (output, options=null) => {
+const async_recursive_solve = async (desired_output, options=null) => {
     const {
         make_check_tick,
     } = bqe;
@@ -1419,10 +1431,10 @@ const async_recursive_solve = async (output, options=null) => {
     const check_tick = make_check_tick(200);
     let work_count = 0;
 
-    trace_fn?.(work_count, () => `begin solve "${output}"`, true);
+    trace_fn?.(work_count, () => `begin solve "${desired_output}"`, true);
 
     // iterate robots in reverse, outputs is the alternative outputs from subsequent stages
-    let outputs = [ output ];
+    let outputs = [ desired_output ];
     for (let robot_index = robots.length; --robot_index >= 0; ) {
         const stage = robot_index;
         const robot = robots[robot_index];
@@ -1430,7 +1442,9 @@ const async_recursive_solve = async (output, options=null) => {
         for (const output of outputs) {
             await check_tick();
             if (work_count++ % trace_mod === 0) {
-                trace_fn?.(work_count, () => `stage ${stage}| output: ${output}`);
+                if (await trace_fn?.(work_count, () => `"${desired_output}" stage ${stage}| output: ${output}`)) {
+                    throw new Error('STOPPED');
+                }
             }
             // iterate output, inputs is the inputs fragments that will produce output in subsequent stage, robot starts in state 'A' at each stage
             let inputs = [ '' ], robot_state = 'A';
@@ -1489,13 +1503,47 @@ const async_recursive_solve = async (output, options=null) => {
     //     .toSorted((a, b) => (a.length - b.length));
 };
 
+// inputs: array of directional keypad inputs consisting of characters matched by /[<>^vA]/.
+// returns filtered inputs
+const optimize_directional_keypad_inputs = (inputs) => {
+    const {
+        changes_char_to_char,
+    } = bqe;
+
+    if (!Array.isArray(inputs) || !inputs.every(input => (typeof input === 'string' && input.match(/^[<>^vA]*$/)))) {
+        throw new Error('inputs must be an array of strings consisting only of the characters "<", ">", "^", "v" or "A"');
+    }
+
+    if (inputs.length === 0) {
+        return inputs;
+    } else {
+        const min_length = inputs.reduce((min_length, input) => ((min_length <= input.length) ? min_length : input.length), Infinity);
+        const extraneous_pattern = /([<][v][<])|([>][\^][>])/;  // "<v<" is better handled by "v<<" and ">^>" is better handled by ">>^"
+        const shortest_inputs_without_extraneous = inputs
+              .filter(input => input.length === min_length && !input.match(extraneous_pattern))
+        const annotated_inputs = shortest_inputs_without_extraneous
+              .map(input => {
+                  return {
+                      input,
+                      cx: changes_char_to_char(input),
+                  };
+              });
+        const min_cx = annotated_inputs.reduce((min_cx, { cx }) => ((min_cx <= cx) ? min_cx : cx), Infinity);
+        const optimized_inputs = annotated_inputs
+              .filter(({ cx }) => cx === min_cx)
+              .map(({ input }) => input);  // remove the now-redundant annotations
+        return optimized_inputs;
+    }
+};
+
 keepalive();
 vars({
     recursive_solve,
     async_recursive_solve,
+    optimize_directional_keypad_inputs,
 });
 </bq-cell>
-<bq-cell id="id-1079ba0b-4e88-4845-8bd3-5d30788595e9" data-type="markdown"># Some thoughts on performance and implementation
+<bq-cell id="id-99ce5aa9-1495-4d03-82f1-cbecdb7787dd" data-type="markdown"># Some thoughts on performance and implementation
 
 The implementation of solve() above is fairly slow even for 2 intermediate robots.  Additionally, it is synchronous and blocks the browser while calculation.  The calculation for each code takes many seconds.  So one thing that should be done is to reimplement solve() is be asynchronous.  This will require unrolling all the map/reduce logic that it currently uses.
 
@@ -1551,30 +1599,24 @@ Thninking about the particulars of the directional keypads, and the way each add
         * "<": nothing
     * **HOWEVER**: note that there are four ambiguous transition paths for the directional keypads, and this will be explored next....
 </bq-cell>
-<bq-cell id="id-964c0b95-5170-4108-a27d-d16bca7dbacb" data-type="javascript" class="show-in-presentation">// determine best paths among the ambiguous ones for keypads
+<bq-cell id="id-09d77a05-c049-4ef6-a25a-03d7c4645f81" data-type="javascript" class="show-in-presentation">// determine best paths among the ambiguous ones for keypads
 
-const changes_char_to_char = (str) => Array.from(str)  // used in best path determination
-      .reduce(
-          ({ last_char, change_count }, char) => {
-              return {
-                  last_char:    char,
-                  change_count: (char === last_char) ? change_count : change_count+1,
-              };
-          },
-          { last_char: null, change_count: 0 }  // reduce initializer
-      ).change_count;
-
-
-// get_best_paths_matrix() needs a directional_best_paths_matrix to compute
+// get_best_paths_data() needs a directional_best_paths_matrix to compute
 // transforms past stage 1.  This is set as soon as possible below, but
 // requires that get_best_paths_matrix() be called with 'directional' first.
 let directional_best_paths_matrix;
 
 const get_best_paths_data = (keypad_type) => {
+    const {
+        create_numeric_keypad,
+        create_directional_keypad,
+        changes_char_to_char,
+    } = bqe;
+
     const get_example_keypad = (keypad_type) => {
         switch (keypad_type) {
-        case 'numeric':     return bqe.create_numeric_keypad();
-        case 'directional': return bqe.create_directional_keypad();
+        case 'numeric':     return create_numeric_keypad();
+        case 'directional': return create_directional_keypad();
         default:            throw new Error(`unknown keypad_type ${keypad_type}`);
         }
     };
@@ -1876,13 +1918,13 @@ const get_best_path_for_keypad_type_between = (keypad_type, from_state, to_state
 };
 
 vars({
-    changes_char_to_char,
     get_best_path_for_keypad_type_between,
 });
 
 </bq-cell>
-<bq-cell id="id-c604ae51-7c3b-42b0-b567-2342727635bd" data-type="markdown">
+<bq-cell id="id-c93ea5f8-cf4b-453a-8d63-3de8e131fd78" data-type="markdown">
 The final optimal transition paths for directional keypads are:
+# OOPS, it didn't work
 * "A" to:
   * "A": nothing
   * "^": "<"
@@ -1914,20 +1956,24 @@ The final optimal transition paths for directional keypads are:
   * "v": ">"
   * "<": nothing
 </bq-cell>
-<bq-cell id="id-782f212a-de10-4ce9-8c93-a8a40d0b317e" data-type="javascript" class="show-in-presentation">// define a new solver
+<bq-cell id="id-ff1e94d1-0094-499b-8244-f0f3fe37735e" data-type="javascript" class="show-in-presentation">// define a new solver
 
 const validate_requirements_for_solve = () => {
-    if (!bqe.keypads) {
+    const {
+        keypads,
+    } = bqe;
+
+    if (!keypads) {
         throw new Error('init_data() must have been called before calling this function');
     }
 
-    if (bqe.keypads.length < 3) {
-        throw new Error(`at least three keypads are expected (user, intermediates..., door) but found ${bqe.keypads.length}`);
+    if (keypads.length < 3) {
+        throw new Error(`at least three keypads are expected (user, intermediates..., door) but found ${keypads.length}`);
     }
 
     // it is assumed that all keypads are of type 'directional' except the last which is of type 'numeric':
-    if ( !bqe.keypads.every((keypad, keypad_index) => {
-        return ( (keypad_index === bqe.keypads.length-1 && keypad.type === 'numeric') ||
+    if ( !keypads.every((keypad, keypad_index) => {
+        return ( (keypad_index === keypads.length-1 && keypad.type === 'numeric') ||
                  (keypad.type === 'directional') );
     }) ) {
         throw new Error('all keypads must be of type "directional" except the last which must be of type "numeric"');
@@ -2002,7 +2048,7 @@ vars({
 });
 
 </bq-cell>
-<bq-cell id="id-bc0a54ea-bc81-43b0-8e2c-57a0c7b74756" data-type="javascript" class="show-in-presentation">// define a yet another new solver
+<bq-cell id="id-372c668a-d09f-49a9-bb22-7cbb00789e4a" data-type="javascript" class="show-in-presentation">// define a yet another new solver
 
 // THIS IS SLOW AND MEMORY HUNGRY...
 // example: cfg = bqe.create_configuration(2); stop = false; bqe.iterative_solve('029A', { robots: cfg.robots, trace_fn: (work_count, get_info, regardless) => { console.log('TRACE:', work_count, get_info()); return stop; }, trace_mod: 1 }).then(result => console.log('>>> RESULT:', result));
@@ -2101,20 +2147,16 @@ const iterative_solve = async (output, options=null) => {
 
         '<', '>', '^', 'v',
 
-        '>^',
-        '>v',
+        '>^', '>v',
 
 //        '<^', 
         '<v',
 
-        '^>',
-        'v>',
+        '^>','v>',
 
-        '^<',
-        'v<',
+        '^<', 'v<',
 
         '>>^', 'v<<',
-        '<v<', '>^>',
     ];
 
     await add_work('', '', 0);
@@ -2152,7 +2194,7 @@ vars({
     iterative_solve,
 });
 </bq-cell>
-<bq-cell id="id-7535bd75-6c95-4c0a-8811-8b97f866964a" data-type="javascript" class="show-in-presentation">// define a trace mechanism
+<bq-cell id="id-f107eb0a-1fbe-4c07-90b9-f35d944a9bb5" data-type="javascript" class="show-in-presentation">// define a trace mechanism
 
 const create_trace_mechanism = (ocx, options=null) => {
     const {
@@ -2262,7 +2304,7 @@ vars({
     create_trace_mechanism,
 });
 </bq-cell>
-<bq-cell id="id-62cffdf5-1205-4880-9070-403903223087" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-b16a63b0-0110-46d1-b97b-f86ac4de5e52" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
 const {
@@ -2302,6 +2344,8 @@ await message_ocx.render_text('Computing results', {
     },
 });
 
+const intermediate_keypad_count = 2;  // given in problem
+
 const solve = bqe.async_recursive_solve;
 
 sleep(0.01).then(async () => {
@@ -2314,12 +2358,24 @@ sleep(0.01).then(async () => {
 
         await trace_ocx?.print__();
 
-        const cfg = bqe.create_configuration(bqe.intermediate_keypad_count);  // match global configuration
-        const solutions = await solve(code, { robots: cfg.robots, trace_fn, trace_mod })
+        const cfg = bqe.create_configuration(intermediate_keypad_count);
+        let solutions;
+        try {
+            solutions = await solve(code, { robots: cfg.robots, trace_fn, trace_mod })
+        } catch (error) {
+            if (get_stopped()) {
+                message_ocx.render_error('STOPPED');
+                return;
+            } else {
+                throw error;
+            }
+        }
+
+        const optimized_solutions = bqe.optimize_directional_keypad_inputs(solutions);
         const result = {
             code,
-            solutions: solutions.filter(solution => solution.length === solutions[0].length),
-            sequence:  solutions[0],
+            solutions: optimized_solutions,
+            sequence:  optimized_solutions[0],
         };
         bqe.results.push(result);
 
@@ -2362,7 +2418,7 @@ const {
 sleep(0.1).then(() => { ocx.element.scrollIntoView(); manual_input_element.focus(); });
 
 </bq-cell>
-<bq-cell id="id-b0d4d967-4550-4c08-8de0-e1fd1359c0f9" data-type="javascript">await print__();
+<bq-cell id="id-c6bea0b5-11da-4358-8ebc-7097fce95b06" data-type="javascript">await print__();
 
 const ccx = ocx.create_child_ocx({
     style: {
@@ -2398,7 +2454,257 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-f58b167f-e5e0-42b4-bb95-4264f9dd5f9d" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-9c1b3b06-2ba7-4033-b7c3-e238872ad7d3" data-type="javascript" class="show-in-presentation">// explore fragment generation in directional keypads
+
+// A "fragment" is sequences of transitions for directional keypads that are
+// bracketed by an 'A' state (i.e., start in 'A' and end int 'A').
+//
+// "sequences" are a sequences of zero or more fragments each followed by 'A'.
+//
+// Here is a transition matrix for directional keypads with only direct paths:
+//
+//     A: { A: '',          <: '<v<, v<<',  >: 'v',       ^: '<',       v: '<v, v<', }
+//     <: { A: '>>^, >^>',  <: '',          >: '>>',      ^: '>^',      v: '>',      }
+//     >: { A: '^',         <: '<<',        >: '',        ^: '^<, <^',  v: '<',      }
+//     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',        v: 'v',      }
+//     v: { A: '>^, ^>',    <: '<',         >: '>',       ^: '^',       v: '',       }
+//
+// eliminating "zigzags":
+//     
+//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '<v, v<', }
+//     <: { A: '>>^,        <: '',          >: '>>',      ^: '>^',      v: '>',      }
+//     >: { A: '^',         <: '<<',        >: '',        ^: '^<, <^',  v: '<',      }
+//     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',        v: 'v',      }
+//     v: { A: '>^, ^>',    <: '<',         >: '>',       ^: '^',       v: '',       }
+//
+// eliminating opposing (<>, ><, ^v, v^):
+//     
+//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '<v, v<', }
+//     <: { A: '>>^',        <: '',                        ^: '>^',      v: '>',      }
+//     >: { A: '^',                         >: '',        ^: '^<, <^',  v: '<',      }
+//     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',                     }
+//     v: { A: '>^, ^>',    <: '<',         >: '>',                     v: '',       }
+//
+// This leaves the following as "core" fragments.  Out of all the possibilities,
+// there are 15 "core" fragments.  As discussed earlier, only the length-two
+// fragments are ambiguous.
+//
+//     '',
+//     '<', '>', '^', 'v',
+//     '<^', '<v', '>^', '>v',
+//     '^<', '^>', 'v<', 'v>',
+//     'v<<', '>>^',
+//
+// with only four "ambiguous" transitions:
+//
+//    ambiguous transition pairs: '<v, v<' and '^<, <^' and '>v, v>' and '>^, ^>'
+//
+// Now the goal is to explore how these evolve and see if there is a pattern
+// to the "optimal" evolution of each.  Here, "optimal" means the evolution
+// generates the shortest possible sequence on higher-up stages.
+
+// (Why no '>>' or '<<'?  Because '<>' and '><' are not useful.)
+const core_fragments_set = new Set([
+    '',
+    '<', '>', '^', 'v',
+    '<^', '&lt;v', '>^', '>v',
+    '^<', '^>', 'v<', 'v>',
+    'v<<', '>>^',
+]);
+
+const example_directional_keypad = bqe.create_directional_keypad();  // used by evolve_fragment(), created once here
+const directional_keypad_labels = example_directional_keypad.get_labels();
+const onlydirectional_keypad_labels_line_re = new RegExp(`^[${directional_keypad_labels.join('').replace('^', '\\^')}]*$`);
+
+const zigzag_re = /v[<>]v|\^[<>]\^|<[v^]<|>[v^]>/;
+
+// Given a two states, which must be valid directional keypad labels, return an
+// array of sequences for the next stage.
+// The option "unrestricted", if false (the default), causes only the "core"
+// fragments to be used in the generation of the sequences.  Otherwise, if
+// unrestricted is true, then any sequence of directional keypad labels will be
+// used when generating each of the stages.
+// The option "allow_zigzag", if false, eliminates "zigzag" sequences, otherwise
+// zigzag sequences are allowed in generation.
+const sequences_between_states = (state, next_state, options=null) => {
+    const {
+        unrestricted = false,
+        allow_zigzag = false,
+    } = (options ?? {});
+
+    let sequences = example_directional_keypad.direct_paths_between(state, next_state)
+        .map(path => path.map(({ dir: { ch } }) => ch).join(''));
+    if (!allow_zigzag) {
+        sequences = sequences.filter(path => !path.match(zigzag_re));
+    }
+    if (!unrestricted) {
+        sequences = sequences.filter(path_dir_chars => core_fragments_set.has(path_dir_chars));
+    }
+    return sequences;
+};
+
+// Given a sequence, return an array of sequences for the next stage.
+// The option "unrestricted", if false (the default), causes only the "core"
+// fragments to be used in the generation of the sequences.  Otherwise, if
+// unrestricted is true, then any sequence of directional keypad labels will be
+// used when generating each of the stages.
+// The option "allow_zigzag", if false, eliminates "zigzag" sequences, otherwise
+// zigzag sequences are allowed in generation.
+const next_stage_sequences_from_sequence = (sequence, options=null) => {
+    const {
+        unrestricted = false,
+        allow_zigzag = false,
+    } = (options ?? {});
+
+    return Array.from(sequence)
+        .reduce(
+            ({ state, sequence_extensions }, next_state) => {
+                return {
+                    state: next_state,
+                    sequence_extensions: sequence_extensions
+                        .flatMap((sequence_extension) => {
+                            return sequences_between_states(state, next_state, options)
+                                .map(path_dir_chars => `${sequence_extension}${path_dir_chars}A`);  // end with 'A'
+                        }),
+                };
+            },
+            { state: 'A', sequence_extensions: [ '' ] },  // reduce initializer; start in state 'A' and build extensions starting with ''
+        )
+        .sequence_extensions;
+};
+
+// Returns a "fragment evolution" which is an object that contains "stages",
+// an array of arrays of sequences and whose size is the given stage_count
+// (default 3), and with the element at index i representing stage i (where
+// the given start_fragment is stage 0).  Each of the elements of the array
+//  at each stage is an array of sequences for that stage.  The returned object
+// also contains "min_length" and "max_length" that pertain to the last stage.
+// The option "unrestricted", if false (the default), causes only the "core"
+// fragments to be allowed and be used in the generation of the sequences.
+// Otherwise, if unrestricted is true, then any sequence of directional keypad
+// labels may be specified for start_fragment and any fragment will be used when
+// generating each of the stages.
+// The option "unlimited", if false, stops processing if excessive results are
+// being generated, otherwise no limit is placed on result generation.
+// The option "allow_zigzag", if false, eliminates "zigzag" sequences, otherwise
+// zigzag sequences are allowed in start_fragment and in generation.
+const evolve_fragment = (start_fragment, options=null) => {
+    const {
+        stage_count  = 3,
+        unrestricted = false,
+        unlimited    = false,
+        allow_zigzag = false,
+    } = (options ?? {});
+
+    const excessive_inputs_limit = 5e8;
+
+    if (!Number.isInteger(stage_count) || stage_count <= 0) {
+        throw new Error('stage_count must be a positive integer');
+    }
+
+    if (typeof start_fragment !== 'string' || !start_fragment.match(onlydirectional_keypad_labels_line_re)) {
+        throw new Error(`fragment must be a string composed of only the directional keypad labels "${directional_keypad_labels.toSorted().join('", "')}"`);
+    }
+    if (!unrestricted && !core_fragments_set.has(start_fragment)) {
+        throw new Error(`!unrestricted mode but fragment is not one of the "core" fragments: "${Array.from(core_fragments_set.values()).join('", "')}"`);
+    }
+    if (!allow_zigzag && start_fragment.match(zigzag_re)) {
+        throw new Error('!allow_zigzag mode but start_fragment contains a "zigzag" sequence');
+    }
+
+    const stages = [ [ start_fragment+'A' ] ];  // stage 0 complete (just the start_fragment)
+    for (let stage_index = 1; stage_index < stage_count; stage_index++) {
+        const inputs_array = [];  // array of arrays of sequences that will produce some sequence from stage_index-1
+        for (const sequence of stages[stage_index-1]) {  // loop through sequences from prior stage
+            inputs_array.push(
+                next_stage_sequences_from_sequence(sequence, options)
+            );
+            if (!unlimited && inputs_array.reduce((total, inputs) => (total + inputs.reduce((total, input) => (total + input.length), 0)), 0) >= excessive_inputs_limit) {
+                throw new Error('!unlimited and inputs generation limit exceeded');
+            }
+        }
+        stages.push(inputs_array.flat(1));
+    }
+
+    const annotated_stages = stages
+          .map((sequences, stage_index) => {
+              let noncore_fragments = 0;
+              let min_fragments     = Infinity;
+              let max_fragments     = -Infinity;
+              let min_length        = Infinity;
+              let max_length        = -Infinity;
+
+              for (const seq of sequences) {
+                  const fragments = seq.split('A');
+                  noncore_fragments += fragments.filter(fragment => !core_fragments_set.has(fragment)).length;
+                  const fragment_count = fragments.length - 1;  // subtract 1 for the final 'A'
+                  min_fragments = Math.min(min_fragments, fragment_count);
+                  max_fragments = Math.max(max_fragments, fragment_count);
+                  min_length    = Math.min(min_length, seq.length);
+                  max_length    = Math.max(max_length, seq.length);
+              }
+
+              return {
+                  noncore_fragments,
+                  min_fragments,
+                  max_fragments,
+                  min_length,
+                  max_length,
+                  sequences,
+              };
+          });
+
+    const final_updated_stage = annotated_stages[stage_count-1];
+
+    const result = {
+        final_noncore_fragments: final_updated_stage.noncore_fragments,
+        final_min_fragments:     final_updated_stage.min_fragments,
+        final_max_fragments:     final_updated_stage.max_fragments,
+        final_min_length:        final_updated_stage.min_length,
+        final_max_length:        final_updated_stage.max_length,
+        final_sequence_count:    final_updated_stage.sequences.length,
+
+        annotated_stages,
+        stages,
+
+        stage_count,
+        unrestricted,
+        unlimited,
+        allow_zigzag,
+    };
+
+    return result;
+};
+
+
+const validate_core_fragments = () => {
+    throw new Error('UNIMPLEMENTED');
+};
+
+
+const get_core_fragments = () => {
+    // return a copy to prevent modification of core_fragments_set by caller...
+    return [ ...core_fragments_set.values() ];
+};
+
+const get_core_fragments_set = () => {
+    // return a copy to prevent modification of core_fragments_set by caller...
+    return new Set(core_fragments_set.values());
+};
+
+
+vars({
+    // note: these definitions are only for directional keypads
+    sequences_between_states,
+    next_stage_sequences_from_sequence,
+    evolve_fragment,
+    validate_core_fragments,
+    get_core_fragments,
+    get_core_fragments_set,
+});
+
+</bq-cell>
+<bq-cell id="id-1bc0d0bb-14e5-4783-ae72-dabd5c688f1e" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
 return;//!!!
 
