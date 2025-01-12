@@ -760,7 +760,7 @@ class RobotDisplay {
         // The goal is for the robot displays to be uniform in size regardless
         // of the size of their keypad.  I think I don't know enough CSS to do
         // this in CSS, so here we go:
-        const display_desired_height = `calc(20ch - ${keypad_controls.get_keypad_element().getBoundingClientRect().height}px)`;
+        const display_desired_height = `calc(23ch - ${keypad_controls.get_keypad_element().getBoundingClientRect().height}px)`;
         const display_ocx = child_ocx.create_child_ocx({
             style: {
                 'font-family':          'monospace',
@@ -1375,14 +1375,17 @@ vars({
 </bq-cell>
 <bq-cell id="id-a46dc0db-02b5-47c4-913c-42e0552a2724" data-type="javascript" class="show-in-presentation">// recursive solution (slow but correct)
 
+const zigzag_re = /v[<>]v|\^[<>]\^|<[v^]<|>[v^]>/;  // recognizer for "zigzag" paths for directional keypad
+
 // returns array of solutions sorted shortest to longest
 // first entry is optimal in terms of length
 const recursive_solve = (output, options=null) => {
     const {
-        robots = bqe.robots,
+        robots       = bqe.robots,
+        allow_zigzag = false,
     } = (options ?? {});
 
-    return robots
+    const solutions = robots
         .toReversed()  // work from last to first
         .reduce(  // produce an array of alternative output elements built up in each robot stage
             (outputs, robot) => {  // outputs: array of output elements, each a string
@@ -1413,6 +1416,10 @@ const recursive_solve = (output, options=null) => {
             [ output ],  // reduce initializer; outputs: initially one single output (a string)
         )
         .toSorted((a, b) => (a.length - b.length));
+
+    return allow_zigzag
+        ? solutions
+        : solutions.filter(solution => !solution.match(zigzag_re));
 };
 
 // returns array of solutions sorted shortest to longest
@@ -1423,9 +1430,10 @@ const async_recursive_solve = async (desired_output, options=null) => {
     } = bqe;
 
     const {
-        robots    = bqe.robots,
-        trace_mod = 1,
-        trace_fn  = null,
+        robots       = bqe.robots,
+        allow_zigzag = false,
+        trace_mod    = 1,
+        trace_fn     = null,
     } = (options ?? {});
 
     const check_tick = make_check_tick(200);
@@ -1434,9 +1442,10 @@ const async_recursive_solve = async (desired_output, options=null) => {
     trace_fn?.(work_count, () => `begin solve "${desired_output}"`, true);
 
     // iterate robots in reverse, outputs is the alternative outputs from subsequent stages
+    // note: stage numbering is reverse from robot numbering; higher stages are closer to the user keypad.
     let outputs = [ desired_output ];
     for (let robot_index = robots.length; --robot_index >= 0; ) {
-        const stage = robot_index;
+        const stage = robots.length - robot_index;
         const robot = robots[robot_index];
         const outputs_arrays = [];
         for (const output of outputs) {
@@ -1446,7 +1455,7 @@ const async_recursive_solve = async (desired_output, options=null) => {
                     throw new Error('STOPPED');
                 }
             }
-            // iterate output, inputs is the inputs fragments that will produce output in subsequent stage, robot starts in state 'A' at each stage
+            // iterate output, inputs is the inputs fragments that will produce output in lower stage, robot starts in state 'A' at each stage
             let inputs = [ '' ], robot_state = 'A';
             for (const output_state of output) {
                 const inputs_arrays = [];
@@ -1467,8 +1476,12 @@ const async_recursive_solve = async (desired_output, options=null) => {
         }
         outputs = outputs_arrays.flat(1);
     }
-    return outputs?.
+    const solutions = outputs?.
         toSorted((a, b) => (a.length - b.length));
+
+    return allow_zigzag
+        ? solutions
+        : solutions.filter(solution => !solution.match(zigzag_re));
 
     // return robots
     //     .toReversed()  // work from last to first
@@ -1538,6 +1551,7 @@ const optimize_directional_keypad_inputs = (inputs) => {
 
 keepalive();
 vars({
+    zigzag_re,
     recursive_solve,
     async_recursive_solve,
     optimize_directional_keypad_inputs,
@@ -1602,8 +1616,9 @@ Thninking about the particulars of the directional keypads, and the way each add
 <bq-cell id="id-09d77a05-c049-4ef6-a25a-03d7c4645f81" data-type="javascript" class="show-in-presentation">// determine best paths among the ambiguous ones for keypads
 
 // get_best_paths_data() needs a directional_best_paths_matrix to compute
-// transforms past stage 1.  This is set as soon as possible below, but
-// requires that get_best_paths_matrix() be called with 'directional' first.
+// transforms highest stage (the stage closest to the user keypad).
+// This is set as soon as possible below, but this also requires that
+// get_best_paths_matrix() be called with 'directional' first.
 let directional_best_paths_matrix;
 
 const get_best_paths_data = (keypad_type) => {
@@ -1727,8 +1742,8 @@ const get_best_paths_data = (keypad_type) => {
     }
 
     // Now fix the ambiguous paths, if any.
-    // Note that no ambiguous_path_data entries yet have
-    // their "mitigated" field set to true.
+    // Note that no ambiguous_path_data entries yet have their "mitigated" field
+    // set to true.
     if (ambiguous_path_data.length > 0) {
         const transform = (output, stage) => {
             const result_array = [];
@@ -1748,10 +1763,11 @@ const get_best_paths_data = (keypad_type) => {
             return result_array.join('');
         };
 
-        const get_transformations_stages = (keypad_type === 'directional') ? 2 : 4;
+        const transformations_stage_count = (keypad_type === 'directional') ? 2 : 4;
 
-        const get_transformations = (output, stages=get_transformations_stages) => {
+        const get_transformations = (output, stages=transformations_stage_count) => {
             const transformations = [ output ];  // 0-th transformation is the given output
+            // note: the stage numbering goes from the door keypad toward the user keypad.
             for (let stage = 0, current = output; stage < stages; stage++) {
                 current = transform(current, stage);
                 if (!current) {
@@ -1924,7 +1940,7 @@ vars({
 </bq-cell>
 <bq-cell id="id-c93ea5f8-cf4b-453a-8d63-3de8e131fd78" data-type="markdown">
 The final optimal transition paths for directional keypads are:
-# OOPS, it didn't work
+# OOPS, it did not work
 * "A" to:
   * "A": nothing
   * "^": "<"
@@ -2293,7 +2309,7 @@ const create_trace_mechanism = (ocx, options=null) => {
         trace_fn_mod,         // from options
         trace_ocx,            // undefined if !trace_enabled
         trace_checkbox,       // undefined if !trace_enabled
-        stop:                 () => { stopped = true; },
+        stop:                 (new_state=true) => { stopped = new_state; },
         get_stopped:          () => stopped,
         get_trace_iterations: () => trace_iterations,
     };
@@ -2307,6 +2323,9 @@ vars({
 <bq-cell id="id-b16a63b0-0110-46d1-b97b-f86ac4de5e52" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
+let resolve_results_ready;
+bqe.results_ready = new Promise(resolve => { resolve_results_ready = resolve; });
+
 const {
     trace_fn,
     trace_fn_mod,
@@ -2316,14 +2335,13 @@ const {
     get_stopped,
     get_trace_iterations,
 } = bqe.create_trace_mechanism(ocx, {
-    trace_enabled:       true,
-    trace_initially_on:  true,
-    trace_fn_mod:        1,
-    height:              30,
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       1,
+    height:             30,
 });
 const trace_mod = 1;
 bqe.trace_fn = trace_fn;//!!!
-
 
 
 //----------------------------------------------------------------------
@@ -2374,6 +2392,7 @@ sleep(0.01).then(async () => {
         const optimized_solutions = bqe.optimize_directional_keypad_inputs(solutions);
         const result = {
             code,
+            intermediate_keypad_count,
             solutions: optimized_solutions,
             sequence:  optimized_solutions[0],
         };
@@ -2388,7 +2407,7 @@ sleep(0.01).then(async () => {
 
     const sum_of_complexities = bqe.results
           .map(({ code, sequence }) => parseInt(code)*sequence.length)
-          .reduce((total, n) => total+n);
+          .reduce((total, n) => (total + n), 0);
 
     await message_ocx.print__();
     const answer_element = await message_ocx.markdown(`
@@ -2398,13 +2417,14 @@ The sum of the complexities of the given codes is **${sum_of_complexities}**.
 
     // finally, scroll answer_element into view
     answer_element.scrollIntoView();
+
+    resolve_results_ready();  // allow Part Two code to proceed
 });
 
 
 //----------------------------------------------------------------------
 
 bqe.init_data();
-//bqe.init_data(25);
 
 await ocx.println();
 await ocx.print__();
@@ -2463,7 +2483,7 @@ await ccx.render_text(description, {
 //
 // Here is a transition matrix for directional keypads with only direct paths:
 //
-//     A: { A: '',          <: '<v<, v<<',  >: 'v',       ^: '<',       v: '<v, v<', }
+//     A: { A: '',          <: '&lt;v<, v<<',  >: 'v',       ^: '<',       v: '&lt;v, v<', }
 //     <: { A: '>>^, >^>',  <: '',          >: '>>',      ^: '>^',      v: '>',      }
 //     >: { A: '^',         <: '<<',        >: '',        ^: '^<, <^',  v: '<',      }
 //     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',        v: 'v',      }
@@ -2471,7 +2491,7 @@ await ccx.render_text(description, {
 //
 // eliminating "zigzags":
 //     
-//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '<v, v<', }
+//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '&lt;v, v<', }
 //     <: { A: '>>^,        <: '',          >: '>>',      ^: '>^',      v: '>',      }
 //     >: { A: '^',         <: '<<',        >: '',        ^: '^<, <^',  v: '<',      }
 //     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',        v: 'v',      }
@@ -2479,8 +2499,8 @@ await ccx.render_text(description, {
 //
 // eliminating opposing (<>, ><, ^v, v^):
 //     
-//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '<v, v<', }
-//     <: { A: '>>^',        <: '',                        ^: '>^',      v: '>',      }
+//     A: { A: '',          <: 'v<<',       >: 'v',       ^: '<',       v: '&lt;v, v<', }
+//     <: { A: '>>^',       <: '',                        ^: '>^',      v: '>',      }
 //     >: { A: '^',                         >: '',        ^: '^<, <^',  v: '<',      }
 //     ^: { A: '>',         <: 'v<',        >: '>v, v>',  ^: '',                     }
 //     v: { A: '>^, ^>',    <: '<',         >: '>',                     v: '',       }
@@ -2491,13 +2511,13 @@ await ccx.render_text(description, {
 //
 //     '',
 //     '<', '>', '^', 'v',
-//     '<^', '<v', '>^', '>v',
+//     '<^', '&lt;v', '>^', '>v',
 //     '^<', '^>', 'v<', 'v>',
 //     'v<<', '>>^',
 //
 // with only four "ambiguous" transitions:
 //
-//    ambiguous transition pairs: '<v, v<' and '^<, <^' and '>v, v>' and '>^, ^>'
+//    ambiguous transition pairs: '&lt;v, v<' and '^<, <^' and '>v, v>' and '>^, ^>'
 //
 // Now the goal is to explore how these evolve and see if there is a pattern
 // to the "optimal" evolution of each.  Here, "optimal" means the evolution
@@ -2516,10 +2536,10 @@ const example_directional_keypad = bqe.create_directional_keypad();  // used by 
 const directional_keypad_labels = example_directional_keypad.get_labels();
 const onlydirectional_keypad_labels_line_re = new RegExp(`^[${directional_keypad_labels.join('').replace('^', '\\^')}]*$`);
 
-const zigzag_re = /v[<>]v|\^[<>]\^|<[v^]<|>[v^]>/;
+const zigzag_re = bqe.zigzag_re;
 
-// Given a two states, which must be valid directional keypad labels, return an
-// array of sequences for the next stage.
+// Given a two states, which must be valid directional keypad labels, return
+// an array of sequences for the next higher stage (closer to the user keypad).
 // The option "unrestricted", if false (the default), causes only the "core"
 // fragments to be used in the generation of the sequences.  Otherwise, if
 // unrestricted is true, then any sequence of directional keypad labels will be
@@ -2543,7 +2563,8 @@ const sequences_between_states = (state, next_state, options=null) => {
     return sequences;
 };
 
-// Given a sequence, return an array of sequences for the next stage.
+// Given a sequence, return an array of sequences for the next stage (the next
+// stage is closer to the user keypad).
 // The option "unrestricted", if false (the default), causes only the "core"
 // fragments to be used in the generation of the sequences.  Otherwise, if
 // unrestricted is true, then any sequence of directional keypad labels will be
@@ -2678,7 +2699,19 @@ const evolve_fragment = (start_fragment, options=null) => {
 
 
 const validate_core_fragments = () => {
-    throw new Error('UNIMPLEMENTED');
+    // test that core fragments only generate sequences composed of core fragments
+    const validated = Array.from(core_fragments_set.values()).every(fragment => {
+        return evolve_fragment( fragment, {
+            unrestricted: true,
+            stage_count:  4,
+        }).stages.flat(1).map(sequence => {
+            return sequence.split('A');
+        }).flat(1).every(fragment => core_fragments_set.has(fragment));
+    });
+    if (!validated) {
+        throw new Error('validation failed');
+    }
+    return validated;
 };
 
 
@@ -2692,7 +2725,7 @@ const get_core_fragments_set = () => {
     return new Set(core_fragments_set.values());
 };
 
-
+validate_core_fragments();
 vars({
     // note: these definitions are only for directional keypads
     sequences_between_states,
@@ -2701,18 +2734,1048 @@ vars({
     validate_core_fragments,
     get_core_fragments,
     get_core_fragments_set,
+});</bq-cell>
+<bq-cell id="id-1bc0d0bb-14e5-4783-ae72-dabd5c688f1e" data-type="javascript" class="show-in-presentation">// definitions for the solution to Part Two
+
+const _core_fragments     = bqe.get_core_fragments();      // make a copy local to this cell but not available outside
+const _core_fragments_set = bqe.get_core_fragments_set();  // make a copy local to this cell but not available outside
+
+const _fragment_transitions = Object.fromEntries(  // only for use locally in cell (to avoid external modification)
+    bqe.get_core_fragments().map(fragment => [
+        fragment,
+        bqe.next_stage_sequences_from_sequence(fragment+'A'),  // the next sequences function returns only sequences composed of core fragments (add implied 'A')
+    ])
+);
+
+const zigzag_re = bqe.zigzag_re;
+
+const get_fragment_transition_alternatives = (fragment, allow_zigzag=false) => {
+    // copy to prevent caller from modifying internal structure
+    const alternatives = Array.from(_fragment_transitions[fragment]);
+    return allow_zigzag
+        ? alternatives
+        : alternatives.filter(alternative => !alternative.match(zigzag_re));
+};
+
+// Returns a new array with each fragment found in sequence.
+// An error is thrown if anything other than a core fragment is found.
+// note: a sequence without a terminating 'A' is equivalent
+// to that initializer with a terminating 'A'.
+const core_fragments_from_sequence = (sequence) => {
+    if (typeof sequence !== 'string') {
+        throw new Error('sequence must be a string');
+    }
+    const fragments = sequence.split('A')
+    if (sequence.endsWith('A')) {
+        fragments.pop();  // remove extraneous empty fragment from end
+    }
+    if (!fragments.every(fragment => _core_fragments_set.has(fragment))) {
+        throw new Error('sequence contains fragments that are not core fragments');
+    }
+    return fragments;
+};
+
+// Returns an object mapping each core fragment found in sequence
+// to the number of occurrences of that fragment.
+// An error is thrown if anything other than a core fragment is found.
+// note: a sequence without a terminating 'A' is equivalent
+// to that initializer with a terminating 'A'.
+const core_fragment_counts_from_sequence = (sequence) => {
+    const counts = {};
+    for (const fragment of core_fragments_from_sequence(sequence)) {
+        counts[fragment] ??= 0;
+        counts[fragment] += 1;
+    }
+    return counts;
+};
+
+
+class CoreFragmentAccumulator {
+    // note: initializer_sequence null, undefined or not specified yields
+    // no initial fragments whereas initializer_sequence === '' yields
+    // one empty-string fragment.
+    // note: a string initializer without a terminating 'A' is equivalent
+    // to that initializer with a terminating 'A'.
+    constructor(initializer_sequence=null) {
+        const initializer_sequence_given = (initializer_sequence !== null && typeof initializer_sequence !== 'undefined');
+        if (initializer_sequence_given && typeof initializer_sequence !== 'string') {
+            throw new Error('initializer_sequence must be null, undefined or a string');
+        }
+        this.#initializer_fragments = initializer_sequence_given ? core_fragments_from_sequence(initializer_sequence) : [];
+        // this initialization of this.#fragment_counts is brute force but easy to verify correctness....
+        this.#fragment_counts = Object.fromEntries(this.constructor.#core_fragment_order.map(fragment => [ fragment, 0 ]));
+        for (const fragment of this.#initializer_fragments) {
+            this.#fragment_counts[fragment] += 1;
+        }
+        Object.defineProperties(this, {
+            initializer_sequence: { enumerable: true, value: (initializer_sequence ?? null) },  // undefined is converted to null
+        });
+    }
+
+    clone() {
+        const cloned = new this.constructor(this.initializer_sequence);
+        cloned.#initializer_fragments = this.get_initializer_fragments();  // get a copy
+        cloned.#fragment_counts       = this.get_fragment_counts();        // get a copy
+        cloned.#sequence_length_cache = this.#sequence_length_cache;       // null or number, so copying is automatic
+        cloned.#state_data_cache      = this.#state_data_cache ? { ...this.#state_data_cache } : null;  // copy if exists
+        return cloned;
+    }
+
+    get_initializer_fragments() {
+        // copy to prevent caller from modifying internal structure
+        return Array.from(this.#initializer_fragments);
+    }
+
+    get_fragment_counts() {
+        // copy to prevent caller from modifying internal structure
+        return { ...this.#fragment_counts };
+    }
+
+    // Update fragment counts by adding the values from the object updates
+    // to each corresponding fragment count.
+    // Note: multiplier is allowed to be negative with the consequence that
+    // this.#fragment_counts may contain negative values....
+    // Note: the only mutating methods are update() and multiply(), and this
+    // is an important fact with regard to caching.
+    update(updates, multiplier=1) {
+        let updates_entries;
+        if ( typeof updates !== 'object' ||
+             !(updates_entries = Object.entries(updates)).every(([ key, value ]) => _core_fragments_set.has(key) && Number.isInteger(value) && value >= 0) ) {
+            throw new Error('updates must be an object with only core fragments as keys and non-negative integers as values');
+        }
+        if (!Number.isInteger(multiplier)) {
+            throw new Error('multiplier must be an integer');
+        }
+
+        // mutation begins:
+        // first, invalidate the caches
+        this.#sequence_length_cache = null;
+        this.#state_data_cache      = null;
+
+        for (const [ fragment, update_count ] of updates_entries) {
+            this.#fragment_counts[fragment] += multiplier*update_count;
+        }
+    }
+
+    // Change fragment counts by multiplying each by factor/divisor.
+    // Note: factor and divisor must each be a positive integer.
+    // An error is thrown and no change is made if any new count would
+    // not be an integer.
+    // Note: the only mutating methods are update() and multiply(), and this
+    // is an important fact with regard to caching.
+    multiply(factor, divisor=1) {
+        if (!Number.isInteger(factor) || factor <= 0) {
+            throw new Error('factor must be a positive integer');
+        }
+        if (!Number.isInteger(divisor) || divisor <= 0) {
+            throw new Error('divisor must be a positive integer');
+        }
+        // do a trial calculation to make sure that the new counts
+        // will all be integers.
+        for (const fragment in this.#fragment_counts) {
+            if (!Number.isInteger((this.#fragment_counts[fragment] * factor) / divisor)) {
+                throw new Error(`multiply() called with values factor=${factor} and divisor=${divisor} that would result in non-integer counts`);
+            }
+        }
+
+        // mutation begins:
+        // first, invalidate the caches
+        this.#sequence_length_cache = null;
+        this.#state_data_cache      = null;
+
+        for (const fragment in this.#fragment_counts) {
+            this.#fragment_counts[fragment] = (this.#fragment_counts[fragment] * factor) / divisor;
+        }
+    }
+
+    // non-mutating version of update()
+    to_updated(updates, multiplier=1) {
+        const cloned = this.clone();
+        cloned.update(updates, multiplier);
+        return cloned;
+    }
+
+    // non-mutating version of multiply()
+    to_multiplied(factor, divisor=1) {
+        const cloned = this.clone();
+        cloned.multiply(factor, divisor);
+        return cloned;
+    }
+
+    // Returns the length of the sequence that this accumulator represents.
+    // note: all fragments are treated as if they end with 'A' even if
+    // initializer_sequence is a string that does not end with 'A'.
+    get_sequence_length() {
+        if (this.#sequence_length_cache === null) {
+            this.#sequence_length_cache = Object.entries(this.#fragment_counts)
+                .reduce(
+                    (total, [ fragment, count ]) => {
+                        return total + count*(fragment.length + 1);  // add one for implied 'A'
+                    },
+                    0,  // reduce initializer
+                );
+        }
+        return this.#sequence_length_cache;
+    }
+
+    get_state_data() {
+        if (this.#state_data_cache === null) {
+            const counts_gcd = this.constructor.calculate_gcd(Object.values(this.#fragment_counts));
+            this.#state_data_cache = {
+                multiplier: counts_gcd,
+                key: this.constructor.#core_fragment_order
+                    .map(fragment => `${this.#fragment_counts[fragment] / counts_gcd}${fragment}`)
+                    .join('_'),
+            };
+        }
+        return { ...this.#state_data_cache };  // copy to prevent caller from modifying internal state
+    }
+
+    count_for(fragment) {
+        return this.#fragment_counts[fragment];
+    }
+
+    get_fragment_counts_entries() {
+        return Object.entries(this.#fragment_counts);
+    }
+
+    static get_core_fragment_order() {
+        // copy to prevent caller from modifying internal structure
+        return Array.from(this.#core_fragment_order);
+    }
+
+    static calculate_gcd(values) {
+        if (!Array.isArray(values) || !values.every(value => Number.isInteger(value))) {
+            throw new Error('values must of an array of integers')
+        }
+        const euclidean_algorithm = (a, b) => {
+            // a and b are both positive integers
+            for (;;) {
+                if (a < b) {
+                    const t = a; 
+                    a = b;
+                    b = t;
+                }
+                // a >= b
+                const m = a % b;
+                if (m === 0) {
+                    return b;
+                } else {
+                    a = m;
+                }
+            }
+        }
+        const gcd = (vs) => {
+            // elements of vs are positive integers
+            if (vs.length === 0) {
+                return 1;
+            } else if (vs.length === 1) {
+                return vs[0];
+            } else {
+                return euclidean_algorithm(vs[0], gcd(vs.slice(1)));
+            }
+        };
+        return gcd(values.filter(n => (n !== 0)).map(n => Math.abs(n)));
+    }
+
+    // internal:
+
+    // array of fragments from this.initializer_sequence in order (all are validated to be core fragments)
+    #initializer_fragments;  // set in constructor
+
+    // mapping from (core) fragment -> count
+    #fragment_counts;  // set in constructor
+
+    // caches, invalidated by update()
+    #sequence_length_cache = null;
+    #state_data_cache      = null;
+
+    // define the canonical ordering for core fragments:
+    static #core_fragment_order = _core_fragments.toSorted().sort((a,b) => a.length-b.length);
+}
+
+const get_next_stage_extensions_for_accumulator = async (accumulator, options=null) => {
+    const {
+        max_sequence_length         = Infinity,
+        allow_computational_fan_out = false,  // allow exponentially expensive fan-out in computation?  Otherwise, get_best_fragment_transition() is used
+        check_tick                  = null,
+    } = (options ?? {});
+
+    if (!allow_computational_fan_out) {
+        // Must have been called at least once before calling
+        // get_best_fragment_transition() below.
+        // This initialization is a no-op after the first call.
+        await init_best_fragment_transition_data(options);
+    }
+
+    const nonzero_fragment_counts_entries = accumulator.get_fragment_counts_entries()
+          .filter(([ fragment, count ]) => (count !== 0));
+
+    let extensions = [ new CoreFragmentAccumulator() ];  // accumulators for next stage, to be built starting with one single empty accumulator
+    for (const [ fragment, count ] of nonzero_fragment_counts_entries) {
+        await check_tick?.();
+        // extensions will "fan out" at each fragment that has multiple transition alternatives
+        const new_extensions = [];
+        for (const extension of extensions) {
+            const next_segment_sequences = allow_computational_fan_out
+                  ? get_fragment_transition_alternatives(fragment)
+                  : [ get_best_fragment_transition(fragment) ];
+            for (const next_segment_sequence of next_segment_sequences) {
+                const next_segment_sequence_fragment_counts = core_fragment_counts_from_sequence(next_segment_sequence);
+                // the counts from the next segment sequence are added with a multiplicity of count
+                const updated_extension = extension.to_updated(next_segment_sequence_fragment_counts, count);
+                if (updated_extension.get_sequence_length() <= max_sequence_length) {
+                    new_extensions.push(updated_extension);
+                }
+            }
+        }
+        extensions = new_extensions;
+    }
+    // extensions now contains all the various ways of extending the accumulator
+    // from the current stage to the next stage.
+    // Finally, weed out extensions that are too long:
+    const min_extension_length = extensions
+          .reduce(
+              (min_extension_length, extension) => {
+                  return Math.min(min_extension_length, extension.get_sequence_length());
+              },
+              Infinity,  // reduce initializer
+          );
+    if (min_extension_length > max_sequence_length) {
+        extensions = [];
+    } else {
+        extensions = extensions
+            .filter(extension => (extension.get_sequence_length() === min_extension_length));
+    }
+    // return the (possibly empty) array of extensions:
+    return extensions;
+};
+
+const find_extension_sequence_lengths_for_core_fragment = async (core_fragment, options=null) => {
+    const {
+        stage_count = 4,
+        check_tick  = null,
+        trace_mod   = 1,
+        trace_fn,
+        allow_computational_fan_out = false,  // used by call to get_next_stage_extensions_for_accumulator()
+    } = (options ?? {});
+
+    const {
+        get_core_fragments_set,
+    } = bqe;
+
+    if (!get_core_fragments_set().has(core_fragment)) {
+        throw new Error(`fragment is not a core fragment: "${fragment}"`);
+    }
+
+    const create_stage_item = (accumulator, prior=null) => {
+        const stage_index = prior ? prior.stage_index+1 : 0;
+        return {
+            accumulator,
+            prior,  // prior stage item for which accumulator is an extension
+            stage_index,
+        };
+    };
+
+    let result = {
+        stage_items:        [ create_stage_item(new CoreFragmentAccumulator(core_fragment)) ],
+        min_data:           null,  // set to { stage_items, min_length } for minimal extensions
+        prior_stage_result: null,
+    };
+    for (let stage_index = 0, work_count = 0; stage_index < stage_count; stage_index++, work_count++) {
+        result = {
+            stage_items:        result.stage_items,  // becomes initial stage_items for next pass
+            min_data:           null,
+            prior_stage_result: result,
+        };
+
+        let next_stage_items = [];
+        for (let stage_item_index = 0; stage_item_index < result.stage_items.length; stage_item_index++) {
+bqe.result = result;//!!!
+            const stage_item = result.stage_items[stage_item_index];
+            const { accumulator } = stage_item;
+            const extensions = await get_next_stage_extensions_for_accumulator(accumulator, options);  // note "allow_computational_fan_out" option
+
+            await check_tick?.();
+            const skip = (result.min_data && extensions.length > 0 && result.min_data.min_length < extensions[0].get_sequence_length());
+            if (work_count % trace_mod === 0) {
+                const get_info = () => `stage:${stage_index} ${stage_item_index}/${result.stage_items.length} extensions:${extensions.length}${skip ? ' (skipping)' : ''} extensions_lengths:${Array.from(new Set(extensions.map(e => e.get_sequence_length())).values()).join(',')} min:${result.min_data ? `l:${result.min_data.min_length}*${result.min_data.stage_items.length}` : '(none)'} stage_length:${result.stage_items.length}`;
+                if (await trace_fn?.(work_count, get_info)) {
+                    throw new Error('STOPPED');
+                }
+            }
+            if (!skip) {
+                for (const extension of extensions) {
+                    const seq_len = extension.get_sequence_length();
+                    // update result.min_data:
+                    if (!result.min_data || result.min_data.min_length >= seq_len) {
+                        if (result.min_data && result.min_data.min_length === seq_len) {
+                            result.min_data.stage_items.push(extension);
+                        } else {
+                            result.min_data = {
+                                stage_items: [ extension ],
+                                min_length:  seq_len,
+                            };
+                        }
+                    }
+                    // add to next_stage:
+                    if (result.min_data && result.min_data.min_length === seq_len) {
+                        next_stage_items.push(create_stage_item(extension, stage_item));
+                    }
+                }
+            }
+        }
+        if (next_stage_items.length === 0) {
+            throw new Error('unexpected: next_stage_items is empty');
+        }
+        result.stage_items = next_stage_items
+            .filter(({ accumulator }) => (accumulator.get_sequence_length() === result.min_data.min_length));
+    }
+    return result;
+};
+
+const get_best_fragment_transition_data = async (options=null) => {
+    const {
+        stage_count = 4,  // 4 was determined to be the minimum for a conclusive result...
+        trace_mod   = 100,
+        trace_fn,
+        check_tick,
+    } = (options ?? {});
+
+    const core_fragments = _core_fragments;
+
+    const eventual_length_data = {};  // fragment -> corresponding sequence length at stage that is stage_count higher up
+    for (const fragment of core_fragments) {
+        eventual_length_data[fragment] = await find_extension_sequence_lengths_for_core_fragment(fragment, {
+            ...options,
+
+            // Must use fan-out because the alternative method
+            // relies on the data being computed here!
+            allow_computational_fan_out: true,
+        });
+    }
+
+    const eventual_cost = {};  // fragment -> cost at stage that is stage_count higher up
+    for (const fragment in eventual_length_data) {
+        eventual_cost[fragment] = eventual_length_data[fragment].min_data.min_length;
+    }
+
+    const fragment_transistion_alternatives = {};
+    for (const fragment of core_fragments) {
+        fragment_transistion_alternatives[fragment] = get_fragment_transition_alternatives(fragment);
+    }
+
+    const best_fragment_transition = Object.fromEntries(  // fragment -> best of its transition alternatives
+        Object.entries(fragment_transistion_alternatives)
+            .map(([ fragment, transition_alternatives ]) => {
+                // transition_alternatives is an array of alternative transition
+                // sequences that implement this fragment one stage up.
+
+                // Now caclulate the total cost for each fragment transition
+                // alternative:
+                const transition_alternatives_costs = transition_alternatives
+                      .map((transition_alternative) => {
+                          // transition_alternative is one alternative
+                          // transition sequence for fragment
+                          const transition_alternative_subfragments = transition_alternative.split('A');
+                          if (transition_alternative.endsWith('A')) {
+                              transition_alternative_subfragments.pop();  // remove extraneous last empty fragment
+                          }
+                          // transition_alternative_subfragments is an array of
+                          // sub-fragments that comprise one alternative
+                          // transition sequence for fragment.
+
+                          // Now calculate the cost of of the transition
+                          // alternative as the sum of the costs of each
+                          // of its sub-fragments, where each sub-fragment
+                          // cost is from the eventual_cost mapping
+                          // (established above).
+                          // Note: Because any fragment starts and ends in
+                          // state 'A', there is no interaction between
+                          // fragments in terms of cost, so this divide and
+                          // conquer approach will work.
+                          const transition_alternative_cost = transition_alternative_subfragments
+                                .reduce(
+                                    (cost, subfragment) => (cost + eventual_cost[subfragment]),
+                                    0,  // reduce initializer
+                                );
+                          return transition_alternative_cost;
+                      });
+                // transition_alternatives and transition_alternatives_costs
+                // are aligned element-by-element.
+                const best_transition_alternative = transition_alternatives
+                      .reduce(
+                          ({ best, cost, occurrences }, transition_alternative, transition_alternative_index) => {
+                              const transition_alternative_cost = transition_alternatives_costs[transition_alternative_index];
+                              if (transition_alternative_cost === cost) {
+                                  occurrences++;
+                              } else if (transition_alternative_cost < cost) {
+                                  best        = transition_alternative;
+                                  cost        = transition_alternative_cost;
+                                  occurrences = 1;
+                              }
+                              return { best, cost, occurrences };
+                          },
+                          { best: null, cost: Infinity, occurrences: 0 },  // reduce initializer
+                      );
+                if (best_transition_alternative.occurrences === 0) {
+                    throw new Error('unexpected: occurrences === 0');
+                } else if (best_transition_alternative.occurrences > 1) {
+                    throw new Error('inconclusive best transition calculation (try increasing stage_count)');
+                }
+                // return the newly-found best mapping for fragment
+                return [ fragment, best_transition_alternative.best ];
+            })
+    );
+
+    return {
+        stage_count,
+        eventual_length_data,
+        eventual_cost,
+        fragment_transistion_alternatives,
+        best_fragment_transition,
+    };
+};
+
+// lazy initialization mechanism for get_best_fragment_transition()
+// It takes several seconds to complete.
+// Pass a trace_fn and check_tick in options to preserve ui performance.
+// trace_mod = 100 is not too noisy but shows progress,
+// trace_mod = 1 takes much longer to complete.
+let best_fragment_transition = null;
+const init_best_fragment_transition_data = async (options) => {
+    // options should contain trace_fn and check_tick to preserve ui performance....
+    if (!best_fragment_transition) {
+        const best_fragment_transition_data = await get_best_fragment_transition_data(options);
+        best_fragment_transition = best_fragment_transition_data.best_fragment_transition;
+    }
+};
+// optimize fragment transition determination.
+// no fan-out, one sequence returned for each core fragment
+const get_best_fragment_transition = (fragment) => {
+    if (!best_fragment_transition) {
+        throw new Error('init_best_fragment_transition_data() must have been called at least once before calling this function!');
+    }
+    if (!_core_fragments_set.has(fragment)) {
+        throw new Error(`fragment is not a core fragment: "${fragment}"`);
+    }
+    return best_fragment_transition[fragment];
+};
+
+const get_min_sequence_lengths_for_stages = async (options) => {
+    const {
+        make_check_tick,
+    } = bqe;
+
+    const {
+        start_sequence,  // must be given
+        start_stage_index           = 0,      // defaults to starting at stage 0
+        end_stage_index: esi,                 // last stage_index to process, set below to start_stage_index+1 if not specified
+        depth_first                 = false,
+        allow_computational_fan_out = false,  // allow exponentially expensive fan-out in computation?  used by calls to get_next_stage_extensions_for_accumulator()
+        trace_mod                   = 1,
+        trace_fn                    = null,
+    } = (options ?? {});
+
+    if (typeof start_sequence !== 'string') {
+        throw new Error('start_sequence must be a string');
+    }
+    if (!Number.isInteger(start_stage_index) || start_stage_index < 0) {
+        throw new Error('start_stage_index must be a non-negative integer');
+    }
+
+    const end_stage_index = esi ?? start_stage_index+1;
+
+    if (!Number.isInteger(end_stage_index) || end_stage_index < start_stage_index) {
+        throw new Error('end_stage_index must be an integer <= start_stage_index');
+    }
+
+    const check_tick = make_check_tick(200);
+
+    trace_fn?.(0, () => `begin get_min_sequence_lengths_for_stages: "${start_sequence}", start_stage_index=${start_stage_index}, end_stage_index=${end_stage_index}`, true);
+
+    const work_queue = [];
+    const add_work = (accumulator, stage_index, extensions=null, depth_first_override=null) => {
+        const work_item = { accumulator, stage_index, extensions };
+        const do_depth_first = (typeof depth_first_override === 'boolean')
+              ? depth_first_override
+              : depth_first;
+        if (do_depth_first) {
+            work_queue.push(work_item);
+        } else {
+            work_queue.unshift(work_item);
+        }
+    }
+    const get_work = () => {
+        if (work_queue.length <= 0) {
+            return null;
+        } else {
+            return work_queue.pop();
+        }
+    }
+
+    // cache for minimum sequence_length computations, and also the eventual return value
+    const min_sequence_length_cache = new Array(end_stage_index+1).fill();
+    for (let stage_index = start_stage_index; stage_index <= end_stage_index; stage_index++) {
+        // Each entry is initially null inidicating that it is unpopulated.
+        // As new minimum sequence_length values are encountered, these are
+        // replaced by { accumulator, min_length }.
+        min_sequence_length_cache[stage_index] = null;
+    }
+
+    // cache for minimum sequence_length computations, and also the eventual return value
+    const extensions_cache = new Array(end_stage_index+1).fill();
+    for (let stage_index = start_stage_index; stage_index <= end_stage_index; stage_index++) {
+        // Each entry is set to an empty object, and that object is a mapping
+        // from the accumulator state_data.key to { accumulator, stage_index, extensions }
+        // where extensions are formed from the accumulator and include only
+        // those whose sequence length is the least.
+        // Note that it is important to not mutate the accumulators or
+        // extensions once they are in the cache.  This means that the
+        // .update() and .multiply() methods must not be used, and instead
+        // the .to_updated() or to_multiplied() methods must be used instead.
+        extensions_cache[stage_index] = {};
+    }
+bqe.caches = { min_sequence_length_cache, extensions_cache };//!!!
+
+    // metrics
+    const count_extensions_cache_entries = () => {
+        return extensions_cache
+            .reduce(
+                (total, stage_cache) => {
+                    if (stage_cache) {
+                        return total + Object.values(stage_cache).map(value => !!value).length;
+                    } else {
+                        return total;
+                    }
+                },
+                0,  // reduce initializer
+            );
+    };
+
+    const extend_work = async (accumulator, stage_index) => {
+/* may phase out extensions_cache....
+        const accumulator_state_data = accumulator.get_state_data();
+        if (extensions_cache[stage_index][accumulator_state_data.key] === null) {
+            // create a new cache entry
+            // Cache entries are created so that the stored extensions were
+            // all created from the stored accumulator.  However, cache
+            // entries are keyed from the accumulator state_data.key but
+            // not the multipler (to increase the number of the cache hits),
+            // so the retrieved extensions may need to be adjusted for the
+            // particular intended use.
+            let extensions = get_next_stage_extensions_for_accumulator(accumulator);
+            if (extensions.length <= 0) {
+                throw new Error(`unexpected: attempting new extensions_cache entry: extensions.length=${extensions_cache_entry.extensions.length} <= 0`);
+            }
+            const min_extension_length = extensions
+                  .reduce(
+                      (min_extension_length, extension) => {
+                          return Math.min(min_extension_length, extension.get_sequence_length());
+                      },
+                      Infinity,  // reduce initializer
+                  );
+            extensions = extensions  // weed out extensions that are too long
+                .filter(extension => (extension.get_sequence_length() === min_extension_length));
+            // add the new entry:
+            extensions_cache[stage_index][accumulator_state_data.key] = {
+                accumulator,
+                stage_index,
+                extensions,
+            };
+        }
+        const extensions_cache_entry = extensions_cache[stage_index][accumulator_state_data.key];
+*/
+
+        // check if this work is already worse than the best seen:
+        const known_min_length_this_stage = min_sequence_length_cache[stage_index]?.min_length ?? Infinity;
+        if ( (stage_index <  end_stage_index && accumulator.get_sequence_length() <= known_min_length_this_stage) ||
+             (stage_index >= end_stage_index && accumulator.get_sequence_length() <  known_min_length_this_stage)    ) {  // no need to work with equal-length sequences on last stage
+            if (stage_index >= end_stage_index) {
+                add_work(accumulator, stage_index);  // no extensions necessary
+            } else {
+                const known_min_length_next_stage = min_sequence_length_cache[stage_index+1]?.min_length ?? Infinity;
+                const extensions = await get_next_stage_extensions_for_accumulator(accumulator, {
+                    ...options,
+                    max_sequence_length: known_min_length_next_stage,
+                });
+                if (extensions.length > 0 && extensions[0].get_sequence_length() > known_min_length_next_stage) {
+                    min_sequence_length_cache[stage_index+1] = {
+                        accumulator: extensions[0],
+                        min_length:  extensions[0].get_sequence_length(),
+                    };
+                }
+                add_work(accumulator, stage_index, extensions, true);
+            }
+        }
+    };
+
+    const start_accumulator = new CoreFragmentAccumulator(start_sequence);
+    // create work loop "seed" work:
+    await extend_work(start_accumulator, start_stage_index);
+    // begin work loop:
+    for (let work_count = 0, work_item; !!(work_item = get_work()); work_count++) {
+        const { accumulator, stage_index, extensions } = work_item;
+        const seq_len = accumulator.get_sequence_length();
+
+        // tracing and yield:
+        if (work_count % trace_mod === 0) {
+            if (await trace_fn?.(work_count, () => `stage:${stage_index}; seq_len:"${seq_len}; extensions:(${extensions?.length}); extensions_cache:${count_extensions_cache_entries()}; work_queue:${work_queue.length}"`)) {
+                throw new Error('STOPPED');
+            }
+        }
+        await check_tick();
+
+        min_sequence_length_cache[stage_index] ??= { accumulator, min_length: seq_len };  // cache seq_len if no cache entry yet exists
+        if (min_sequence_length_cache[stage_index].min_length >= seq_len) {
+            if (min_sequence_length_cache[stage_index].min_length > seq_len) {
+                min_sequence_length_cache[stage_index] = { accumulator, min_length: seq_len };
+            }
+            if (extensions) {
+                for (const extension of extensions) {
+                    await extend_work(extension, stage_index+1);
+                }
+            }
+        }
+    }
+
+    // once the work loop is exhausted, return the final min_sequence_length_cache
+    return min_sequence_length_cache;
+};
+
+const test_min_lengths_calculation_on_prior_result = async (result, options) => {
+    const {
+        make_check_tick,
+        create_configuration,
+        async_recursive_solve,
+        zigzag_re,
+    } = bqe;
+
+    const {
+        trace_fn,
+    } = (options ?? {});
+
+    const {
+        intermediate_keypad_count,
+        code,
+        sequence,
+        solutions,
+    } = result;
+
+    const check_tick = make_check_tick(200);
+
+    const earlier_keypad_count = intermediate_keypad_count - 1;
+    const cfg = create_configuration(earlier_keypad_count);
+    const earlier_solutions = (await async_recursive_solve(code, { robots: cfg.robots }))
+          .filter(solution => !solution.match(zigzag_re));
+    const min_sequence_lengths_results = [];
+    for (const earlier_solution of earlier_solutions) {
+        if (await trace_fn?.(0, () => `code "${code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
+            throw new Error('STOPPED');
+        }
+        await check_tick();
+
+        const min_sequence_lengths = await get_min_sequence_lengths_for_stages({
+            ...options,
+            start_sequence:    earlier_solution,
+            start_stage_index: earlier_keypad_count,
+            end_stage_index:   intermediate_keypad_count,
+        });
+        min_sequence_lengths_results.push({ code, earlier_solution, min_sequence_lengths });
+    }
+    const min_length = min_sequence_lengths_results
+          .reduce(
+              (min_length, { min_sequence_lengths }) => {
+                  return Math.min(min_length, min_sequence_lengths[intermediate_keypad_count].min_length);
+              },
+              Infinity,  // reduce initializer
+          );
+    return (min_length === sequence.length);
+};
+
+const run_tests = async (ocx, test_options=null) => {
+    const {
+        use_computed_test_results,
+        trace_ocx,
+        trace_fn,
+        trace_mod,
+    } = (test_options ?? {});
+
+    const {
+        make_check_tick,
+        get_core_fragments,
+        get_min_sequence_lengths_for_stages,
+    } = bqe;
+
+    const test_ocx = ocx.create_child_ocx({
+        style: {
+            border:  '1px solid grey',
+            padding: '0.5em',
+        },
+    });
+
+    const output_test_message = async (message) => {
+        const element = await test_ocx.println(message);
+        element.scrollIntoView();
+    };
+
+    if (use_computed_test_results) {
+        await bqe.results_ready;
+        await output_test_message('COMPUTED TEST RESULTS READY');
+    }
+
+    const test_message_element = await test_ocx.println('Testing...');
+    sleep(0.1).then(() => test_ocx.element.scrollIntoView());
+
+    let test_results;
+    if (use_computed_test_results) {
+        test_results = bqe.results;
+    } else {
+        // simple canned data set that is available immediately:
+        test_results = [
+            {
+                code: '208A',
+                intermediate_keypad_count: 2,
+                sequence: "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A>^AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                solutions: [
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A>^AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A>^AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A^>AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A>^AvA&lt;^A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A>^AvA&lt;^A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A^>AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A^>AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A^>AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A^>AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A^>AvA&lt;^A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA^&lt;A>AvA^Av&lt;&lt;A>A^>AvA&lt;^A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A^>AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA&lt;^A>AvA^Av&lt;&lt;A>A>^AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A>^AAAvA^A&lt;A>A",
+                    "&lt;vA&lt;AA>>^AvA&lt;^A>AvA^Av&lt;&lt;A>A>^AvA^&lt;A>Av&lt;&lt;A>>^AAAvA^Av&lt;&lt;A>A^>AAAvA^A&lt;A>A",
+                ],
+            },
+        ];
+    }
+
+    // test with test_results:
+    {
+        for (const result of test_results) {
+            await trace_ocx?.print__();
+            await test_ocx.print__();
+            await test_ocx.println(`Testing min_lengths calculation with prior result for "${result.code}"`);
+            let success, error;
+            try {
+                success = await test_min_lengths_calculation_on_prior_result(result, {
+                    trace_fn,
+                    trace_mod,
+                    check_tick: make_check_tick(200),
+                });
+            } catch (e) {
+                error = e;
+                console.error(error);
+            }
+            const result_phrase = error ? `CAUSED ERROR "${error.message}"` : success ? 'SUCCEEDED' : 'FAILED';
+            const result_element = await test_ocx.println(`>>> min_lengths calculation test with prior result for "${result.code}" ${result_phrase}`);
+            result_element.scrollIntoView();//!!!
+        }
+    }
+    await test_ocx.print__();
+
+    // try to go out to 26 stages:
+    {
+        const { code, intermediate_keypad_count, sequence } = test_results[0];
+        for (const fragment of get_core_fragments()) {
+            const start_sequence    = `${fragment}A`;
+            const start_stage_index = 0;
+            const end_stage_index   = 25;
+            const min_sequence_lengths = await get_min_sequence_lengths_for_stages({
+                start_sequence,
+                start_stage_index,
+                end_stage_index,
+                depth_first: true,
+                trace_fn,
+                trace_mod: 1,
+                check_tick: make_check_tick(200),
+            });
+            await output_test_message(`TEST fragment sequence: "${start_sequence}" (see console)`);
+            console.log('TEST', `fragment sequence: "${start_sequence}"`, { min_sequence_lengths });
+        }
+    }
+    await test_ocx.print__();
+
+    // compare results for core fragments with allow_computational_fan_out on and off:
+    // (will need to limit stage_count to 5 in order to complete with allow_computational_fan_out on!!)
+    {
+        const stage_count = 5;
+
+        bqe.compare_results = {};
+        const check_tick = bqe.make_check_tick(200);
+        for (const allow_computational_fan_out of [ true, false ]) {
+            const compare_results_key = allow_computational_fan_out ? 'with-fan-out' : 'no-fan-out';
+
+            const result_record = {
+                fragment_results: {},
+                fragment_summary: {},
+                options: {
+                    start_stage_index: 0,
+                    end_stage_index:   stage_count-1,
+                    depth_first:       true,
+                    trace_mod:         10,
+                    allow_computational_fan_out,
+                },
+            };
+            bqe.compare_results[compare_results_key] = result_record;
+
+            for (const fragment of get_core_fragments()) {
+                const options = {
+                    ...result_record.options,
+                    start_sequence: `${fragment}A`,
+                };
+                const min_sequence_lengths = await get_min_sequence_lengths_for_stages({
+                    ...options,
+                    trace_fn,
+                    check_tick,
+                });
+                const fragment_result = {
+                    min_sequence_lengths,
+                    options,
+                };
+                result_record.fragment_results[fragment] = fragment_result;
+                result_record.fragment_summary[fragment] = min_sequence_lengths.map(({ min_length }) => min_length);
+                await output_test_message(`FINISHED FRAGMENT "${fragment}" (see console)`);
+                console.log(`FINISHED FRAGMENT "${fragment}"`, compare_results_key, fragment_result);
+            }
+        }
+    }
+    await test_ocx.print__();
+};
+
+const get_sequence_length_from_increasing_prior_result_intermediate_keypads = async (prior_result, new_intermediate_keypad_count, options=null) => {
+    const {
+        trace_fn,
+        check_tick,
+    } = (options ?? {});
+
+    const {
+        zigzag_re,
+        create_configuration,
+        async_recursive_solve,
+        get_min_sequence_lengths_for_stages
+    } = bqe;
+
+    const earlier_intermediate_keypad_count = 1;
+    const cfg = create_configuration(earlier_intermediate_keypad_count);
+    const earlier_solutions = (await async_recursive_solve(prior_result.code, { robots: cfg.robots }))
+          .filter(solution => !solution.match(zigzag_re));
+
+    const min_sequence_lengths_results = [];
+    for (const earlier_solution of earlier_solutions) {
+        if (await trace_fn?.(0, () => `code "${prior_result.code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
+            throw new Error('STOPPED');
+        }
+        await check_tick?.();
+
+        const min_sequence_lengths = await get_min_sequence_lengths_for_stages({
+            ...options,
+            start_sequence:    earlier_solution,
+            start_stage_index: earlier_intermediate_keypad_count,
+            end_stage_index:   new_intermediate_keypad_count,
+        });
+        min_sequence_lengths_results.push(min_sequence_lengths);
+    }
+    const min_length = min_sequence_lengths_results
+          .reduce(
+              (min_length, min_sequence_lengths) => {
+                  return Math.min(min_length, min_sequence_lengths[new_intermediate_keypad_count].min_length);
+              },
+              Infinity,  // reduce initializer
+          );
+    return min_length;
+};
+
+keepalive();
+vars({
+    get_fragment_transition_alternatives,
+    core_fragments_from_sequence,
+    core_fragment_counts_from_sequence,
+    CoreFragmentAccumulator,
+    get_next_stage_extensions_for_accumulator,
+    find_extension_sequence_lengths_for_core_fragment,
+    get_best_fragment_transition_data,
+    get_min_sequence_lengths_for_stages,
+    test_min_lengths_calculation_on_prior_result,
+    run_tests,
+    get_sequence_length_from_increasing_prior_result_intermediate_keypads,
 });
-
 </bq-cell>
-<bq-cell id="id-1bc0d0bb-14e5-4783-ae72-dabd5c688f1e" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-1e5b3a0a-c63d-4f39-bdbc-a5c506845a28" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+keepalive();
 
-return;//!!!
+const perform_tests             = false;  // run a set of tests?
+const use_computed_test_results = true;   // use bqe.results from Part One for testing?
+
+
+//----------------------------------------------------------------------
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       1,
+    height:             30,
+});
+const trace_mod = 100;
+bqe.trace_fn = trace_fn;//!!!
+
+await trace_fn(0, () => '--- computation trace begin ---')
+
+if (perform_tests) {
+    await bqe.run_tests(ocx, {
+        use_computed_test_results,
+        trace_ocx,
+        trace_fn,
+        trace_mod,
+    });
+}
+
+
+//----------------------------------------------------------------------
+
+await bqe.results_ready;
+console.log('ready');
+
+const new_intermediate_keypad_count = 25;  // given in problem
+
+await ocx.print__();
+await ocx.println(`Computing new sequence lengths for results with ${new_intermediate_keypad_count} intermediate keypads...`);
+await ocx.println();
+
+const new_sequence_lengths = {};  // code -> sequence_length
+for (const result of bqe.results) {
+    const code = result.code;
+    (await ocx.println(`Computing for code "${code}"...`)).scrollIntoView();
+    const sequence_length = await bqe.get_sequence_length_from_increasing_prior_result_intermediate_keypads(result, new_intermediate_keypad_count, {
+        trace_mod:  100,
+        trace_fn,
+        check_tick: bqe.make_check_tick(200),
+    });
+    new_sequence_lengths[code] = sequence_length;
+    await ocx.println(`    new sequence length = ${sequence_length}`);
+    (await ocx.println()).scrollIntoView();
+}
+
+const sum_of_complexities = Object.entries(new_sequence_lengths)
+      .map(([ code, sequence_length ]) => parseInt(code)*sequence_length)
+      .reduce((total, n) => (total + n), 0);
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
-!!!
+The sum of the complexities of the given codes with intermediate keypad count increased to ${new_intermediate_keypad_count} is **${sum_of_complexities}**.
 `);
-
+answer_element.scrollIntoView();
 </bq-cell>
 </body>
 </html>
