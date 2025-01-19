@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-c73d6204-9adb-4e41-89f7-b95228e64286" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/24
+`);
+const description = `
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-ee1daa79-0038-42ff-aee9-f147eee3a6b5" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+bqe.input_data = input_data.trim();
+globalThis.bqe = bqe;//!!!
+</bq-cell>
+<bq-cell id="id-80443364-61ad-4a9f-8185-6310ed91d414" data-type="javascript" class="show-in-presentation">// define a trace mechanism
+
+// Mechanism to yield for long computations:
+// make_check_tick() returns an aync function such that when that function
+// is called (and awaited), will await a call to next_tick() if the the
+// specified time has elapsed since the last time this function called
+// next_tick() and return true.  Otherwise, if the specified time has
+// not elapsed, the function returns false immediately.
+const make_check_tick = (the_tick_interval_ms=200) => {
+    let last_tick_time = Date.now();
+    return (tick_interval_ms=the_tick_interval_ms) => {
+        // Return a promise only if next_tick() is to be called.
+        // Otherwise, return a simple false value.
+        const new_last_tick_time = Date.now();
+        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
+            return false;
+        } else {
+            last_tick_time = new_last_tick_time;
+            return new Promise(resolve => {
+                next_tick()
+                    .then(() => resolve(true));
+            });
+        }
+    }
+};
+
+const create_trace_mechanism = (ocx, options=null) => {
+    const {
+        trace_enabled       = true,
+        trace_initially_on  = true,
+        trace_fn_mod        = 10,
+        height              = 20,  // ch units
+    } = (options ?? {});
+
+    let trace_ocx;
+    let trace_checkbox;
+
+    let stopped = false;
+
+    let trace_iterations = 0;
+    let trace_fn;
+
+    if (!trace_enabled) {
+        trace_fn = async () => { return stopped; };
+    } else {
+        const stop_button = ocx.create_child({
+            tag: 'button',
+            innerText: 'Stop',
+        });
+        stop_button.onclick = () => { stopped = true; };
+
+        const trace_controls = ocx.create_child({
+            children: [
+                {
+                    tag: 'label',
+                    children: [
+                        'Trace',
+                        {
+                            tag: 'input',
+                            attrs: {
+                                type: 'checkbox',
+                            },
+                        },
+                    ],
+                },
+                {
+                    tag:       'button',
+                    innerText: 'Clear',
+                    style: {
+                        'font-size':   'x-small',
+                        'margin-left': '0.5ch',
+                    },
+                }
+            ],
+        });
+        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+        if (trace_initially_on) {
+            trace_checkbox.checked = true;
+        }
+
+        const trace_clear_button = trace_controls.querySelector('button');
+        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+        trace_ocx = ocx.create_child_ocx({
+            style: {
+                'font-family':          'monospace',
+                'font-size':            'x-small',
+                'white-space':          'nowrap',
+                'white-space-collapse': 'preserve',
+                'max-height':           `${height}ch`,
+                'max-width':            'fit-content',
+                padding:                '1em',
+                overflow:               'auto',
+                border:                 '1px solid var(--theme-ou-rc)',
+            },
+        });
+
+        let trace_iterations = 0;
+        trace_fn = async (prefix=null, get_info=null, regardless=false) => {  // returns true iff !stopped
+            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
+                if (trace_enabled && trace_checkbox.checked) {
+                    const formatted_prefix = (typeof prefix === 'number') ? sprintf('%-8d', prefix) : (prefix ?? '');
+                    const spacer = (typeof prefix === 'undefined' || prefix === null) ? '' : ' ';
+                    const info = (typeof get_info === 'function') ? get_info() : (get_info ?? '');
+                    const output_data = sprintf('%s%s%s', formatted_prefix, spacer, info);
+                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+                    const bounding_rect = trace_output_element.getBoundingClientRect();
+                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
+                        // only scroll back into view if already at least partially showing
+                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
+                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
+                    }
+                }
+            }
+            return stopped;
+        };
+    }
+
+    // return controls
+    return {
+        trace_fn,             // async (prefix=null, get_info=null, regardless=false) => stopped; no-op async function if !trace_enabled
+        trace_fn_mod,         // from options
+        trace_ocx,            // undefined if !trace_enabled
+        trace_checkbox,       // undefined if !trace_enabled
+        stop:                 (new_state=true) => { stopped = new_state; },
+        get_stopped:          () => stopped,
+        get_trace_iterations: () => trace_iterations,
+    };
+};
+
+keepalive();
+vars({
+    make_check_tick,
+    create_trace_mechanism,
+});
+</bq-cell>
+<bq-cell id="id-97cbb4a7-dc9b-4626-9d72-7c586b867686" data-type="javascript" class="show-in-presentation">// utility definitions
+
+class Wire {
+    constructor(name, trace_message=null) {
+        if (typeof name !== 'string' || name === '') {
+            throw new Error('name must be a non-empty string');
+        }
+        Object.defineProperties(this, {
+            name:          { enumerable: true, value: name },
+            trace_message: { enumerable: true, value: trace_message },
+        });
+        this.#establish_new_waiting_state();
+    }
+
+    set input (bit){
+        bit = bit ? 1 : 0;
+        this.trace_message?.(`setting wire "${this.name}" to ${bit}`)
+        this.#resolve(bit);
+    }
+
+    get output (){ return this.#promise; }
+
+    // internal:
+
+    #promise;
+    #resolve;
+
+    #establish_new_waiting_state() {
+        this.#promise = new Promise((resolve) => { this.#resolve = resolve; })
+            .then(value => {
+                this.#establish_new_waiting_state();
+                return value;
+            });
+    }
+}
+
+class Gate {
+    constructor(type, inputs, output, operation, trace_message=null) {
+        if (typeof type !== 'string' || type === '') {
+            throw new Error('type must be a nonempty string');
+        }
+        if (!Array.isArray(inputs) || inputs.length === 0 || !inputs.every(input => (input instanceof Wire))) {
+            throw new Error('inputs must be a non-empty array of Wire instances');
+        }
+        if (!(output instanceof Wire)) {
+            throw new Error('output must be a Wire instance');
+        }
+        if (typeof operation !== 'function' || operation.length !== inputs.length) {
+            // bug: operations defined with variable number of arguments not handled
+            throw new Error(`operation must be an async function taking inputs.length (${inputs.length}) arguments`);
+        }
+        Object.defineProperties(this, {
+            type:          { enumerable: true, value: type },
+            output:        { enumerable: true, value: output },
+            operation:     { enumerable: true, value: operation },
+            trace_message: { enumerable: true, value: trace_message },
+        });
+        this.#inputs = inputs;
+        this.#establish_new_waiting_state();
+    }
+
+    get inputs (){ return Array.from(this.#inputs); }
+
+    // internal:
+
+    #inputs;
+
+    #establish_new_waiting_state() {
+        let set_output;
+        new Promise((resolve) => { set_output = resolve; })
+            .then((value) => this.output.input = value);
+        Promise.all(this.#inputs.map(input => input.output))
+            .then((values) => {
+                const result = this.operation(...values);
+                const inputs_string = this.#inputs
+                      .map((input, input_index) => `${input.name}=${values[input_index]}`)
+                      .join(' and ');
+                this.trace_message?.(`${this.type} gate got inputs ${inputs_string} and is setting output "${this.output.name}" to ${result}`);
+                this.#establish_new_waiting_state();
+                set_output(result);
+            });
+    }
+}
+
+const create_binary_gate_by_type = (type, inputs, output, trace_message=null) => {
+    if (!Array.isArray(inputs) || inputs.length !== 2) {
+        throw new Error('inputs must be an array of length 2');
+    }
+    switch (type) {
+        case 'AND': return new Gate(type, inputs, output, (a, b) => ((!!a && !!b) ? 1 : 0), trace_message);
+        case 'OR':  return new Gate(type, inputs, output, (a, b) => ((!!a || !!b) ? 1 : 0), trace_message);
+        case 'XOR': return new Gate(type, inputs, output, (a, b) => ((!!a ^  !!b) ? 1 : 0), trace_message);
+        default: throw new Error(`unknown gate type "${type}"`);
+    }
+}
+
+const input1_wire_name_prefix = 'x';  // from problem
+const input2_wire_name_prefix = 'y';  // from problem
+const output_wire_name_prefix = 'z';  // from problem
+
+// validate simplifying assumptions regarding wire name prefixes
+if (input1_wire_name_prefix.length !== input2_wire_name_prefix.length || input1_wire_name_prefix.length === 0) {
+    throw new Error('input wire name prefixes must be non-empty and must be the same length');
+}
+if (output_wire_name_prefix.length === 0) {
+    throw new Error('output wire name prefix must be non-empty');
+}
+if (input1_wire_name_prefix.match(/[0-9]$/) || input2_wire_name_prefix.match(/[0-9]$/) || output_wire_name_prefix.match(/[0-9]$/)) {
+    throw new Error('wire name prefixes must not end with a digit');
+}
+
+const wire_number_re = /([0-9]+)$/;
+const get_digit_count_from_wire_name = (wire_name) => {
+    const match = wire_name.match(wire_number_re);
+    return match ? match[1].length : 0;
+};
+const get_wire_number_from_wire_name = (wire_name) => {
+    const match = wire_name.match(wire_number_re);
+    return match ? +match[1] : undefined;
+};
+
+const make_wire_name = (prefix, wire_number, digit_count) => {
+    if (typeof prefix !== 'string') {
+        throw new Error('prefix must be a string');
+    }
+    if (!Number.isInteger(wire_number) || wire_number < 0) {
+        throw new Error('wire_number must be a non-negative integer');
+    }
+    if (!Number.isInteger(digit_count) || digit_count <= 0) {
+        throw new Error('digit_count must be a positive integer');
+    }
+    return `${prefix}${wire_number.toString().padStart(digit_count, '0')}`;
+};
+
+const create_configuration = (test_data_set=null, configuration_options=null) => {
+    keepalive();
+
+    const input_data = bqe.input_data;
+
+    const {
+        defer_set_inputs  = false,  // can use go() to perform later
+        gate_output_swaps,
+    } = (configuration_options ?? {});
+
+    const console_trace_message_outputter = (message) => console.log(message);
+
+    let {
+        trace_message_enabled   = false,
+        trace_message_outputter = console_trace_message_outputter,
+    } = (configuration_options ?? {});
+
+    // define a trace_message interface
+    const get_trace_message_enabled = () => trace_message_enabled;
+    const set_trace_message_enabled = (on=true) => { trace_message_enabled = !!on; };
+
+    const get_trace_message_outputter = () => trace_message_outputter;
+    const set_trace_message_outputter = (message_outputter) => { trace_message_outputter = message_outputter };
+
+    const trace_message = (message) => {
+        if (trace_message_enabled) {
+            trace_message_outputter(message);
+        }
+    };
+
+    // parse input
+    let testing;
+    let input_lines;
+    switch (test_data_set) {
+    case null:
+        testing = false;
+        input_lines = input_data;
+        break;
+
+    case 0:
+        testing = true;
+        input_lines = `
+x00: 1
+x01: 1
+x02: 1
+y00: 0
+y01: 1
+y02: 0
+
+x00 AND y00 -> z00
+x01 XOR y01 -> z01
+x02 OR y02 -> z02
+`;
+        break;
+
+    case 1:
+        testing = true;
+        input_lines = `
+x00: 1
+x01: 0
+x02: 1
+x03: 1
+x04: 0
+y00: 1
+y01: 1
+y02: 1
+y03: 1
+y04: 1
+
+ntg XOR fgs -> mjb
+y02 OR x01 -> tnw
+kwq OR kpj -> z05
+x00 OR x03 -> fst
+tgd XOR rvg -> z01
+vdt OR tnw -> bfw
+bfw AND frj -> z10
+ffh OR nrd -> bqk
+y00 AND y03 -> djm
+y03 OR y00 -> psh
+bqk OR frj -> z08
+tnw OR fst -> frj
+gnj AND tgd -> z11
+bfw XOR mjb -> z00
+x03 OR x00 -> vdt
+gnj AND wpb -> z02
+x04 AND y00 -> kjc
+djm OR pbm -> qhw
+nrd AND vdt -> hwm
+kjc AND fst -> rvg
+y04 OR y02 -> fgs
+y01 AND x02 -> pbm
+ntg OR kjc -> kwq
+psh XOR fgs -> tgd
+qhw XOR tgd -> z09
+pbm OR djm -> kpj
+x03 XOR y03 -> ffh
+x00 XOR y04 -> ntg
+bfw OR bqk -> z06
+nrd XOR fgs -> wpb
+frj XOR qhw -> z04
+bqk OR frj -> z07
+y03 OR x01 -> nrd
+hwm AND bqk -> z03
+tgd XOR rvg -> z12
+tnw OR pbm -> gnj
+`;
+        break;
+
+    default: throw new Error(`test_data_set ${test_data_set} not recognized`)
+    }
+    input_lines = input_lines.trim().split('\n');
+
+    // now that the input_lines is established, create the configuration
+
+    const wires = {};  // mapping: name -> Wire instance
+    const gates = [];  // array of Gate instances
+
+    const get_wires = () => ({ ...wires });
+    const get_gates = () => Array.from(gates);
+
+    // gather the definitions from the input
+    const wire_initializers = {};
+    const gate_initializers = {};
+    let inputting_gate_definitions = false;
+    for (let line_index = 0; line_index < input_lines.length; line_index++) {
+        const line = input_lines[line_index];
+        if (line.length === 0) {
+            if (inputting_gate_definitions) {
+                throw new Error('second empty line encountered at line #${line_index+1}');
+            }
+            inputting_gate_definitions = true;
+            continue;
+        }
+        if (!inputting_gate_definitions) {
+
+            const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)[\s]*[:][\s]*([01])$/);
+            if (!match) {
+                throw new Error(`illegal line format at line #${line_index+1}: "${line}"`);
+            }
+            const name  = match[1];
+            const value = +match[2];
+            if (name in wire_initializers) {
+                throw new Error(`duplicate wire initializer for "${name}" at line #${line_index+1}: "${line}"`);
+            }
+            wire_initializers[name] = value;
+            wires[name] = new Wire(name, trace_message);
+
+        } else {  // inputting_gate_definitions
+
+            const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)[\s]+(AND|OR|XOR)[\s]+([a-zA-Z][a-zA-Z0-9]*)[\s]*[-][>][\s]*([a-zA-Z][a-zA-Z0-9]*)$/);
+            if (!match) {
+                throw new Error(`illegal line format at line #${line_index+1}: "${line}"`);
+            }
+            const input_name1 = match[1];
+            const type        = match[2];
+            const input_name2 = match[3];
+            const output_name = match[4];
+            if (output_name in wire_initializers) {
+                throw new Error(`${type} gate given with output name "${output_name}" which was already specified by a wire initializer`);
+            }
+            if (gate_initializers[output_name]) {
+                throw new Error(`${type} gate given with output name "${output_name}" which was already specified earlier`);
+            }
+            gate_initializers[output_name] = { input_name1, type, input_name2, output_name };
+            wires[output_name] = new Wire(output_name, trace_message);
+        }
+    }
+
+    // validate input and output wire names
+    const validate_wire_names = (label, name_prefix) => {  // returns an array of the corresponding names
+        if (!name_prefix.match(/[a-zA-Z]+/)) {
+            throw new Error(`unexpected: ${label} wires: name_prefix "${name_prefix}" is not safe for the way name_re is created`);
+        }
+        const name_re = new RegExp(`^${name_prefix}(?&lt;bit_index&gt;[0-9]+)$`);
+        const names = Object.values(wires)
+              .map(wire => wire.name)
+              .filter(name => name.match(name_re))
+              .sort();  // (OK to use sort() because filter() created a new intermediate array) this will sort lsb to msb ascending
+        if (names.length < 1 || !names.every(name => (name.length === names[0].length))) {
+            throw new Error(`${label} wires names ("${name_prefix}" followed by 1 or more decimal digits) must all be the same length`)
+        }
+        const wire_bit_index_strings = names.map(name => name.match(name_re).groups.bit_index);  // we already know these will all match
+        const wire_bit_indices = wire_bit_index_strings.map(string => +string);
+        const start = Math.min( ...wire_bit_indices );
+        const end   = Math.max( ...wire_bit_indices );
+        if (start !== 0 || end !== new Set(wire_bit_indices).size-1) {
+            throw new Error(`there are missing bit indices for the ${label} wire names ("${name_prefix}" followed by 1 or more decimal digits)`);
+        }
+        return names;
+    };
+    const input1_wire_names = validate_wire_names('input1', input1_wire_name_prefix);
+    const input2_wire_names = validate_wire_names('input2', input2_wire_name_prefix);
+    const input_wire_names  = [ ...input1_wire_names, ...input2_wire_names ];
+    const output_wire_names = validate_wire_names('output', output_wire_name_prefix);
+
+    if (input_wire_names.length > 0) {
+        if (!input_wire_names.every(name => (name.length === input_wire_names[0].length))) {
+            throw new Error('all input wire names must have the same length');
+        }
+    }
+
+    // note: input1_wire_name_prefix.length === input2_wire_name_prefix.length
+    const input_wire_digit_count  = (input_wire_names.length  === 0) ? 0 : (input_wire_names[0].length  - input1_wire_name_prefix.length);
+    const output_wire_digit_count = (output_wire_names.length === 0) ? 0 : (output_wire_names[0].length - input1_wire_name_prefix.length);
+
+    const make_input1_wire_name = (wire_number) => make_wire_name(input1_wire_name_prefix, wire_number, input_wire_digit_count);
+    const make_input2_wire_name = (wire_number) => make_wire_name(input2_wire_name_prefix, wire_number, input_wire_digit_count);
+    const make_output_wire_name = (wire_number) => make_wire_name(output_wire_name_prefix, wire_number, output_wire_digit_count);
+
+    // if gate_output_swaps is specified, validate it then apply it to gate_initializers
+    if (gate_output_swaps) {
+        if ( !Array.isArray(gate_output_swaps) ||
+             !gate_output_swaps.every(pair => {
+                 return ( Array.isArray(pair) &&
+                          pair.length === 2   &&
+                          pair.every(name => name in gate_initializers) );
+             }) ) {
+            throw new Error('gate_output_swaps must be an array of arrays of two output_names that each exist in the gate initializers');
+        }
+        // swap the initializer entries for each specified pair in order
+        // no check is performed for redundancy, etc....
+        for (const [ output_name1, output_name2 ] of gate_output_swaps) {
+            const initializer1 = gate_initializers[output_name1];
+            const initializer2 = gate_initializers[output_name2];
+            initializer1.output_name = output_name2;
+            initializer2.output_name = output_name1;
+            gate_initializers[output_name1] = initializer2;
+            gate_initializers[output_name2] = initializer1;
+        }
+    }
+
+    // create and "wire" up the gates according to gate_initializers
+    for (const { input_name1, type, input_name2, output_name } of Object.values(gate_initializers)) {
+        const input1 = wires[input_name1];
+        if (!input1) {
+            throw new Error(`wire "${input_name1}" not found`);
+        }
+        const input2 = wires[input_name2];
+        if (!input2) {
+            throw new Error(`wire "${input_name2}" not found`);
+        }
+        const output = wires[output_name];
+        if (!output) {
+            throw new Error(`wire "${output_name}" not found`);
+        }
+        const inputs = [ input1, input2 ];
+        const gate = create_binary_gate_by_type(type, inputs, output, trace_message);
+        gates.push(gate);
+    }
+
+    // now, set the input wire values; first set up last_input_values to
+    // monitor the last values applied to the input wires.
+    const last_input_values = {};
+    for (const name of Object.keys(wire_initializers)) {
+        const wire = wires[name];
+        const setup_wire_monitor = () => {
+            wire.output
+                .then(value => {
+                    last_input_values[name] = value;
+                    setup_wire_monitor();  // continue monitoriing
+                });
+        };
+        setup_wire_monitor();
+    }
+    // Now, create a function that will actually set the input wire values
+    // Note: this is not called immediately here to give a chance to
+    // change the trace_message_outputter before running the net.
+    // A function "go" is provided that calls set_initial_input_values().
+    const set_initial_input_values = () => {
+          for (const [ name, value ] of Object.entries(wire_initializers)) {
+              wires[name].input = value;
+          }
+    };
+    if (!defer_set_inputs) {
+        set_initial_input_values();
+    }
+    // create a similar function to set input wire values from last_input_values.
+    const set_wires_from_last_input_values = () => {
+        for (const [ name, value ] of Object.entries(last_input_values)) {
+            wires[name].input = value;
+        }
+    };
+
+    // finally, define the function (and etc) to get the final output
+    let _resolve_output_wires_promise;
+    let _output_wires_promise = new Promise(resolve => { _resolve_output_wires_promise = resolve; })
+        .then(() => {
+            _resolve_output_wires_promise = undefined;
+            _output_wires_promise         = undefined;
+        });
+    let output_wires_bits;    // set when promise resolves
+    let output_wires_number;  // set when promise resolves
+    const wait_for_output = () => {
+        // output_wire_names is sorted in ascending order, i.e., lsb to msb
+        // Reverse the order for more direct calculation of the resulting number.
+        Promise.all(output_wire_names.toReversed().map(name => wires[name].output))
+            .then(bits => {
+                _resolve_output_wires_promise?.();
+                trace_message('>>> setting new output_wires_bits', bits);//!!!
+                output_wires_bits = bits;
+                // calculate corresponding number
+                let number = 0;
+                for (const bit of bits) {
+                    number = 2*number + bit;
+                }
+                trace_message('>>> setting new output_wires_number', number);//!!!
+                output_wires_number = number;
+                // establish new waiting state
+                wait_for_output();
+                trace_message('>>> waiting for new output_wires_bits');//!!!
+            });
+    };
+    wait_for_output();
+
+    const get_output_wires_number = async () => {
+        await _output_wires_promise;  // will become undefined after first resolve
+        return output_wires_number;
+    }
+
+    const get_input1_wire_names = () => Array.from(input1_wire_names);
+    const get_input2_wire_names = () => Array.from(input2_wire_names);
+    const get_input_wire_names  = () => Array.from(input_wire_names);
+    const get_output_wire_names = () => Array.from(output_wire_names);
+
+    const get_input1_wires = () => input1_wire_names.map(name => wires[name]);
+    const get_input2_wires = () => input2_wire_names.map(name => wires[name]);
+    const get_input_wires  = () => input_wire_names.map(name => wires[name]);
+    const get_output_wires = () => output_wire_names.map(name => wires[name]);
+
+    const get_last_input_values = () => ({ ...last_input_values });
+
+    const get_gate_output_swaps = () => !gate_output_swaps ? undefined : gate_output_swaps.map(([ output1, output2 ]) => [ output1, output2 ]);
+
+    const get_wire_initializers = () => ({ ...wire_initializers });
+    const get_gate_initializers = () => Object.fromEntries( Object.entries(gate_initializers).map(([ output_name, initializer ]) => [ output_name, { ...initializer } ]) );
+
+    const go = () => set_initial_input_values();
+
+    return {
+        console_trace_message_outputter,
+        get_trace_message_enabled,
+        set_trace_message_enabled,
+        get_trace_message_outputter,
+        set_trace_message_outputter,
+        trace_message,
+        testing,
+        get_wires,
+        get_gates,
+        input_wire_digit_count,
+        output_wire_digit_count,
+        make_input1_wire_name,
+        make_input2_wire_name,
+        make_output_wire_name,
+        set_initial_input_values,
+        set_wires_from_last_input_values,
+        get_output_wires_number,
+        get_input1_wire_names,
+        get_input2_wire_names,
+        get_input_wire_names,
+        get_output_wire_names,
+        get_input1_wires,
+        get_input2_wires,
+        get_input_wires,
+        get_output_wires,
+        get_gate_output_swaps,
+        get_last_input_values,
+        get_wire_initializers,
+        get_gate_initializers,
+        go,
+    };
+};
+
+const init_data = (test_data_set=null, configuration_options=null) => {
+    const current_configuration = create_configuration(test_data_set, configuration_options);
+    vars(current_configuration);
+    vars({ current_configuration });
+};
+
+keepalive();
+vars({
+    Wire,
+    Gate,
+    create_binary_gate_by_type,
+    input1_wire_name_prefix,
+    input2_wire_name_prefix,
+    output_wire_name_prefix,
+    get_digit_count_from_wire_name,
+    get_wire_number_from_wire_name,
+    make_wire_name,
+    create_configuration,
+    init_data,
+});
+</bq-cell>
+<bq-cell id="id-1cbfee8b-5d82-468c-a04b-3f43debe4065" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
+keepalive();
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       1,
+    height:             32,
+});
+bqe.trace_fn = trace_fn;//!!!
+
+await trace_fn('--- computation trace begin ---', null, true);
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
+
+const trace_message_outputter = trace_fn
+      ? async (message) => { await trace_fn(message, null, true); }  // hopefully the async outputter methods will serialize correctly....
+      : undefined;
+
+bqe.init_data(null, {
+    trace_message_enabled: true,
+    trace_message_outputter,
+});
+
+const {
+    testing,
+    nodes,
+} = bqe;
+
+const answer = await bqe.get_output_wires_number();
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One${bqe.testing ? ' (TESTING)' : ''}
+The circuit outputs the number **${answer}** (in decimal).
+`);
+
+// finally, scroll answer_element into view
+sleep(0.1).then(() => (trace_ocx?.element ?? answer_element).scrollIntoView());
+</bq-cell>
+<bq-cell id="id-394beaf9-be2e-442b-95ee-c427b7d46484" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '110ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+const description = `
+--- Part Two ---
+
+After inspecting the monitoring device more closely, you determine that the system you're simulating is trying to add two binary numbers.
+
+Specifically, it is treating the bits on wires starting with x as one binary number, treating the bits on wires starting with y as a second binary number, and then attempting to add those two numbers together. The output of this operation is produced as a binary number on the wires starting with z. (In all three cases, wire 00 is the least significant bit, then 01, then 02, and so on.)
+
+The initial values for the wires in your puzzle input represent just one instance of a pair of numbers that sum to the wrong value. Ultimately, any two binary numbers provided as input should be handled correctly. That is, for any combination of bits on wires starting with x and wires starting with y, the sum of the two numbers those bits represent should be produced as a binary number on the wires starting with z.
+
+For example, if you have an addition system with four x wires, four y wires, and five z wires, you should be able to supply any four-bit number on the x wires, any four-bit number on the y numbers, and eventually find the sum of those two numbers as a five-bit number on the z wires. One of the many ways you could provide numbers to such a system would be to pass 11 on the x wires (1011 in binary) and 13 on the y wires (1101 in binary):
+
+x00: 1
+x01: 1
+x02: 0
+x03: 1
+y00: 1
+y01: 0
+y02: 1
+y03: 1
+
+If the system were working correctly, then after all gates are finished processing, you should find 24 (11+13) on the z wires as the five-bit binary number 11000:
+
+z00: 0
+z01: 0
+z02: 0
+z03: 1
+z04: 1
+
+Unfortunately, your actual system needs to add numbers with many more bits and therefore has many more wires.
+
+Based on forensic analysis of scuff marks and scratches on the device, you can tell that there are exactly four pairs of gates whose output wires have been swapped. (A gate can only be in at most one such pair; no gate's output was swapped multiple times.)
+
+For example, the system below is supposed to find the bitwise AND of the six-bit number on x00 through x05 and the six-bit number on y00 through y05 and then write the result as a six-bit number on z00 through z05:
+
+x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z05
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z00
+
+However, in this example, two pairs of gates have had their output wires swapped, causing the system to produce wrong answers. The first pair of gates with swapped outputs is x00 AND y00 -> z05 and x05 AND y05 -> z00; the second pair of gates is x01 AND y01 -> z02 and x02 AND y02 -> z01. Correcting these two swaps results in this system that works as intended for any set of initial values on wires that start with x or y:
+
+x00 AND y00 -> z00
+x01 AND y01 -> z01
+x02 AND y02 -> z02
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z05
+
+In this example, two pairs of gates have outputs that are involved in a swap. By sorting their output wires' names and joining them with commas, the list of wires involved in swaps is z00,z01,z02,z05.
+
+Of course, your actual system is much more complex than this, and the gates that need their outputs swapped could be anywhere, not just attached to a wire starting with z. If you were to determine that you need to swap output wires aaa with eee, ooo with z99, bbb with ccc, and aoc with z24, your answer would be aaa,aoc,bbb,ccc,eee,ooo,z24,z99.
+
+Your system of gates and wires has four pairs of gates which need their output wires swapped - eight wires in total. Determine which four pairs of gates need their outputs swapped so that your system correctly performs addition; what do you get if you sort the names of the eight wires involved in a swap and then join those names with commas?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-007e8abf-2e6a-4214-8c64-de60ff0fd8d6" data-type="javascript" class="show-in-presentation">// define functions for exploring gate nets
+
+// options: {
+//     configuration     = bqe.current_configuration,
+//     gate_initializers = configuration.get_gate_initializers(),  // (with configuration as defined above)
+//     canonical         = false,
+// }
+// If gate_initializers is specified, then if it was created from a different
+// configuration than bqe.current_configuration, that different configuration
+// must also be given.
+//
+// returns mapping: wire_name -> gate_net  // (does not include input wire names)
+const create_mapping_wire_name_to_gate_net = (options=null) => {
+    const configuration = options?.configuration ?? bqe.current_configuration;
+
+    const gate_initializers = options?.gate_initializers
+          ? Object.fromEntries( Object.entries(options.gate_initializers).map(([ output_name, initializer ]) => [ output_name, { ...initializer } ]) )  // make a copy
+          : configuration.get_gate_initializers();
+
+    const {
+        canonical = false,
+    } = (options ?? {});
+
+    const {
+        get_input_wire_names,
+        get_output_wire_names,
+    } = configuration;
+
+    const input_wire_names_set = new Set(get_input_wire_names());
+
+    const output_wire_names = get_output_wire_names();
+
+    // main part of create_mapping_wire_name_to_gate_net():
+    const mapping_wire_name_to_gate_net = {};
+
+    const resolve_wire_name = (wire_name) => {
+        if (wire_name in mapping_wire_name_to_gate_net) {
+            return mapping_wire_name_to_gate_net[wire_name];
+        } else {
+            let mapped_to;
+            if (input_wire_names_set.has(wire_name)) {
+                return wire_name;
+            } else {
+                const wire_gate_initializer = gate_initializers[wire_name];
+                if (!wire_gate_initializer) {
+                    throw new Error(`gate initializer not found for wire "${wire_name}"`);
+                }
+                const { input_name1, input_name2, type, output_name } = wire_gate_initializer;
+                const mapped_to = {
+                    input1: resolve_wire_name(input_name1),
+                    input2: resolve_wire_name(input_name2),
+                    type,
+                    output_name,
+                };
+                mapping_wire_name_to_gate_net[wire_name] = mapped_to;
+                return mapped_to;
+            }
+        }
+    };
+
+    for (const output_wire_name of output_wire_names) {
+        resolve_wire_name(output_wire_name);
+    }
+
+    if (canonical) {
+        // the following relies on the fact that all gates are symmetric in their inputs...
+
+        const strcmp = (s1, s2) => (s1 < s2) ? -1 : ((s1 > s2) ? 1 : 0);
+
+        const depth = (gn) => {
+            if (typeof gn === 'string') {
+                return 0;
+            } else {
+                return 1 + Math.max(depth(gn.input1), depth(gn.input2));
+            }
+        };
+
+        const gn_cmp = (gn1, gn2) => {
+            if (typeof gn1 === 'string') {
+                if (typeof gn2 === 'string') {
+                    return strcmp(gn1, gn2);
+                } else {
+                    return -1;
+                }
+            } else if (typeof gn2 === 'string') {
+                return 1;
+            } else {
+                const d1 = depth(gn1);
+                const d2 = depth(gn2);
+                if (d1 < d2) {
+                    return -1;
+                } else if (d1 > d2) {
+                    return 1;
+                } else {
+                    if (gn1.type === gn2.type) {
+                        return strcmp(gn1.output_name, gn2.output_name);
+                    } else if (gn1.type === 'XOR') {  // special case: want XOR nodes before other nodes for the adder problem
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }
+            }
+        }
+
+        for (const gate_net of Object.values(mapping_wire_name_to_gate_net)) {
+            if (gn_cmp(gate_net.input1, gate_net.input2) > 0) {
+                // swap the inputs
+                const t = gate_net.input1;
+                gate_net.input1 = gate_net.input2;
+                gate_net.input2 = t;
+            }
+        }
+    }
+
+    return mapping_wire_name_to_gate_net;
+};
+
+// options: {
+//     indent_size = 2,
+// }
+// returns gate_net: string or { input1, input2, type, output_name }
+const format_gate_net = (gate_net, options=null) => {
+    const {
+        indent_size = 2,
+    } = (options ?? {});
+
+    const indentation = ' '.repeat(indent_size);
+
+    const lines = [];
+
+    const representative_name = (gn) => (typeof gn === 'string') ? gn : gn.output_name;
+
+    const format = (gn, indent_level=0) => {
+        if (typeof gn === 'string') {
+            // no need to output at this level because the representative_name was output above...
+            // lines.push(`${indentation.repeat(indent_level)}${gn}`);
+        } else {
+            const { input1, input2, type, output_name } = gn;
+            lines.push(`${indentation.repeat(indent_level)}${output_name}: ${representative_name(input1)} ${type} ${representative_name(input2)}`);
+            format(input1, indent_level+1);
+            format(input2, indent_level+1);
+        }
+    };
+
+    format(gate_net);
+    return lines.join('\n');
+};
+
+// options: {
+//     configuration                 = bqe.current_configuration,
+//     mapping_wire_name_to_gate_net = create_mapping_wire_name_to_gate_net(options),
+//     gate_initializers             = configuration.get_gate_initializers(),  // if create_mapping_wire_name_to_gate_net() called (with configuration as defined above)
+//     canonical                     = false,                                  // if create_mapping_wire_name_to_gate_net() called
+//     indent_size                   = 2,                                      // for format_gate_net()
+// }
+// If gate_initializers or mapping_wire_name_to_gate_net is specified, then if
+// those were created from a different configuration than bqe.current_configuration,
+// that different configuration must also be given.
+//
+// Example with different configuration
+// ------------------------------------
+// const configuration = bqe.create_configuration(0);
+// const gate_initializers = configuration.get_gate_initializers();
+// const mapping_wire_name_to_gate_net = bqe.create_mapping_wire_name_to_gate_net({ configuration, gate_initializers, canonical: true });
+// const console.log(bqe.format_entire_gate_net({ configuration, mapping_wire_name_to_gate_net }));
+const format_entire_gate_net = (options=null) => {
+    const {
+        configuration = bqe.current_configuration,
+    } = (options ?? {});
+    const {
+        mapping_wire_name_to_gate_net = create_mapping_wire_name_to_gate_net({ ...options, configuration }),
+    } = (options ?? {});
+
+    return configuration.get_output_wire_names()
+        .map(wire_name => format_gate_net(mapping_wire_name_to_gate_net[wire_name], options))
+        .join('\n');
+};
+
+keepalive();
+vars({
+    create_mapping_wire_name_to_gate_net,
+    format_gate_net,
+    format_entire_gate_net,
+});
+</bq-cell>
+<bq-cell id="id-1a83ed94-a673-4efe-825c-a8bf4eaed772" data-type="javascript" class="show-in-presentation">// display gate net to help understand its structure
+
+const show_gate_net = async (ocx, configuration, title='Current Gate Net') => {
+    const formatted_gate_net = bqe.format_entire_gate_net({ configuration, canonical: true });
+
+    await ocx.markdown(`# ${title}`);
+
+    const gate_net_ocx = ocx.create_child_ocx({
+        style: {
+            'font-family':          'monospace',
+            'font-size':            'xx-small',
+            'white-space':          'nowrap',
+            'white-space-collapse': 'preserve',
+            'max-height':           '60dvh',
+            'max-width':            'fit-content',
+            padding:                '1em',
+            overflow:               'auto',
+            border:                 '1px solid var(--theme-ou-rc)',
+        },
+    });
+    await gate_net_ocx.render_text(formatted_gate_net);
+};
+
+const configuration = bqe.create_configuration();
+await show_gate_net(ocx, configuration);
+
+keepalive();
+vars({
+    show_gate_net,
+});
+</bq-cell>
+<bq-cell id="id-27b6364e-67d9-469c-9f97-d6c8a5069ac9" data-type="markdown">
+
+# Desired Recurrence for Each Output Wire
+
+**n = 0:**
+* z[n] = { x[n] XOR y[n] }
+
+**n = 1:**
+* z[n] = { { x[n] XOR y[n] } XOR { x[n-1] AND y[n-1] } }
+
+**n > 1:**
+* z[n] = { { x[n] XOR y[n] } XOR { { x[n-1] AND y[n-1] } OR { z[n-1].input1 AND z[n-1].input2 } } }
+
+**Also: z[n] present but x[n] and y[n] are not** *(presumably x[n-1] and y[n-1] are present):*
+* z[n] = { { x[n-1] AND y[n-1] } OR { z[n-1].input1 AND z[n-1].input2 } }
+
+</bq-cell>
+<bq-cell id="id-43ef79da-2b51-4077-b647-1bfde3579df6" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
+keepalive();
+
+const gn_same = (gn1, gn2) => {  // null/undefined/empty fields are treated as wildcards
+    if (!gn1 || !gn2) {
+        return false;  // require both to not be null/undefined/empty
+    } else if (gn1 === gn2) {
+        return true;
+    } else if (typeof gn1 === 'string') {
+        return false;
+    } else if (typeof gn2 === 'string') {
+        return false;
+    } else {
+        return ( (!gn1.input1      || !gn2.input1      || gn1.input1      === gn2.input1) &&
+                 (!gn1.input2      || !gn2.input2      || gn1.input2      === gn2.input2) &&
+                 (!gn1.type        || !gn2.type        || gn1.type        === gn2.type)   &&
+                 (!gn1.output_name || !gn2.output_name || gn1.output_name === gn2.output_name) );
+    }
+}
+
+const test_data_set = null;  // use the actual problem data set
+
+const special_cases_verified = [];
+
+// z00 and z01: get these special cases out of the way first...
+// also: check special case for the last z if corresponding x and y are not present.
+const special_cases_are_ok = () => {
+    const configuration_options = {
+        trace_message_enabled: false,
+        defer_set_inputs:      true,
+    };
+
+    const configuration = bqe.create_configuration(test_data_set, configuration_options);
+    const gate_net_mapping = bqe.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
+
+    // special case: n === 0: z[0] = { x[0] XOR y[0] }
+    const gn00 = gate_net_mapping.z00;
+    if (!gn00) {
+        throw new Error('unexpected: no gate found for output wire z00');
+    }
+    if (!gn_same(gn00, { input1: 'x00', input2: 'y00', type: 'XOR', output_name: 'z00' })) {
+        return false;
+    }
+    special_cases_verified.push('z00');
+
+    // special case: n === 1: z[1] = { { x[1] XOR y[1] } XOR { x[0] AND y[0] } }
+    const gn01 = gate_net_mapping.z01;
+    if (!gn01) {
+        throw new Error('unexpected: no gate found for output wire z01');
+    }
+    if ( gn01.type !== 'XOR' ||
+         !gn_same(gn01.input1, { input1: 'x01', input2: 'y01', type: 'XOR' }) ||
+         !gn_same(gn01.input2, { input1: 'x00', input2: 'y00', type: 'AND' })    ) {
+        return false;
+    }
+    special_cases_verified.push('z01');
+
+    // finally, check for any output with no corresponding inputs
+    const input1_names = configuration.get_input1_wire_names();
+    const input2_names = configuration.get_input2_wire_names();
+    const output_names = configuration.get_output_wire_names();
+    for (const zn of output_names) {
+        const n = bqe.get_wire_number_from_wire_name(zn);
+        const xn = configuration.make_input1_wire_name(n);
+        const yn = configuration.make_input2_wire_name(n);
+        const has_xn = input1_names.includes(xn);
+        const has_yn = input2_names.includes(yn);
+        if (!has_xn || !has_yn) {
+            if (has_xn) {
+                throw new Error(`unexpected: output wire "${zn}" has corresponding input wire "${xn}" but does not have "${yn}"`);
+            }
+            if (has_yn) {
+                throw new Error(`unexpected: output wire "${zn}" does not have corresponding input wire "${xn}" but does have "${yn}"`);
+            }
+
+            const xn_1 = configuration.make_input1_wire_name(n-1);
+            const yn_1 = configuration.make_input2_wire_name(n-1);
+            const has_xn_1 = input1_names.includes(xn_1);
+            const has_yn_1 = input2_names.includes(yn_1);
+            if (!has_xn_1 || !has_yn_1) {
+                throw new Error(`unexpected: output wire "${zn}" does not have corresponding input wires "${xn}" and "${yn}", but also does not have "${xn_1}" and "${yn_1}"`);
+            }
+
+            const zn_1 = configuration.make_output_wire_name(n-1);
+
+            // special case: z[n] = { { x[n-1] AND y[n-1] } OR { z[n-1].input1 AND z[n-1].input2 } }
+            const gzn = gate_net_mapping[zn];
+            if ( !gzn ||
+                 gzn.type !== 'OR' ||
+                 !gn_same(gzn.input1, { input1: xn_1, input2: yn_1, type: 'AND' }) ||
+                 !gate_net_mapping[zn_1] ||
+                 !gn_same(gzn.input2, {
+                     input1: gate_net_mapping[zn_1].input1,
+                     input2: gate_net_mapping[zn_1].input2,
+                     type: 'AND' }) ) {
+                return false;
+            }
+
+            special_cases_verified.push(zn);
+        }
+    }
+
+    return true;
+};
+if (!special_cases_are_ok()) {
+    throw new Error('unexpected: I thought the special cases were OK but they are not?!');
+}
+
+const defect_recognizer = (options=null) => {
+    const {
+        gate_output_swaps,
+    } = (options ?? {});
+
+    const configuration_options = {
+        trace_message_enabled: false,
+        defer_set_inputs:      true,
+        gate_output_swaps,
+    };
+
+    const configuration = bqe.create_configuration(test_data_set, configuration_options);
+    const gate_net_mapping = bqe.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
+
+    // The special cases have already been verified above.
+    // Check the remaining general cases.
+
+    const remaining_output_wire_names_to_check = configuration.get_output_wire_names()
+          .filter(name => !special_cases_verified.includes(name));
+
+    for (const zn of remaining_output_wire_names_to_check) {
+        const n = bqe.get_wire_number_from_wire_name(zn);
+        const xn = configuration.make_input1_wire_name(n);
+        const yn = configuration.make_input2_wire_name(n);
+        const xn_1 = configuration.make_input1_wire_name(n-1);
+        const yn_1 = configuration.make_input2_wire_name(n-1);
+        const zn_1 = configuration.make_output_wire_name(n-1);
+
+        const gzn = gate_net_mapping[zn];
+
+        // verify: z[n] = { { x[n] XOR y[n] } XOR { { x[n-1] AND y[n-1] } OR { z[n-1].input1 AND z[n-1].input2 } } }
+
+        if (gzn.type !== 'XOR') {
+            const replacements = Object.values(gate_net_mapping)
+                  .filter((repl) => {
+                      return ( repl.type === 'XOR' &&
+                               gn_same(repl.input1, { input1: xn, input2: yn, type: 'XOR' }) &&
+                               repl.input2 &&
+                               repl.input2.type === 'OR' &&
+                               gn_same(repl.input2.input1, { input1: xn_1, input2: yn_1, type: 'AND' }) &&
+                               gate_net_mapping[zn_1] &&
+                               gn_same(repl.input2.input2, {
+                                   input1: gate_net_mapping[zn_1].input1,
+                                   input2: gate_net_mapping[zn_1].input2,
+                                   type: 'AND' }) );
+                  });
+            if (replacements.length !== 1) {
+                throw new Error(`unexpected: unable to find unique replacement for defect on wire "${zn}"`);
+            }
+            return [ zn, replacements[0].output_name ];
+        } else {
+            // gzn.type is OK, now verify the rest of the structure
+            const target_gn_pattern = { input1: xn, input2: yn, type: 'XOR' };
+            if (!gn_same(gzn.input1, target_gn_pattern)) {
+                const replacements = Object.values(gate_net_mapping)
+                      .filter((repl) => gn_same(repl, target_gn_pattern));
+                if (replacements.length !== 1) {
+                    throw new Error(`unexpected: unable to find unique replacement for defect on input1 of wire "${zn}"`);
+                }
+                return [ gzn.input1.output_name, replacements[0].output_name ];
+            } else if (typeof gzn.input2 === 'string') {
+                throw new Error(`unexpected: typeof gzn.input2 === 'string' for wire "${zn}"`);
+            } else if (gzn.input2.type !== 'OR') {
+                const replacements = Object.values(gate_net_mapping)
+                      .filter((repl) => {
+                          return ( repl.type === 'OR' &&
+                                   gn_same(repl.input1, { input1: xn_1, input2: yn_1, type: 'AND' }) &&
+                                   gate_net_mapping[zn_1] &&
+                                   gn_same(repl.input2, {
+                                       input1: gate_net_mapping[zn_1].input1,
+                                       input2: gate_net_mapping[zn_1].input2,
+                                       type: 'AND' }) );
+                      });
+                if (replacements.length !== 1) {
+                    throw new Error(`unexpected: unable to find unique replacement for defect on input2 of wire "${zn}"`);
+                }
+                return [ gzn.input2.output_name, replacements[0].output_name ];
+            } else {
+                // gzn.input2.type is OK, now verify the rest of the structure
+                const target_gn_pattern = { input1: xn_1, input2: yn_1, type: 'AND' };
+                if (!gn_same(gzn.input2.input1, target_gn_pattern)) {
+                    const replacements = Object.values(gate_net_mapping)
+                          .filter((repl) => gn_same(repl, target_gn_pattern));
+                    if (replacements.length !== 1) {
+                        throw new Error(`unexpected: unable to find unique replacement for defect on input2.input1 of wire "${zn}"`);
+                    }
+                    return [ gzn.input2.input1.output_name, replacements[0].output_name ];
+                } else if (!gate_net_mapping[zn_1]) {
+                    throw new Error(`unexpected: !gate_net_mapping[zn_1] for wire zn_1 = "${zn_1}"`);
+                } else {
+                    const target_gn_pattern = { input1: gate_net_mapping[zn_1].input1, input2: gate_net_mapping[zn_1].input2, type: 'AND' };
+                    if (!gn_same(gzn.input2.input2, target_gn_pattern)) {
+                        const replacements = Object.values(gate_net_mapping)
+                              .filter((repl) => gn_same(repl, target_gn_pattern));
+                        if (replacements.length !== 1) {
+                            throw new Error(`unexpected: unable to find unique replacement for defect on input2.input1 of wire "${zn}"`);
+                        }
+                        return [ gzn.input2.input2.output_name, replacements[0].output_name ];
+                    }
+                }
+            }
+        }
+    }
+};
+
+// Strategy: find defects and patch them via gate_output_swaps
+// until there are no more defects.
+await ocx.markdown(`## Fixing swapped gate outputs:`);
+const gate_output_swaps = [];
+for (let pass_count = 0, pass_count_max = 10; ; pass_count++) {
+    const first_time = (gate_output_swaps.length === 0);
+    await ocx.println(`Looking for${first_time ? '' : ' additional'} defects${first_time ? '...' : ` after applying the gate output swaps: ${gate_output_swaps.map(s => s.join('/')).join(', ')}`}`);
+    const swap = defect_recognizer({ gate_output_swaps });
+    if (!swap) {
+        await ocx.println('... no more defects found.');
+        break;
+    } else {
+        gate_output_swaps.push(swap);
+    }
+    if (pass_count > pass_count_max) {
+        throw new Error(`unexpected: something wrong with algorithm; more than ${pass_count_max} defects found!`);
+    }
+}
+
+await ocx.markdown(`## Checking if the adder circuit works now:`);
+let failure_count = 0;
+for (let i = 0; i < 10; i++) {
+    // Note: configurations are not actually compatible with setting
+    // new inputs and getting an output number more than once!!!
+
+    // This should now be a working gate configuration for the adder circuit:
+    const configuration = bqe.create_configuration(test_data_set, {
+        trace_message_enabled: false,
+        defer_set_inputs:      true,
+        gate_output_swaps,
+    });
+    const input1_wires = configuration.get_input1_wires();
+    const input2_wires  =configuration.get_input2_wires();
+
+    const x = Math.floor(2**input2_wires.length * Math.random());
+    const y = Math.floor(2**input2_wires.length * Math.random());
+    const x_bits_little_endian = Array.from(x.toString(2)).map(str => +str).toReversed();
+    const y_bits_little_endian = Array.from(y.toString(2)).map(str => +str).toReversed();
+    for (let i = 0; i < input1_wires.length; i++) {  // set x input bits
+        input1_wires[i].input = (x_bits_little_endian[i] ?? 0);
+    }
+    for (let i = 0; i < input2_wires.length; i++) {  // set y input bits
+        input2_wires[i].input = (y_bits_little_endian[i] ?? 0);
+    }
+    const z = await configuration.get_output_wires_number();
+    const correct = (x+y === z);
+    await ocx.println(`* trying x=${x} and y=${y}; x+y=${x+y}`);
+    await ocx.println(`  >>> submitting x and y to the circuit yields ${z} which is ${correct ? 'CORRECT' : 'WRONG'}`);
+    await ocx.println();
+    if (!correct) {
+        failure_count++;
+    }
+}
+if (failure_count > 0) {
+    throw new Error('adder circuit still does not work reliably');
+}
+
+const answer = gate_output_swaps.flat(1).toSorted().join(',');
+
+const answer_element = await ocx.markdown(`
+# Answer to Part Two${bqe.testing ? ' (TESTING)' : ''}
+The sorted, comma-separated swapped gate wire names is **"${answer}"**.
+`);
+sleep(0.1).then(() => answer_element.scrollIntoView());
+</bq-cell>
+</body>
+</html>
