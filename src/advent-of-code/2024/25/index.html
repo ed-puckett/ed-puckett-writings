@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-eval>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell id="id-1f3b3f41-4e40-47ca-ad55-28c6b7d49c26" data-type="javascript">
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '100ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+await ccx.markdown(`
+# Excerpt of Problem
+## From: https://adventofcode.com/2024/day/25
+`);
+const description = `
+--- Day 25: Code Chronicle ---
+
+Out of ideas and time, The Historians agree that they should go back to check the Chief Historian's office one last time, just in case he went back there without you noticing.
+
+When you get there, you are surprised to discover that the door to his office is locked! You can hear someone inside, but knocking yields no response. The locks on this floor are all fancy, expensive, virtual versions of five-pin tumbler locks, so you contact North Pole security to see if they can help open the door.
+
+Unfortunately, they've lost track of which locks are installed and which keys go with them, so the best they can do is send over schematics of every lock and every key for the floor you're on (your puzzle input).
+
+The schematics are in a cryptic file format, but they do contain manufacturer information, so you look up their support number.
+
+"Our Virtual Five-Pin Tumbler product? That's our most expensive model! Way more secure than--" You explain that you need to open a door and don't have a lot of time.
+
+"Well, you can't know whether a key opens a lock without actually trying the key in the lock (due to quantum hidden variables), but you can rule out some of the key/lock combinations."
+
+"The virtual system is complicated, but part of it really is a crude simulation of a five-pin tumbler lock, mostly for marketing reasons. If you look at the schematics, you can figure out whether a key could possibly fit in a lock."
+
+He transmits you some example schematics:
+
+#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+#####
+##.##
+.#.##
+...##
+...#.
+...#.
+.....
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+.....
+.....
+#.#..
+###..
+###.#
+###.#
+#####
+
+.....
+.....
+.....
+#....
+#.#..
+#.#.#
+#####
+
+"The locks are schematics that have the top row filled (#) and the bottom row empty (.); the keys have the top row empty and the bottom row filled. If you look closely, you'll see that each schematic is actually a set of columns of various heights, either extending downward from the top (for locks) or upward from the bottom (for keys)."
+
+"For locks, those are the pins themselves; you can convert the pins in schematics to a list of heights, one per column. For keys, the columns make up the shape of the key where it aligns with pins; those can also be converted to a list of heights."
+
+"So, you could say the first lock has pin heights 0,5,3,4,3:"
+
+#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+"Or, that the first key has heights 5,0,2,1,3:"
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+"These seem like they should fit together; in the first four columns, the pins and key don't overlap. However, this key cannot be for this lock: in the rightmost column, the lock's pin overlaps with the key, which you know because in that column the sum of the lock height and key height is more than the available space."
+
+"So anyway, you can narrow down the keys you'd need to try by just testing each key with each lock, which means you would have to check... wait, you have how many locks? But the only installation that size is at the North--" You disconnect the call.
+
+In this example, converting both locks to pin heights produces:
+
+0,5,3,4,3
+1,2,0,5,3
+
+Converting all three keys to heights produces:
+
+5,0,2,1,3
+4,3,4,0,2
+3,0,2,0,1
+
+Then, you can try every key with every lock:
+
+    Lock 0,5,3,4,3 and key 5,0,2,1,3: overlap in the last column.
+    Lock 0,5,3,4,3 and key 4,3,4,0,2: overlap in the second column.
+    Lock 0,5,3,4,3 and key 3,0,2,0,1: all columns fit!
+    Lock 1,2,0,5,3 and key 5,0,2,1,3: overlap in the first column.
+    Lock 1,2,0,5,3 and key 4,3,4,0,2: all columns fit!
+    Lock 1,2,0,5,3 and key 3,0,2,0,1: all columns fit!
+
+So, in this example, the number of unique lock/key pairs that fit together without overlapping in any column is 3.
+
+Analyze your lock and key schematics. How many unique lock/key pairs fit together without overlapping in any column?
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+<bq-cell id="id-224cc36a-97a4-44d7-bfda-f978ca939e89" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
+
+const { input_data } = await import_local('./input-data.js');
+if (typeof input_data !== 'string') {
+    throw new Error('input_data is not a string');
+}
+bqe.input_data = input_data.trim();
+globalThis.bqe = bqe;//!!!
+</bq-cell>
+<bq-cell id="id-20d43a20-36cf-41b8-8c15-afe73d4218df" data-type="javascript" class="show-in-presentation">// define a trace mechanism
+
+// Mechanism to yield for long computations:
+// make_check_tick() returns an aync function such that when that function
+// is called (and awaited), will await a call to next_tick() if the the
+// specified time has elapsed since the last time this function called
+// next_tick() and return true.  Otherwise, if the specified time has
+// not elapsed, the function returns false immediately.
+const make_check_tick = (the_tick_interval_ms=200) => {
+    let last_tick_time = Date.now();
+    return (tick_interval_ms=the_tick_interval_ms) => {
+        // Return a promise only if next_tick() is to be called.
+        // Otherwise, return a simple false value.
+        const new_last_tick_time = Date.now();
+        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
+            return false;
+        } else {
+            last_tick_time = new_last_tick_time;
+            return new Promise(resolve => {
+                next_tick()
+                    .then(() => resolve(true));
+            });
+        }
+    }
+};
+
+const create_trace_mechanism = (ocx, options=null) => {
+    const {
+        trace_enabled       = true,
+        trace_initially_on  = true,
+        trace_fn_mod        = 10,
+        height              = 20,  // ch units
+    } = (options ?? {});
+
+    let trace_ocx;
+    let trace_checkbox;
+
+    let stopped = false;
+
+    let trace_iterations = 0;
+    let trace_fn;
+
+    if (!trace_enabled) {
+        trace_fn = async () => { return stopped; };
+    } else {
+        const stop_button = ocx.create_child({
+            tag: 'button',
+            innerText: 'Stop',
+        });
+        stop_button.onclick = () => { stopped = true; };
+
+        const trace_controls = ocx.create_child({
+            children: [
+                {
+                    tag: 'label',
+                    children: [
+                        'Trace',
+                        {
+                            tag: 'input',
+                            attrs: {
+                                type: 'checkbox',
+                            },
+                        },
+                    ],
+                },
+                {
+                    tag:       'button',
+                    innerText: 'Clear',
+                    style: {
+                        'font-size':   'x-small',
+                        'margin-left': '0.5ch',
+                    },
+                }
+            ],
+        });
+        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
+        if (trace_initially_on) {
+            trace_checkbox.checked = true;
+        }
+
+        const trace_clear_button = trace_controls.querySelector('button');
+        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
+
+        trace_ocx = ocx.create_child_ocx({
+            style: {
+                'font-family':          'monospace',
+                'font-size':            'x-small',
+                'white-space':          'nowrap',
+                'white-space-collapse': 'preserve',
+                'max-height':           `${height}ch`,
+                'max-width':            'fit-content',
+                padding:                '1em',
+                overflow:               'auto',
+                border:                 '1px solid var(--theme-ou-rc)',
+            },
+        });
+
+        let trace_iterations = 0;
+        trace_fn = async (prefix=null, get_info=null, regardless=false) => {  // returns true iff !stopped
+            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
+                if (trace_enabled && trace_checkbox.checked) {
+                    const formatted_prefix = (typeof prefix === 'number') ? sprintf('%-8d', prefix) : (prefix ?? '');
+                    const spacer = (typeof prefix === 'undefined' || prefix === null) ? '' : ' ';
+                    const info = (typeof get_info === 'function') ? get_info() : (get_info ?? '');
+                    const output_data = sprintf('%s%s%s', formatted_prefix, spacer, info);
+                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
+                    const bounding_rect = trace_output_element.getBoundingClientRect();
+                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
+                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
+                        // only scroll back into view if already at least partially showing
+                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
+                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
+                    }
+                }
+            }
+            return stopped;
+        };
+    }
+
+    // return controls
+    return {
+        trace_fn,             // async (prefix=null, get_info=null, regardless=false) => stopped; no-op async function if !trace_enabled
+        trace_fn_mod,         // from options
+        trace_ocx,            // undefined if !trace_enabled
+        trace_checkbox,       // undefined if !trace_enabled
+        stop:                 (new_state=true) => { stopped = new_state; },
+        get_stopped:          () => stopped,
+        get_trace_iterations: () => trace_iterations,
+    };
+};
+
+keepalive();
+vars({
+    make_check_tick,
+    create_trace_mechanism,
+});
+</bq-cell>
+<bq-cell id="id-52e8854d-6993-4b8a-9c38-b27f3d09f932" data-type="javascript" class="show-in-presentation">// utility definitions
+
+const cols_per_row       = 5;
+const rows_per_schematic = 7;
+
+const filled_cell_char = '#';
+const empty_cell_char  = '.';
+
+const line_re        = new RegExp(`^[${filled_cell_char}${empty_cell_char}]{${cols_per_row}}$`);
+const filled_line_re = new RegExp(`^[${filled_cell_char}]{${cols_per_row}}$`);
+const empty_line_re  = new RegExp(`^[${empty_cell_char}]{${cols_per_row}}$`);  // "empty" in schematic
+
+const create_configuration = (test_data_set=null) => {
+    keepalive();
+
+    const input_data = bqe.input_data;
+
+    // parse input
+    let testing;
+    let input_lines;
+    switch (test_data_set) {
+    case null:
+        testing = false;
+        input_lines = input_data;
+        break;
+
+    case 0:
+        testing = true;
+        input_lines = `
+#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+#####
+##.##
+.#.##
+...##
+...#.
+...#.
+.....
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+.....
+.....
+#.#..
+###..
+###.#
+###.#
+#####
+
+.....
+.....
+.....
+#....
+#.#..
+#.#.#
+#####
+`;
+        break;
+
+    default: throw new Error(`test_data_set ${test_data_set} not recognized`)
+    }
+    input_lines = input_lines.trim().split('\n');
+
+    // now that the input_lines is established, create the configuration
+
+    // gather the definitions from the input
+    locks = [];
+    keys  = [];
+
+    let rows;
+    for (let line_index = 0; line_index < input_lines.length; line_index++) {
+        const line = input_lines[line_index];
+        if (line.length === 0) {
+            if (rows) {
+                throw new Error(`encountered empty line with incomplete schematic at line #${line_index+1}`);
+            }
+            continue;
+        }
+        if (!line.match(line_re)) {
+            throw new Error(`encountered illegal format at line #${line_index+1}`);
+        }
+        (rows ??= []).push(line);
+        if (rows.length === rows_per_schematic) {
+            const start_line_index = line_index-rows_per_schematic+1;
+            // translate the rows
+            if (rows[0].match(filled_line_re) && rows[rows_per_schematic-1].match(empty_line_re)) {
+                // lock
+                const extents = [];
+                for (let c = 0; c < cols_per_row; c++) {
+                    let saw_empty = false;
+                    for (let r = 1; r < rows_per_schematic; r++) {
+                        switch (rows[r].charAt(c)) {
+                        case empty_cell_char:
+                            if (!saw_empty) {
+                                extents.push(r-1);
+                                saw_empty = true;
+                            }
+                            break;
+                        case filled_cell_char:
+                            if (saw_empty) {
+                                throw new Error(`encountered bad lock schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
+                            }
+                            break;
+                        }
+                    }
+                }
+                locks.push(extents);
+            } else if (rows[0].match(empty_line_re) && rows[rows_per_schematic-1].match(filled_line_re)) {
+                // key
+                const extents = [];
+                for (let c = 0; c < cols_per_row; c++) {
+                    let saw_empty = false;
+                    for (let r = rows_per_schematic-1; --r >= 0; ) {
+                        switch (rows[r].charAt(c)) {
+                        case empty_cell_char:
+                            if (!saw_empty) {
+                                extents.push(rows_per_schematic-2-r);
+                                saw_empty = true;
+                            }
+                            break;
+                        case filled_cell_char:
+                            if (saw_empty) {
+                                throw new Error(`encountered bad key schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
+                            }
+                            break;
+                        }
+                    }
+                }
+                keys.push(extents);
+            } else {
+                throw new Error(`encountered bad schematic at line #${start_line_index+1}`);
+            }
+            rows = undefined;
+        }
+        //!!!
+    }
+    if (rows) {
+        throw new Error(`final schematic was incomplete`);
+    }
+
+    const get_locks = () => locks.map(lock => Array.from(lock));
+    const get_keys  = () => keys.map(key   => Array.from(key));
+
+    return {
+        get_locks,
+        get_keys,
+    };
+};
+
+const init_data = (test_data_set=null) => {
+    const current_configuration = create_configuration(test_data_set);
+    vars(current_configuration);
+    vars({ current_configuration });
+};
+
+keepalive();
+vars({
+    cols_per_row,
+    rows_per_schematic,
+    create_configuration,
+    init_data,
+});
+</bq-cell>
+<bq-cell id="id-4073518a-0a06-48e2-8ec2-a6cd720be556" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
+keepalive();
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       1,
+    height:             32,
+});
+bqe.trace_fn = trace_fn;//!!!
+
+await trace_fn('--- computation trace begin ---', null, true);
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
+
+bqe.init_data();
+
+const {
+    cols_per_row,
+    rows_per_schematic,
+    get_locks,
+    get_keys,
+} = bqe;
+
+
+const locks = get_locks();
+const keys  = get_keys();
+
+let fits = 0;
+for (const lock of locks) {
+    for (const key of keys) {
+        if (lock.every((e, i) => e+key[i] <= rows_per_schematic-2)) {
+            fits++;
+        }
+    }
+}
+
+const answer_element = await ocx.markdown(`
+# Answer to Part One${bqe.testing ? ' (TESTING)' : ''}
+There are **${fits}** unique key/lock pairs that fit together without overlapping.
+`);
+
+// finally, scroll answer_element into view
+sleep(0.1).then(() => (trace_ocx?.element ?? answer_element).scrollIntoView());
+</bq-cell>
+<bq-cell id="id-48fd70f2-3dc4-4a8e-94a9-db0a5a5ca321" data-type="javascript">await print__();
+
+const ccx = ocx.create_child_ocx({
+    style: {
+        'max-width': '110ch',
+        border:      '1px solid grey',
+        padding:     '1em',
+    },
+});
+
+const description = `
+--- Part Two ---
+
+You and The Historians crowd into the office, startling the Chief Historian awake! The Historians all take turns looking confused until one asks where he's been for the last few months.
+
+"I've been right here, working on this high-priority request from Santa! I think the only time I even stepped away was about a month ago when I went to grab a cup of coffee..."
+
+Just then, the Chief notices the time. "Oh no! I'm going to be late! I must have fallen asleep trying to put the finishing touches on this chronicle Santa requested, but now I don't have enough time to go visit the last 50 places on my list and complete the chronicle before Santa leaves! He said he needed it before tonight's sleigh launch."
+
+One of The Historians holds up the list they've been using this whole time to keep track of where they've been searching. Next to each place you all visited, they checked off that place with a star. Other Historians hold up their own notes they took on the journey; as The Historians, how could they resist writing everything down while visiting all those historically significant places?
+
+The Chief's eyes get wide. "With all this, we might just have enough time to finish the chronicle! Santa said he wanted it wrapped up with a bow, so I'll call down to the wrapping department and... hey, could you bring it up to Santa? I'll need to be in my seat to watch the sleigh launch by then."
+
+You nod, and The Historians quickly work to collect their notes into the final set of pages for the chronicle.
+
+You have enough stars to Deliver The Chronicle.
+
+---
+
+Using the notes from the places marked by all fifty stars, The Historians finish the chronicle, wrap it, and give it to you so you can bring it to Santa before the big sleigh launch.
+
+Santa is already in the sleigh making the final launch preparations when you arrive. You try to hand him the chronicle, but he doesn't take it. "Ho ho ho," he laughs to himself. "That gift isn't for me - it's for you. That chronicle is a record of all the places you've been and people you've helped over the last decade. Thank you for everything." With that, Santa takes off in his sleigh to deliver the rest of this year's presents.
+
+(Also, there's a new design up in the [Shop] if you're interested. If you don't see it, give it a few minutes.)
+
+Congratulations! You've finished every puzzle in Advent of Code 2024! I hope you had as much fun solving them as I had making them for you. I'd love to hear about your adventure; you can get in touch with me via contact info on my website or through Bluesky, Mastodon, or Twitter.
+
+If you'd like to see more things like this in the future, please consider supporting Advent of Code and sharing it with others.
+
+I've highlighted the easter eggs in each puzzle, just in case you missed any. Hover your mouse over them, and the easter egg will appear.
+`;
+
+await ccx.render_text(description, {
+    style: {
+        'font-family': 'monospace',
+    },
+});
+</bq-cell>
+</body>
+</html>
