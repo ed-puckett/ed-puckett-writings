@@ -380,7 +380,7 @@ const find_three_member_cliques = () => {
 
 const filter_members_with = (set, predicate_fn) => {
     return new Set(
-        set.values()
+        Array.from(set.values())
             .filter(member => predicate_fn(member))
     );
 };
@@ -494,7 +494,7 @@ const check_tick = make_check_tick(200);
 const extend_size_of_cliques = async (current_cliques) => {
     const result = new Set();
     const current_cliques_expanded = Array.from(
-        current_cliques.values()
+        Array.from(current_cliques.values())
             .map(clique_member => {
                 return clique_member
                     .split(clique_member_join_string)

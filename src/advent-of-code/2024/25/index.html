@@ -360,8 +360,8 @@ const create_configuration = (test_data_set=null) => {
     // now that the input_lines is established, create the configuration
 
     // gather the definitions from the input
-    locks = [];
-    keys  = [];
+    const locks = [];
+    const keys  = [];
 
     let rows;
     for (let line_index = 0; line_index < input_lines.length; line_index++) {
@@ -469,7 +469,7 @@ const {
     get_stopped,
     get_trace_iterations,
 } = bqe.create_trace_mechanism(ocx, {
-    trace_enabled:      true,
+    trace_enabled:      false,
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             32,

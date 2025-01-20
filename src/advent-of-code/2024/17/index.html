@@ -359,13 +359,13 @@ const step_program = async (trace_outputter=null) => {
             throw new Error(`illegal opcode ${opcode} in instruction at location ${pc_start}`);
         } else {
             const opcode_def = opcode_defs[opcode];
-            const { mnemonic, operand_types, eval } = opcode_def;
+            const { mnemonic, operand_types, eval: _eval } = opcode_def;  // note: cannot bind "eval" in strict mode
             if (operand_types.some(type => type == operand_type_register)) {
                 throw new Error('step_program: operand_type_register not supported for opcode (use operand_type_combo)');
             }
             const operands = operand_types.map(operand_type => program[registers.PC++]);
             const operand_values = operands.map((operand, i) => parse_operand(operand, operand_types[i]));
-            eval(...operand_values);
+            _eval(...operand_values);
             if (trace_outputter) {
                 await trace_outputter(format_instruction(pc_start, opcode, operands, operand_types, operand_values));
             }

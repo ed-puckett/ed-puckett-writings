@@ -596,7 +596,7 @@ const init_data = () => {
 
         // To be run after everything else, when all cell.cost_from_start values are set to their final values.
         // Sets cell.cost_to_end for all cells for which can_occupy() returns true.
-        set_cost_to_end_values = async () => {
+        const set_cost_to_end_values = async () => {
             const work_queue = [];
             const add_work_item = (walk_cell, exit_dir=null, walked_cells=new Set()) => {
                 work_queue.push({ walk_cell, exit_dir, walked_cells });

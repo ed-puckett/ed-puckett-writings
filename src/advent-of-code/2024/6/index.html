@@ -326,7 +326,7 @@ this.walk_guard = (recorder=[]) => {  // recorder entries: { type, r, c, dir_ch 
         throw new Error('recorder must be an array');
     }
     recorder.splice(0);  // clear recorder
-    move_actions_set = new Set();
+    const move_actions_set = new Set();
 
     const hash_recorder_element = (recorder_element) => {
         const { type, r, c, dir_ch } = recorder_element;
