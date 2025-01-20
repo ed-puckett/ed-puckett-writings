@@ -6,7 +6,7 @@
 </head>
 <body>
 <bq-cell id="id-c65389d7-e3d5-4094-9931-ee8377f7a49f" data-type="javascript">
-const markdown = `
+const description = `
 # Excerpt of Problem
 ## From: https://adventofcode.com/2024/day/2
 ~~~ plain !
@@ -48,7 +48,7 @@ So, in this example, 2 reports are safe.
 Analyze the unusual data from the engineers. How many reports are safe?
 ~~~
 `;
-await ocx.markdown(markdown, {
+await ocx.markdown(description, {
     style: {
         'max-width': '100ch',
         border:      '1px solid grey',
@@ -171,7 +171,7 @@ await ocx.render_text(results.map(([ _, comment ]) => comment).join('\n'), {
 sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
 <bq-cell id="id-e23f6792-fadd-43a7-bbae-a0d0d2809253" data-type="javascript">await print__();
 
-const markdown = `
+const description = `
 ~~~ plain !
 --- Part Two ---
 
@@ -196,7 +196,7 @@ Update your analysis by handling situations where the Problem Dampener can remov
 ~~~
 `;
 
-await ocx.markdown(markdown, {
+await ocx.markdown(description, {
     style: {
         'max-width': '120ch',
         border:      '1px solid grey',
