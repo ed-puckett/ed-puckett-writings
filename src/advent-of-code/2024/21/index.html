@@ -201,18 +201,6 @@ class Direction {
     get back  (){ return this.constructor.#directions[this.back_ch]; }
 }
 
-class SerialDataSource {
-    #subject = new rxjs.Subject();
-
-    subscribe(observerOrNext) {
-        return this.#subject.subscribe(observerOrNext);
-    }
-
-    dispatch(data) {
-        this.#subject.next(data);
-    }
-}
-
 
 class KeypadButton {
     constructor(label) {
@@ -837,7 +825,6 @@ class RobotDisplay {
 
 keepalive();
 vars({
-    SerialDataSource,
     Direction,
     KeypadButton,
     Keypad,
