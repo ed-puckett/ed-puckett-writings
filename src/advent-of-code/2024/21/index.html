@@ -876,30 +876,6 @@ for (const line of input_lines) {
     codes.push(line);
 }
 
-// Mechanism to yield for long computations:
-// make_check_tick() returns an aync function such that when that function
-// is called (and awaited), will await a call to next_tick() if the the
-// specified time has elapsed since the last time this function called
-// next_tick() and return true.  Otherwise, if the specified time has
-// not elapsed, the function returns false immediately.
-const make_check_tick = (the_tick_interval_ms=200) => {
-    let last_tick_time = Date.now();
-    return (tick_interval_ms=the_tick_interval_ms) => {
-        // Return a promise only if next_tick() is to be called.
-        // Otherwise, return a simple false value.
-        const new_last_tick_time = Date.now();
-        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
-            return false;
-        } else {
-            last_tick_time = new_last_tick_time;
-            return new Promise(resolve => {
-                next_tick()
-                    .then(() => resolve(true));
-            });
-        }
-    }
-};
-
 const changes_char_to_char = (str) => Array.from(str)  // used in best path determination
       .reduce(
           ({ last_char, change_count }, char) => {
@@ -1066,7 +1042,6 @@ keepalive();
 vars({
     solution_output_options,
     codes,
-    make_check_tick,
     changes_char_to_char,
     create_numeric_keypad,
     create_directional_keypad,
@@ -1412,10 +1387,6 @@ const recursive_solve = (output, options=null) => {
 // returns array of solutions sorted shortest to longest
 // first entry is optimal in terms of length
 const async_recursive_solve = async (desired_output, options=null) => {
-    const {
-        make_check_tick,
-    } = bqe;
-
     const {
         robots       = bqe.robots,
         allow_zigzag = false,
@@ -1986,7 +1957,6 @@ const validate_requirements_for_solve = () => {
 // THIS IS FAST BUT GIVES CORRECT BUT NONOPTIMAL ANSWERS....
 const greedy_solve = async (output, options=null) => {
     const {
-        make_check_tick,
         get_best_path_for_keypad_type_between,
     } = bqe;
 
@@ -2057,7 +2027,6 @@ vars({
 // example: cfg = bqe.create_configuration(2); stop = false; bqe.iterative_solve('029A', { robots: cfg.robots, trace_fn: (work_count, get_info, regardless) => { console.log('TRACE:', work_count, get_info()); return stop; }, trace_mod: 1 }).then(result => console.log('>>> RESULT:', result));
 const iterative_solve = async (output, options=null) => {
     const {
-        make_check_tick,
         simulate,
     } = bqe;
 
@@ -3251,10 +3220,6 @@ const get_best_fragment_transition = (fragment) => {
 
 const get_min_sequence_lengths_for_stages = async (options) => {
     const {
-        make_check_tick,
-    } = bqe;
-
-    const {
         start_sequence,  // must be given
         start_stage_index           = 0,      // defaults to starting at stage 0
         end_stage_index: esi,                 // last stage_index to process, set below to start_stage_index+1 if not specified
@@ -3432,7 +3397,6 @@ bqe.caches = { min_sequence_length_cache, extensions_cache };//!!!
 
 const test_min_lengths_calculation_on_prior_result = async (result, options) => {
     const {
-        make_check_tick,
         create_configuration,
         async_recursive_solve,
         zigzag_re,
@@ -3489,7 +3453,6 @@ const run_tests = async (ocx, test_options=null) => {
     } = (test_options ?? {});
 
     const {
-        make_check_tick,
         get_core_fragments,
         get_min_sequence_lengths_for_stages,
     } = bqe;
@@ -3592,7 +3555,7 @@ const run_tests = async (ocx, test_options=null) => {
         const stage_count = 5;
 
         bqe.compare_results = {};
-        const check_tick = bqe.make_check_tick(200);
+        const check_tick = make_check_tick(200);
         for (const allow_computational_fan_out of [ true, false ]) {
             const compare_results_key = allow_computational_fan_out ? 'with-fan-out' : 'no-fan-out';
 
@@ -3747,7 +3710,7 @@ for (const result of bqe.results) {
     const sequence_length = await bqe.get_sequence_length_from_increasing_prior_result_intermediate_keypads(result, new_intermediate_keypad_count, {
         trace_mod:  100,
         trace_fn,
-        check_tick: bqe.make_check_tick(200),
+        check_tick: make_check_tick(200),
     });
     new_sequence_lengths[code] = sequence_length;
     await ocx.println(`    new sequence length = ${sequence_length}`);

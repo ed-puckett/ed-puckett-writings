@@ -165,30 +165,6 @@ globalThis.bqe = bqe;//!!!
 </bq-cell>
 <bq-cell id="id-80443364-61ad-4a9f-8185-6310ed91d414" data-type="javascript" class="show-in-presentation">// define a trace mechanism
 
-// Mechanism to yield for long computations:
-// make_check_tick() returns an aync function such that when that function
-// is called (and awaited), will await a call to next_tick() if the the
-// specified time has elapsed since the last time this function called
-// next_tick() and return true.  Otherwise, if the specified time has
-// not elapsed, the function returns false immediately.
-const make_check_tick = (the_tick_interval_ms=200) => {
-    let last_tick_time = Date.now();
-    return (tick_interval_ms=the_tick_interval_ms) => {
-        // Return a promise only if next_tick() is to be called.
-        // Otherwise, return a simple false value.
-        const new_last_tick_time = Date.now();
-        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
-            return false;
-        } else {
-            last_tick_time = new_last_tick_time;
-            return new Promise(resolve => {
-                next_tick()
-                    .then(() => resolve(true));
-            });
-        }
-    }
-};
-
 const create_trace_mechanism = (ocx, options=null) => {
     const {
         trace_enabled       = true,
@@ -296,7 +272,6 @@ const create_trace_mechanism = (ocx, options=null) => {
 
 keepalive();
 vars({
-    make_check_tick,
     create_trace_mechanism,
 });
 </bq-cell>

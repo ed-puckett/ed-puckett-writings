@@ -209,34 +209,9 @@ for (let line_index = 0; line_index < input_lines.length; line_index++) {
 const processing_times_per_day = 2000;  // from problem
 const monkey_delta_memory_size = 4;     // from problem
 
-// Mechanism to yield for long computations:
-// make_check_tick() returns an aync function such that when that function
-// is called (and awaited), will await a call to next_tick() if the the
-// specified time has elapsed since the last time this function called
-// next_tick() and return true.  Otherwise, if the specified time has
-// not elapsed, the function returns false immediately.
-const make_check_tick = (the_tick_interval_ms=200) => {
-    let last_tick_time = Date.now();
-    return (tick_interval_ms=the_tick_interval_ms) => {
-        // Return a promise only if next_tick() is to be called.
-        // Otherwise, return a simple false value.
-        const new_last_tick_time = Date.now();
-        if (new_last_tick_time-last_tick_time < tick_interval_ms) {
-            return false;
-        } else {
-            last_tick_time = new_last_tick_time;
-            return new Promise(resolve => {
-                next_tick()
-                    .then(() => resolve(true));
-            });
-        }
-    }
-};
-
 keepalive();
 vars({
     solution_output_options,
-    make_check_tick,
     secrets,
     processing_times_per_day,
     monkey_delta_memory_size,
@@ -725,7 +700,6 @@ await trace_fn(0, () => '--- computation trace begin ---')
 sleep(2).then(() => trace_ocx.element.scrollIntoView());//!!!
 
 const {
-    make_check_tick,
     secrets,
     processing_times_per_day,
     monkey_delta_memory_size,
