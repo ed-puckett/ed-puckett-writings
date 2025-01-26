@@ -122,6 +122,10 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
+<bq-cell id="id-f107eb0a-1fbe-4c07-90b9-f35d944a9bb5" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
+</bq-cell>
 <bq-cell id="id-678a7c25-8a1f-444f-81de-0a4fd2d7d786" data-type="javascript" class="show-in-presentation">// utility class definitions
 
 class Direction {
@@ -2165,10 +2169,6 @@ keepalive();
 vars({
     iterative_solve,
 });
-</bq-cell>
-<bq-cell id="id-f107eb0a-1fbe-4c07-90b9-f35d944a9bb5" data-type="javascript">
-const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
-vars({ create_trace_mechanism });
 </bq-cell>
 <bq-cell id="id-b16a63b0-0110-46d1-b97b-f86ac4de5e52" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();

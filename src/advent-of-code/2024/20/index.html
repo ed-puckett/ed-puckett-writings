@@ -811,29 +811,6 @@ keepalive();
 </bq-cell>
 <bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
-const {
-    trace_fn,
-    trace_fn_mod,
-    trace_ocx,
-    trace_checkbox,
-    stop,
-    get_stopped,
-    get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
-    trace_enabled:      true,
-    trace_initially_on: true,
-    trace_fn_mod:       10,
-    height:             30,
-    prefix_width:       7,
-});
-
-const trace_mod = 10;
-
-sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
-
-
-//----------------------------------------------------------------------
-
 const input_data_examples = [
 // 0:
 `
@@ -887,10 +864,36 @@ const set_test_dataset = (input_data_example_to_use) => {
 
 set_test_dataset(undefined);
 
+
+//----------------------------------------------------------------------
+
 bqe.init_data();
 
 await ocx.println(`The initial map (${bqe.rows}x${bqe.cols}):`)
 await bqe.render_memory(ocx);
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       10,
+    height:             30,
+    prefix_width:       7,
+});
+
+const trace_mod = 10;
+
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
+
+
+//----------------------------------------------------------------------
 
 bqe.result = await bqe.find_best_maze_solution({
     analyze_cheats: {

@@ -145,118 +145,6 @@ if (typeof input_data !== 'string') {
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
 </bq-cell>
-<bq-cell id="id-20d43a20-36cf-41b8-8c15-afe73d4218df" data-type="javascript" class="show-in-presentation">// define a trace mechanism
-
-const create_trace_mechanism = (ocx, options=null) => {
-    const {
-        trace_enabled       = true,
-        trace_initially_on  = true,
-        trace_fn_mod        = 10,
-        height              = 20,  // ch units
-    } = (options ?? {});
-
-    let trace_ocx;
-    let trace_checkbox;
-
-    let stopped = false;
-
-    let trace_iterations = 0;
-    let trace_fn;
-
-    if (!trace_enabled) {
-        trace_fn = async () => { return stopped; };
-    } else {
-        const stop_button = ocx.create_child({
-            tag: 'button',
-            innerText: 'Stop',
-        });
-        stop_button.onclick = () => { stopped = true; };
-
-        const trace_controls = ocx.create_child({
-            children: [
-                {
-                    tag: 'label',
-                    children: [
-                        'Trace',
-                        {
-                            tag: 'input',
-                            attrs: {
-                                type: 'checkbox',
-                            },
-                        },
-                    ],
-                },
-                {
-                    tag:       'button',
-                    innerText: 'Clear',
-                    style: {
-                        'font-size':   'x-small',
-                        'margin-left': '0.5ch',
-                    },
-                }
-            ],
-        });
-        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-        if (trace_initially_on) {
-            trace_checkbox.checked = true;
-        }
-
-        const trace_clear_button = trace_controls.querySelector('button');
-        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-        trace_ocx = ocx.create_child_ocx({
-            style: {
-                'font-family':          'monospace',
-                'font-size':            'x-small',
-                'white-space':          'nowrap',
-                'white-space-collapse': 'preserve',
-                'max-height':           `${height}ch`,
-                'max-width':            'fit-content',
-                padding:                '1em',
-                overflow:               'auto',
-                border:                 '1px solid var(--theme-ou-rc)',
-            },
-        });
-
-        let trace_iterations = 0;
-        trace_fn = async (prefix=null, get_info=null, regardless=false) => {  // returns true iff !stopped
-            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
-                if (trace_enabled && trace_checkbox.checked) {
-                    const formatted_prefix = (typeof prefix === 'number') ? sprintf('%-8d', prefix) : (prefix ?? '');
-                    const spacer = (typeof prefix === 'undefined' || prefix === null) ? '' : ' ';
-                    const info = (typeof get_info === 'function') ? get_info() : (get_info ?? '');
-                    const output_data = sprintf('%s%s%s', formatted_prefix, spacer, info);
-                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-                    const bounding_rect = trace_output_element.getBoundingClientRect();
-                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                        // only scroll back into view if already at least partially showing
-                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-                    }
-                }
-            }
-            return stopped;
-        };
-    }
-
-    // return controls
-    return {
-        trace_fn,             // async (prefix=null, get_info=null, regardless=false) => stopped; no-op async function if !trace_enabled
-        trace_fn_mod,         // from options
-        trace_ocx,            // undefined if !trace_enabled
-        trace_checkbox,       // undefined if !trace_enabled
-        stop:                 (new_state=true) => { stopped = new_state; },
-        get_stopped:          () => stopped,
-        get_trace_iterations: () => trace_iterations,
-    };
-};
-
-keepalive();
-vars({
-    create_trace_mechanism,
-});
-</bq-cell>
 <bq-cell id="id-52e8854d-6993-4b8a-9c38-b27f3d09f932" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const cols_per_row       = 5;
@@ -435,25 +323,6 @@ vars({
 <bq-cell id="id-4073518a-0a06-48e2-8ec2-a6cd720be556" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
-const {
-    trace_fn,
-    trace_fn_mod,
-    trace_ocx,
-    trace_checkbox,
-    stop,
-    get_stopped,
-    get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
-    trace_enabled:      false,
-    trace_initially_on: true,
-    trace_fn_mod:       1,
-    height:             32,
-});
-bqe.trace_fn = trace_fn;//!!!
-
-await trace_fn('--- computation trace begin ---', null, true);
-sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
-
 bqe.init_data();
 
 const {
@@ -482,7 +351,7 @@ There are **${fits}** unique key/lock pairs that fit together without overlappin
 `);
 
 // finally, scroll answer_element into view
-sleep(0.1).then(() => (trace_ocx?.element ?? answer_element).scrollIntoView());
+sleep(0.1).then(() => answer_element.scrollIntoView());
 </bq-cell>
 <bq-cell id="id-48fd70f2-3dc4-4a8e-94a9-db0a5a5ca321" data-type="javascript">await print__();
 

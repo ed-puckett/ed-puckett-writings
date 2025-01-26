@@ -70,7 +70,11 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-3dd4f23a-dc47-4378-b9b9-efa1fb78f43a" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
+<bq-cell id="id-969b871c-507f-4838-bbf7-aa9690cd710b" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
+</bq-cell>
+<bq-cell id="id-3dd4f23a-dc47-4378-b9b9-efa1fb78f43a" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -79,7 +83,7 @@ if (typeof input_data !== 'string') {
 
 bqe.input_data = input_data.trim();
 </bq-cell>
-<bq-cell id="id-22b84bb3-c044-45e6-a530-ab8d4a007c8f" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+<bq-cell id="id-22b84bb3-c044-45e6-a530-ab8d4a007c8f" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const data_output_options = {
     style: {
@@ -189,8 +193,8 @@ const init_data = () => {
             } else {
                 // trace
                 if (iterations++ % trace_mod === 0) {
-                    if (!(await trace_fn({ design, prefix, pattern, level, iterations }))) {
-                        // trace_fn returns true iff !stopped
+                    if (await trace_fn(() => JSON.stringify({ design, prefix, pattern, level, iterations }))) {
+                        // trace_fn returns true iff stopped
                         stopped = true;    // for recursive invocations
                         return undefined;  // indicate: stopped
                     }
@@ -253,8 +257,8 @@ const init_data = () => {
             } else {
                 // trace
                 if (iterations++ % trace_mod === 0) {
-                    if (!(await trace_fn({ design, prefix, count, level, iterations }))) {
-                        // trace_fn returns true iff !stopped
+                    if (await trace_fn(() => JSON.stringify({ design, prefix, count, level, iterations }))) {
+                        // trace_fn returns true iff stopped
                         stopped = true;    // for recursive invocations
                         return undefined;  // indicate: stopped
                     }
@@ -314,14 +318,21 @@ const init_data = () => {
             };
         });
 
-        let last_tick_time = Date.now();
         await next_tick();  // just to be sure it happens at least once if this function completes quickly...
-        const check_tick = async (tick_interval_ms=100) => {
-            const new_last_tick_time = Date.now();
-            if (new_last_tick_time-last_tick_time >= tick_interval_ms) {
-                last_tick_time = new_last_tick_time;
-                await next_tick();
-            }
+        const check_tick = make_check_tick(100);
+
+        const get_info_from_position = (position) => {
+            const { i, ch, prefix, suffix, potentials, answer_for_position } = position;
+            return sprintf(
+                '%-2d %s %s %s %j %j',
+                i, ch, prefix, suffix, answer_for_position,
+                potentials.map(({ pattern, answer_for_potential }) => {
+                    return [
+                        pattern,
+                        answer_for_potential,
+                    ];
+                }),
+            );
         };
 
         // returns the count of realizable pattern combinations for the design, or undefined if stopped
@@ -335,8 +346,8 @@ const init_data = () => {
 
             // trace
             if (iterations++ % trace_mod === 0) {
-                if (!(await trace_fn(position))) {
-                    // trace_fn returns true iff !stopped
+                if (await trace_fn(() => get_info_from_position(position))) {
+                    // trace_fn returns true iff stopped
                     stopped = true;    // for recursive invocations
                     return undefined;  // indicate: stopped
                 }
@@ -388,7 +399,7 @@ vars({
 });
 keepalive();
 </bq-cell>
-<bq-cell id="id-7d7d759b-8283-47cb-95dc-f55005d17dd7" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-7d7d759b-8283-47cb-95dc-f55005d17dd7" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
 const input_data_examples = [
 // 0:
@@ -414,103 +425,35 @@ const set_test_dataset = (input_data_example_to_use) => {
     }
 };
 
-let stopped = false;
-const stop_button = ocx.create_child({
-    tag: 'button',
-    innerText: 'Stop',
-});
-stop_button.onclick = () => { stopped = true; };
-
-await println('Results:')
-
-const solution_ocx = ocx.create_child_ocx(bqe.solution_output_options);
-
-let trace_ocx;
-let trace_checkbox;
-
-const tracing_enabled = true;
-if (tracing_enabled) {
-    const trace_controls = ocx.create_child({
-        children: [
-            {
-                tag: 'label',
-                children: [
-                    'Trace',
-                    {
-                        tag: 'input',
-                        attrs: {
-                            type: 'checkbox',
-                        },
-                    },
-                ],
-            },
-            {
-                tag:       'button',
-                innerText: 'Clear',
-                style: {
-                    'font-size':   'x-small',
-                    'margin-left': '0.5ch',
-                },
-            }
-        ],
-    });
-    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-    trace_checkbox.checked = true;
-
-    const trace_clear_button = trace_controls.querySelector('button');
-    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-    trace_ocx = ocx.create_child_ocx({
-        style: {
-            'font-family':          'monospace',
-            'font-size':            'x-small',
-            'white-space':          'nowrap',
-            'white-space-collapse': 'preserve',
-            'height':               '20ch',
-            'max-width':            'fit-content',
-            padding:                '1em',
-            overflow:               'auto',
-            border:                 '1px solid lightgrey',
-        }
-    });
-}
-
-let trace_iterations = 0;
-const trace_fn = async (position) => {  // returns true iff !stopped
-    if (trace_iterations++ % trace_iterations_mod === 0) {
-        if (tracing_enabled && trace_checkbox.checked) {
-            const { i, ch, prefix, suffix, potentials, answer_for_position } = position;
-            const output_data = sprintf(
-                '%-2d %s %s %s %j %j',
-                i, ch, prefix, suffix, answer_for_position,
-                potentials.map(({ pattern, answer_for_potential }) => {
-                    return [
-                        pattern,
-                        answer_for_potential,
-                    ];
-                }),
-            );
-            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-            const bounding_rect = trace_output_element.getBoundingClientRect();
-            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-            if (bounding_rect.bottom <= parent_bounding_rect.bottom+30 || parent_bounding_rect.y < window.innerHeight) {
-                // only scroll back into view if already at least partially showing
-                trace_output_element.scrollIntoView();
-            }
-        }
-    }
-    return !stopped;
-};
-const trace_mod            = 10;
-const trace_iterations_mod = 10;
-
 
 //----------------------------------------------------------------------
 
-sleep(0.1).then(() => stop_button.scrollIntoView());
-
 set_test_dataset(undefined);
 bqe.init_data();
+
+const solution_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+
+await ocx.print__();
+
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       10,
+    height:             30,
+    prefix_width:       7,
+});
+
+const trace_mod = 10;
+
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 bqe.results = {};
 for (const design of bqe.designs) {
@@ -520,22 +463,22 @@ for (const design of bqe.designs) {
     await solution_ocx.printf(`%s %-80s\n`, indicator, design);
 
     if (typeof result === 'undefined') {
-        stopped = true;
+        stop(true);
         await solution_ocx.println(`STOPPED`);
     }
 
-    if (stopped) {
+    if (get_stopped()) {
         break;
     }
 }
 const success_count = Object.values(bqe.results).filter(result => !!result).length;
 
-vars({ stopped, success_count });
+vars({ get_stopped, success_count });
 
 const answer_element = await ocx.markdown(`
 # Answer to Part One
 Of the ${bqe.designs.length} design${bqe.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
-${stopped ? '* However, the search process was stopped before all were tested' : ''}
+${get_stopped() ? '* However, the search process was stopped before all were tested' : ''}
 `);
 
 // scroll answer_element into view, but after a delay to let other rendering finish
@@ -595,9 +538,9 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-1184f9a6-deb3-41df-aefe-52554c1200a8" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-1184f9a6-deb3-41df-aefe-52554c1200a8" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-const answer_markup = bqe.stopped
+const answer_markup = bqe.get_stopped()
       ? '**The calculation was stopped before the answer was computed.**'
       : `The sum of the different ways of making each design is **${Object.values(bqe.results).reduce((total, r) => total+r)}**.`
 

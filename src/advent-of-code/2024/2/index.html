@@ -55,7 +55,7 @@ await ocx.markdown(description, {
         padding:     '1em',
     },
 });</bq-cell>
-<bq-cell id="id-129b3ada-89ee-4118-80a1-50f316e02a1a" data-type="javascript" class="show-full show-in-presentation">// input_data is a string containing sets of at least two numbers separated by whitespace,
+<bq-cell id="id-129b3ada-89ee-4118-80a1-50f316e02a1a" data-type="javascript" class="show-in-presentation">// input_data is a string containing sets of at least two numbers separated by whitespace,
 // and with each set ending with a newline
 
 const { input_data } = await import_local('./input-data.js');
@@ -64,7 +64,7 @@ if (typeof input_data !== 'string') {
 }
 
 this.input_data = input_data + '\n';  // newline to simplify loop termination later</bq-cell>
-<bq-cell id="id-0b28dbf2-321b-458f-92e2-970a120a8e1d" data-type="javascript" class="show-full show-in-presentation">// display the input data
+<bq-cell id="id-0b28dbf2-321b-458f-92e2-970a120a8e1d" data-type="javascript" class="show-in-presentation">// display the input data
 await ocx.println('input data:');
 await ocx.render_text(this.input_data.trim(), {
     style: {
@@ -75,7 +75,7 @@ await ocx.render_text(this.input_data.trim(), {
         border:       '1px solid lightgrey',
     },
 });</bq-cell>
-<bq-cell id="id-797fd632-ee58-4ffe-8dcc-b9dae00bae3e" data-type="javascript" class="show-full show-in-presentation">// parse input_data and gather into array reports containing arrays of levels from each line
+<bq-cell id="id-797fd632-ee58-4ffe-8dcc-b9dae00bae3e" data-type="javascript" class="show-in-presentation">// parse input_data and gather into array reports containing arrays of levels from each line
 this.reports = [];
 for (let i = 0, eol; i < this.input_data.length && (eol = this.input_data.indexOf('\n', i)) !== -1; i = eol+1) {
     const line = this.input_data.slice(i, eol).trim();
@@ -90,7 +90,7 @@ for (let i = 0, eol; i < this.input_data.length && (eol = this.input_data.indexO
         this.reports.push(levels);
     }
 }</bq-cell>
-<bq-cell id="id-4d2c7aaa-6453-4025-9adf-5611a16d9623" data-type="javascript" class="show-full show-in-presentation">// make labels for each result
+<bq-cell id="id-4d2c7aaa-6453-4025-9adf-5611a16d9623" data-type="javascript" class="show-in-presentation">// make labels for each result
 this.report_labels = this.reports.map(report => report.join(' '));
 const max_label_length = this.report_labels.reduce((max, label) => ((max < label.length) ? label.length : max), 0);
 for (const label of this.report_labels) {
@@ -102,7 +102,7 @@ for (let i = 0; i < this.report_labels.length; i++) {
     const label = this.report_labels[i];
     this.report_labels[i] = (label+':').padEnd(max_label_length+1, ' ');
 }</bq-cell>
-<bq-cell id="id-f48cdb42-bc9f-412a-a42d-1645bec9da97" data-type="javascript" class="show-full show-in-presentation">this.max_delta_magnitude = 3;
+<bq-cell id="id-f48cdb42-bc9f-412a-a42d-1645bec9da97" data-type="javascript" class="show-in-presentation">this.max_delta_magnitude = 3;
 
 // The error analyzer function for a given report.
 // The return value will be a string describing an error or undefined if no error.
@@ -137,7 +137,7 @@ this.report_analyzer = (report) => {
     }
     return null;  // no error found
 };</bq-cell>
-<bq-cell id="id-85f492f4-453f-4de3-a601-d185d56c5720" data-type="javascript" class="show-full show-in-presentation">// Get results array with one element for each report.
+<bq-cell id="id-85f492f4-453f-4de3-a601-d185d56c5720" data-type="javascript" class="show-in-presentation">// Get results array with one element for each report.
 // Each element will be an array [ had_error, comment ]
 const results = this.reports.map((report, report_index) => {
     const error = this.report_analyzer(report);
@@ -203,7 +203,7 @@ await ocx.markdown(description, {
         padding:     '1em',
     },
 });</bq-cell>
-<bq-cell id="id-9d15b57a-97cf-46eb-a2e3-e2c156069eb4" data-type="javascript" class="show-full show-in-presentation">// Get results array with one element for each report.
+<bq-cell id="id-9d15b57a-97cf-46eb-a2e3-e2c156069eb4" data-type="javascript" class="show-in-presentation">// Get results array with one element for each report.
 // Each element will be an array [ had_error, comment ]
 const results = this.reports.map((report, report_index) => {
     const error = this.report_analyzer(report);

@@ -86,6 +86,10 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
+<bq-cell id="id-73894403-3cfd-4916-b03b-f7cb9f8d8a97" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
+</bq-cell>
 <bq-cell id="id-aff6514b-a432-4dac-a038-70fd6ff4b2ad" data-type="javascript" class="show-in-presentation">// utility class definitions
 
 class Direction {
@@ -168,7 +172,6 @@ keepalive();
 vars({
     Direction,
 });
-
 </bq-cell>
 <bq-cell id="id-bffcc337-5e31-4571-bc60-fa9117d1a94b" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines, each line containing a number represented in base 10
 
@@ -215,116 +218,6 @@ vars({
     secrets,
     processing_times_per_day,
     monkey_delta_memory_size,
-});
-</bq-cell>
-<bq-cell id="id-73894403-3cfd-4916-b03b-f7cb9f8d8a97" data-type="javascript" class="show-in-presentation">// define a trace mechanism
-
-const create_trace_mechanism = (ocx, options=null) => {
-    const {
-        trace_enabled       = true,
-        trace_initially_on  = true,
-        trace_fn_mod        = 10,
-        height              = 20,  // ch units
-    } = (options ?? {});
-
-    let trace_ocx;
-    let trace_checkbox;
-
-    let stopped = false;
-
-    let trace_iterations = 0;
-    let trace_fn;
-
-    if (!trace_enabled) {
-        trace_fn = async () => { return stopped; };
-    } else {
-        const stop_button = ocx.create_child({
-            tag: 'button',
-            innerText: 'Stop',
-        });
-        stop_button.onclick = () => { stopped = true; };
-
-        const trace_controls = ocx.create_child({
-            children: [
-                {
-                    tag: 'label',
-                    children: [
-                        'Trace',
-                        {
-                            tag: 'input',
-                            attrs: {
-                                type: 'checkbox',
-                            },
-                        },
-                    ],
-                },
-                {
-                    tag:       'button',
-                    innerText: 'Clear',
-                    style: {
-                        'font-size':   'x-small',
-                        'margin-left': '0.5ch',
-                    },
-                }
-            ],
-        });
-        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-        if (trace_initially_on) {
-            trace_checkbox.checked = true;
-        }
-
-        const trace_clear_button = trace_controls.querySelector('button');
-        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-        trace_ocx = ocx.create_child_ocx({
-            style: {
-                'font-family':          'monospace',
-                'font-size':            'x-small',
-                'white-space':          'nowrap',
-                'white-space-collapse': 'preserve',
-                'height':               `${height}ch`,
-                'max-width':            'fit-content',
-                padding:                '1em',
-                overflow:               'auto',
-                border:                 '1px solid var(--theme-ou-rc)',
-            },
-        });
-
-        let trace_iterations = 0;
-        trace_fn = async (work_count=0, get_info=undefined, regardless=false) => {  // returns true iff !stopped
-            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
-                if (trace_enabled && trace_checkbox.checked) {
-                    const info = get_info?.() ?? '(no information given)';
-                    const output_data = sprintf('%-8d %s', work_count, info);
-                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-                    const bounding_rect = trace_output_element.getBoundingClientRect();
-                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                        // only scroll back into view if already at least partially showing
-                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-                    }
-                }
-            }
-            return stopped;
-        };
-    }
-
-    // return controls
-    return {
-        trace_fn,             // async (work_count, get_info, regardless) => stopped; no-op async function if !trace_enabled
-        trace_fn_mod,         // from options
-        trace_ocx,            // undefined if !trace_enabled
-        trace_checkbox,       // undefined if !trace_enabled
-        stop:                 (new_state=true) => { stopped = new_state; },
-        get_stopped:          () => stopped,
-        get_trace_iterations: () => trace_iterations,
-    };
-};
-
-keepalive();
-vars({
-    create_trace_mechanism,
 });
 </bq-cell>
 <bq-cell id="id-8e93dfac-5f4c-404a-a32f-3902a318aed3" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
@@ -490,7 +383,7 @@ const get_statistics = async (options) => {
     for (let buyer_index = 0; buyer_index < secrets.length; buyer_index++) {
         await check_tick?.();
         if (buyer_index % trace_mod === 0) {
-            if (await trace_fn?.(buyer_index, () => `getting buyer data for buyer ${buyer_index}`)) {
+            if (await trace_fn?.(buyer_index, `getting buyer data for buyer ${buyer_index}`)) {
                 throw new Error('STOPPED');
             }
         }
@@ -552,7 +445,7 @@ const get_delta_windows = async (price_matrix, options=null) => {
 
         await check_tick?.();
         if (buyer_index % trace_mod === 0) {
-            if (await trace_fn?.(buyer_index, () => `getting delta windows for buyer ${buyer_index}`)) {
+            if (await trace_fn?.(buyer_index, `getting delta windows for buyer ${buyer_index}`)) {
                 throw new Error('STOPPED');
             }
         }
@@ -573,7 +466,7 @@ const get_delta_windows = async (price_matrix, options=null) => {
 
     const delta_windows = new Map(entries_arrays.flat(1));
 
-    if (await trace_fn?.(0, () => `DONE: delta_windows.size = ${delta_windows.size}`, true)) {
+    if (await trace_fn?.('', `DONE: delta_windows.size = ${delta_windows.size}`, true)) {
         throw new Error('STOPPED');
     }
 
@@ -598,7 +491,7 @@ const find_best_delta_window = async (price_matrix, delta_windows, options=null)
 
         await check_tick?.();
         if (work_count++ % trace_mod === 0) {
-            if (await trace_fn?.(work_count, () => `trying delta window ${delta_window.join(',')} for all buyers`)) {
+            if (await trace_fn?.(work_count, `trying delta window ${delta_window.join(',')} for all buyers`)) {
                 throw new Error('STOPPED');
             }
         }
@@ -641,7 +534,7 @@ const find_best_delta_window_optimized = async (price_matrix, price_for_sequence
     for (let buyer_index = 0; buyer_index < price_for_sequence.length; buyer_index++) {
         await check_tick?.();
         if (work_count++ % trace_mod === 0) {
-            if (await trace_fn?.(work_count, () => `summing prices for all sequences; buyer ${buyer_index}`)) {
+            if (await trace_fn?.(work_count, `summing prices for all sequences; buyer ${buyer_index}`)) {
                 throw new Error('STOPPED');
             }
         }
@@ -693,11 +586,13 @@ const {
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             30,
+    prefix_width:       7,
 });
 bqe.trace_fn = trace_fn;//!!!
 
-await trace_fn(0, () => '--- computation trace begin ---')
-sleep(2).then(() => trace_ocx.element.scrollIntoView());//!!!
+await trace_fn('--- computation trace begin ---', true)
+
+sleep(2).then(() => trace_ocx.element.scrollIntoView(false));//!!!
 
 const {
     secrets,

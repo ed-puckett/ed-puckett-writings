@@ -90,7 +90,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
+<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated newlines, each line containing two non-negative numbers separated by a comma.
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -103,7 +103,7 @@ bqe.cols = 71;
 bqe.bytes_to_simulate = 1024;
 bqe.input_data = input_data.trim();
 </bq-cell>
-<bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+<bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const memory_output_options = {
     style: {
@@ -333,8 +333,6 @@ const init_data = () => {
             start_cell = the_start_cell,
             start_dir  = the_start_dir,
             end_cell   = the_end_cell,
-            trace_fn,
-            trace_mod  = 1000,
         } = (options ?? {});
 
         let best_solution;  // undefined if none found yet, otherwise { cost, path }
@@ -445,17 +443,6 @@ const init_data = () => {
             // work_item represents a path being constructed
             const { cell, entry_dir, visited_cells, cost } = work_item;
 
-            if (attempt_count % trace_mod === 0) {
-                await trace_fn?.({
-                    attempt_count,
-                    cell,
-                    entry_dir,
-                    visited_cells,
-                    best_solution,
-                    work_queue,
-                });
-            }
-
             if (cell === end_cell) {
                 // found a new solution
                 if (!best_solution || cost < best_solution.cost) {
@@ -511,7 +498,7 @@ vars({
 });
 keepalive();
 </bq-cell>
-<bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
 const input_data_examples = [
 // 0:
@@ -623,7 +610,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
 let min = 1024, max = bqe.input_byte_coordinates.length
 while (min !== max) {

@@ -112,7 +112,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-e5d963b5-3104-41f6-8b9e-3862920df4fe" data-type="javascript" class="show-full show-in-presentation">// input_data is a long string of characters separated into rows by newlines.
+<bq-cell id="id-e5d963b5-3104-41f6-8b9e-3862920df4fe" data-type="javascript" class="show-in-presentation">// input_data is a long string of characters separated into rows by newlines.
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -120,7 +120,7 @@ if (typeof input_data !== 'string') {
 }
 
 this.input_data = input_data.trim();</bq-cell>
-<bq-cell id="id-fc5280a6-078d-4da8-b201-890ed0998c20" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+<bq-cell id="id-fc5280a6-078d-4da8-b201-890ed0998c20" data-type="javascript" class="show-in-presentation">// utility definitions
 
 this.map_output_options = {
     style: {
@@ -319,7 +319,7 @@ continue;//!!!
         }
     }
 };</bq-cell>
-<bq-cell id="id-a6c2f0b9-f661-44b2-a0a0-bb15dba8fa4a" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-a6c2f0b9-f661-44b2-a0a0-bb15dba8fa4a" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
 this.init_map();
 
@@ -411,7 +411,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-a770c801-63b7-4dd0-a4be-a30b45db99a8" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-a770c801-63b7-4dd0-a4be-a30b45db99a8" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
 const total_discounted_fence_price = this.regions.reduce((total, region) => (total + region.get_discounted_fence_price()), 0)
 

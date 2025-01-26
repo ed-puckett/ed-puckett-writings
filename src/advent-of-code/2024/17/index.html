@@ -88,7 +88,7 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-58673230-c5ad-42c7-b331-9247b4ae2939" data-type="javascript" class="show-full show-in-presentation">// input_data is a long string of lines separated by newlines.
+<bq-cell id="id-58673230-c5ad-42c7-b331-9247b4ae2939" data-type="javascript" class="show-in-presentation">// input_data is a long string of lines separated by newlines.
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -96,7 +96,7 @@ if (typeof input_data !== 'string') {
 }
 
 bqe.input_data = input_data.trim();</bq-cell>
-<bq-cell id="id-3b4b7ef2-2604-42fb-8e00-80f188ba6ae2" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+<bq-cell id="id-3b4b7ef2-2604-42fb-8e00-80f188ba6ae2" data-type="javascript" class="show-in-presentation">// utility definitions
 
 globalThis.bqe = bqe;//!!!
 
@@ -402,7 +402,7 @@ vars({
     run_program,
 });
 </bq-cell>
-<bq-cell id="id-e5e44175-8cc4-402f-8df6-cd8bb3908889" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-e5e44175-8cc4-402f-8df6-cd8bb3908889" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
 const input_data_examples = [
 // 0:
@@ -742,7 +742,7 @@ await test(0b111_000_000_000_000_000_000_000_111_110_110_001_101_110_011_011, tr
 * Actually, a recursive solution extending values that generate the correct sequence progressively to the left might work....
 
 </bq-cell>
-<bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-full show-in-presentation">// utility definitions for answer to Part Two
+<bq-cell id="id-99bc45d1-8edd-42f1-bbc8-4e3417a3b207" data-type="javascript" class="show-in-presentation">// utility definitions for answer to Part Two
 
 const generate_outputs = (N, include_stepwise_info=false) => {
     const outputs = [];
@@ -780,7 +780,7 @@ const find_solution_candidates = (base_N=0, i=0) => {
 };
 
 vars({ generate_outputs, desired_outputs_string, find_solution_candidates });</bq-cell>
-<bq-cell id="id-ce512a31-1c3e-435c-a5df-9c28222481ad" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-ce512a31-1c3e-435c-a5df-9c28222481ad" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
 const solution_candidates = bqe.find_solution_candidates();
 

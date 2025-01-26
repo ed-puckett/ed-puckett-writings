@@ -154,6 +154,10 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
+<bq-cell id="id-80443364-61ad-4a9f-8185-6310ed91d414" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
+</bq-cell>
 <bq-cell id="id-ee1daa79-0038-42ff-aee9-f147eee3a6b5" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated by newlines
 
 const { input_data } = await import_local('./input-data.js');
@@ -162,118 +166,6 @@ if (typeof input_data !== 'string') {
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
-</bq-cell>
-<bq-cell id="id-80443364-61ad-4a9f-8185-6310ed91d414" data-type="javascript" class="show-in-presentation">// define a trace mechanism
-
-const create_trace_mechanism = (ocx, options=null) => {
-    const {
-        trace_enabled       = true,
-        trace_initially_on  = true,
-        trace_fn_mod        = 10,
-        height              = 20,  // ch units
-    } = (options ?? {});
-
-    let trace_ocx;
-    let trace_checkbox;
-
-    let stopped = false;
-
-    let trace_iterations = 0;
-    let trace_fn;
-
-    if (!trace_enabled) {
-        trace_fn = async () => { return stopped; };
-    } else {
-        const stop_button = ocx.create_child({
-            tag: 'button',
-            innerText: 'Stop',
-        });
-        stop_button.onclick = () => { stopped = true; };
-
-        const trace_controls = ocx.create_child({
-            children: [
-                {
-                    tag: 'label',
-                    children: [
-                        'Trace',
-                        {
-                            tag: 'input',
-                            attrs: {
-                                type: 'checkbox',
-                            },
-                        },
-                    ],
-                },
-                {
-                    tag:       'button',
-                    innerText: 'Clear',
-                    style: {
-                        'font-size':   'x-small',
-                        'margin-left': '0.5ch',
-                    },
-                }
-            ],
-        });
-        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-        if (trace_initially_on) {
-            trace_checkbox.checked = true;
-        }
-
-        const trace_clear_button = trace_controls.querySelector('button');
-        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-        trace_ocx = ocx.create_child_ocx({
-            style: {
-                'font-family':          'monospace',
-                'font-size':            'x-small',
-                'white-space':          'nowrap',
-                'white-space-collapse': 'preserve',
-                'max-height':           `${height}ch`,
-                'max-width':            'fit-content',
-                padding:                '1em',
-                overflow:               'auto',
-                border:                 '1px solid var(--theme-ou-rc)',
-            },
-        });
-
-        let trace_iterations = 0;
-        trace_fn = async (prefix=null, get_info=null, regardless=false) => {  // returns true iff !stopped
-            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
-                if (trace_enabled && trace_checkbox.checked) {
-                    const formatted_prefix = (typeof prefix === 'number') ? sprintf('%-8d', prefix) : (prefix ?? '');
-                    const spacer = (typeof prefix === 'undefined' || prefix === null) ? '' : ' ';
-                    const info = (typeof get_info === 'function') ? get_info() : (get_info ?? '');
-                    const output_data = sprintf('%s%s%s', formatted_prefix, spacer, info);
-                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-                    const bounding_rect = trace_output_element.getBoundingClientRect();
-                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                        // only scroll back into view if already at least partially showing
-                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-                    }
-                }
-            }
-            return stopped;
-        };
-    }
-
-    // return controls
-    return {
-        trace_fn,             // async (prefix=null, get_info=null, regardless=false) => stopped; no-op async function if !trace_enabled
-        trace_fn_mod,         // from options
-        trace_ocx,            // undefined if !trace_enabled
-        trace_checkbox,       // undefined if !trace_enabled
-        stop:                 (new_state=true) => { stopped = new_state; },
-        get_stopped:          () => stopped,
-        get_trace_iterations: () => trace_iterations,
-    };
-};
-
-keepalive();
-vars({
-    create_trace_mechanism,
-});
 </bq-cell>
 <bq-cell id="id-97cbb4a7-dc9b-4626-9d72-7c586b867686" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -821,11 +713,11 @@ const {
 });
 bqe.trace_fn = trace_fn;//!!!
 
-await trace_fn('--- computation trace begin ---', null, true);
+await trace_fn('--- computation trace begin ---', true);
 sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 const trace_message_outputter = trace_fn
-      ? async (message) => { await trace_fn(message, null, true); }  // hopefully the async outputter methods will serialize correctly....
+      ? async (message) => { await trace_fn(message, true); }  // hopefully the async outputter methods will serialize correctly....
       : undefined;
 
 bqe.init_data(null, {
