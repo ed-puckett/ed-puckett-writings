@@ -150,7 +150,11 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-full show-in-presentation">// input_data is a string with lines separated newlines
+<bq-cell id="id-041c6697-bf60-4b7b-9138-9b2d32e78f40" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
+</bq-cell>
+<bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated newlines
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
@@ -160,7 +164,7 @@ if (typeof input_data !== 'string') {
 // values given in problem
 bqe.input_data = input_data.trim();
 </bq-cell>
-<bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-full show-in-presentation">// utility definitions
+<bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const memory_output_options = {
     style: {
@@ -432,7 +436,7 @@ const init_data = () => {
         let stopped = false;
         const check_trace = async (get_info, regardless=false) => {
             if (work_count++ % trace_mod === 0 || regardless) {
-                if (!(await trace_fn?.(work_count, get_info, regardless))) {
+                if (await trace_fn?.(work_count, get_info, regardless)) {
                     stopped = true;
                 }
             }
@@ -805,86 +809,27 @@ vars({
 });
 keepalive();
 </bq-cell>
-<bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part One
+<bq-cell id="id-0f466d83-d080-46fa-9e8a-2401fb58243a" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 
-let stopped = false;
-const stop_button = ocx.create_child({
-    tag: 'button',
-    innerText: 'Stop',
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       10,
+    height:             30,
+    prefix_width:       7,
 });
-stop_button.onclick = () => { stopped = true; };
 
-let trace_ocx;
-let trace_checkbox;
+const trace_mod = 10;
 
-const tracing_enabled = true;
-if (tracing_enabled) {
-    const trace_controls = ocx.create_child({
-        children: [
-            {
-                tag: 'label',
-                children: [
-                    'Trace',
-                    {
-                        tag: 'input',
-                        attrs: {
-                            type: 'checkbox',
-                        },
-                    },
-                ],
-            },
-            {
-                tag:       'button',
-                innerText: 'Clear',
-                style: {
-                    'font-size':   'x-small',
-                    'margin-left': '0.5ch',
-                },
-            }
-        ],
-    });
-    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-    trace_checkbox.checked = true;
-
-    const trace_clear_button = trace_controls.querySelector('button');
-    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-    trace_ocx = ocx.create_child_ocx({
-        style: {
-            'font-family':          'monospace',
-            'font-size':            'x-small',
-            'white-space':          'nowrap',
-            'white-space-collapse': 'preserve',
-            'height':               '20ch',
-            'max-width':            'fit-content',
-            padding:                '1em',
-            overflow:               'auto',
-            border:                 '1px solid lightgrey',
-        }
-    });
-    sleep(0.1).then(() => stop_button.scrollIntoView());
-}
-
-let trace_iterations = 0;
-const trace_fn = async (work_count, get_info, regardless) => {  // returns true iff !stopped
-    if (trace_iterations++ % trace_iterations_mod === 0 || regardless) {
-        if (tracing_enabled && trace_checkbox.checked) {
-            const info = get_info();
-            const output_data = sprintf('%-8d %s', work_count, info);
-            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-            const bounding_rect = trace_output_element.getBoundingClientRect();
-            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-            if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                // only scroll back into view if already at least partially showing
-                // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-            }
-        }
-    }
-    return !stopped;
-};
-const trace_mod            = 10;
-const trace_iterations_mod = 10;
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 
 //----------------------------------------------------------------------
@@ -1075,90 +1020,33 @@ await ccx.render_text(description, {
     },
 });
 </bq-cell>
-<bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-full show-in-presentation">// calculate and display the answer to Part Two
+<bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-let trace_iterations = 0;
-const trace_fn = async (work_count, get_info, regardless) => {  // returns true iff !stopped
-    if (trace_iterations++ % trace_iterations_mod === 0 || regardless) {
-        if (tracing_enabled && trace_checkbox.checked) {
-            const info = get_info();
-            const output_data = sprintf('%-8d %s', work_count, info);
-            const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-            const bounding_rect = trace_output_element.getBoundingClientRect();
-            const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-            if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                // only scroll back into view if already at least partially showing
-                // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-            }
-        }
-    }
-    return !stopped;
-};
-const trace_mod            = 10;
-const trace_iterations_mod = 10;
+const {
+    trace_fn,
+    trace_fn_mod,
+    trace_ocx,
+    trace_checkbox,
+    stop,
+    get_stopped,
+    get_trace_iterations,
+} = bqe.create_trace_mechanism(ocx, {
+    trace_enabled:      true,
+    trace_initially_on: true,
+    trace_fn_mod:       10,
+    height:             30,
+    prefix_width:       7,
+});
+
+const trace_mod = 10;
+
+sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 
 // run the problem again with cheat_steps_max = 20:
 
 bqe.init_data();
 
-let stopped = false;
-const stop_button = ocx.create_child({
-    tag: 'button',
-    innerText: 'Stop',
-});
-stop_button.onclick = () => { stopped = true; };
-
-let trace_ocx;
-let trace_checkbox;
-
-const tracing_enabled = true;
-if (tracing_enabled) {
-    const trace_controls = ocx.create_child({
-        children: [
-            {
-                tag: 'label',
-                children: [
-                    'Trace',
-                    {
-                        tag: 'input',
-                        attrs: {
-                            type: 'checkbox',
-                        },
-                    },
-                ],
-            },
-            {
-                tag:       'button',
-                innerText: 'Clear',
-                style: {
-                    'font-size':   'x-small',
-                    'margin-left': '0.5ch',
-                },
-            }
-        ],
-    });
-    trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-    trace_checkbox.checked = true;
-
-    const trace_clear_button = trace_controls.querySelector('button');
-    trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-    trace_ocx = ocx.create_child_ocx({
-        style: {
-            'font-family':          'monospace',
-            'font-size':            'x-small',
-            'white-space':          'nowrap',
-            'white-space-collapse': 'preserve',
-            'height':               '20ch',
-            'max-width':            'fit-content',
-            padding:                '1em',
-            overflow:               'auto',
-            border:                 '1px solid lightgrey',
-        }
-    });
-}
 
 bqe.result = await bqe.find_best_maze_solution({
     analyze_cheats: {
@@ -1197,6 +1085,7 @@ for (const [ cost_savings, count ] of analysis_breakdown) {
 await ocx.println();
 await ocx.println('Cheat cost savings breakdown (only positive results shown):');
 const ab_ocx = ocx.create_child_ocx(bqe.solution_output_options);
-await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));</bq-cell>
+const analysis_element = await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
+sleep(0.1).then(() => analysis_element.scrollIntoView(false));</bq-cell>
 </body>
 </html>
