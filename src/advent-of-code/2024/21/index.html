@@ -1397,7 +1397,7 @@ const async_recursive_solve = async (desired_output, options=null) => {
     const check_tick = make_check_tick(200);
     let work_count = 0;
 
-    trace_fn?.(work_count, () => `begin solve "${desired_output}"`, true);
+    trace_fn?.('-', `begin solve "${desired_output}"`, true);
 
     // iterate robots in reverse, outputs is the alternative outputs from subsequent stages
     // note: stage numbering is reverse from robot numbering; higher stages are closer to the user keypad.
@@ -1409,7 +1409,7 @@ const async_recursive_solve = async (desired_output, options=null) => {
         for (const output of outputs) {
             await check_tick();
             if (work_count++ % trace_mod === 0) {
-                if (await trace_fn?.(work_count, () => `"${desired_output}" stage ${stage}| output: ${output}`)) {
+                if (await trace_fn?.(work_count, `"${desired_output}" stage ${stage}| output: ${output}`)) {
                     throw new Error('STOPPED');
                 }
             }
@@ -2006,7 +2006,7 @@ const greedy_solve = async (output, options=null) => {
         const keypad = processing_keypads[processing_keypad_index];
         await check_tick();
         if (work_count++ % trace_mod === 0) {
-            if (await trace_fn?.(work_count, () => `working...`)) {
+            if (await trace_fn?.(work_count, `working...`)) {
                 return 'STOPPED';
             }
         }
@@ -2054,7 +2054,7 @@ const iterative_solve = async (output, options=null) => {
         if (key0 >= Math.max( ...work_queue_keys )) {  // otherwise, don't add this work
             for (const key of work_queue_keys) {
                 if (key < key0) {
-                    await trace_fn?.(work_count, () => `deleting shorter key from work_queue: ${key}`, true);
+                    await trace_fn?.(work_count, `deleting shorter key from work_queue: ${key}`, true);
                     work_queue.delete(key);
                 }
             }
@@ -2139,7 +2139,7 @@ const iterative_solve = async (output, options=null) => {
 
         await check_tick();
         if (work_count % trace_mod === 0) {
-            if (await trace_fn?.(work_count, () => `{${get_work_queue_size()}}[${largest_output_size}] input: "${work_input}" -> "${work_output}"`)) {
+            if (await trace_fn?.(work_count, `{${get_work_queue_size()}}[${largest_output_size}] input: "${work_input}" -> "${work_output}"`)) {
                 return '(STOPPED)';
             }
         }
@@ -2150,7 +2150,7 @@ const iterative_solve = async (output, options=null) => {
             if (new_result !== null) {
                 const new_result_output = new_result.output;
                 if (new_result_output === output) {
-                    await trace_fn?.(work_count, () => `found solution: ${new_input}`, true);
+                    await trace_fn?.(work_count, `found solution: ${new_input}`, true);
                     return new_input;
                 } else if (output.startsWith(new_result_output)) {
                     await add_work(new_input, new_result_output, work_count);
@@ -2166,115 +2166,9 @@ vars({
     iterative_solve,
 });
 </bq-cell>
-<bq-cell id="id-f107eb0a-1fbe-4c07-90b9-f35d944a9bb5" data-type="javascript" class="show-in-presentation">// define a trace mechanism
-
-const create_trace_mechanism = (ocx, options=null) => {
-    const {
-        trace_enabled       = true,
-        trace_initially_on  = true,
-        trace_fn_mod        = 10,
-        height              = 20,  // ch units
-    } = (options ?? {});
-
-    let trace_ocx;
-    let trace_checkbox;
-
-    let stopped = false;
-
-    let trace_iterations = 0;
-    let trace_fn;
-
-    if (!trace_enabled) {
-        trace_fn = async () => { return stopped; };
-    } else {
-        const stop_button = ocx.create_child({
-            tag: 'button',
-            innerText: 'Stop',
-        });
-        stop_button.onclick = () => { stopped = true; };
-
-        const trace_controls = ocx.create_child({
-            children: [
-                {
-                    tag: 'label',
-                    children: [
-                        'Trace',
-                        {
-                            tag: 'input',
-                            attrs: {
-                                type: 'checkbox',
-                            },
-                        },
-                    ],
-                },
-                {
-                    tag:       'button',
-                    innerText: 'Clear',
-                    style: {
-                        'font-size':   'x-small',
-                        'margin-left': '0.5ch',
-                    },
-                }
-            ],
-        });
-        trace_checkbox = trace_controls.querySelector('input[type="checkbox"]');
-        if (trace_initially_on) {
-            trace_checkbox.checked = true;
-        }
-
-        const trace_clear_button = trace_controls.querySelector('button');
-        trace_clear_button.onclick = () => { if (trace_ocx) trace_ocx.element.innerText = ''; }
-
-        trace_ocx = ocx.create_child_ocx({
-            style: {
-                'font-family':          'monospace',
-                'font-size':            'x-small',
-                'white-space':          'nowrap',
-                'white-space-collapse': 'preserve',
-                'height':               `${height}ch`,
-                'max-width':            'fit-content',
-                padding:                '1em',
-                overflow:               'auto',
-                border:                 '1px solid var(--theme-ou-rc)',
-            },
-        });
-
-        let trace_iterations = 0;
-        trace_fn = async (work_count=0, get_info=undefined, regardless=false) => {  // returns true iff !stopped
-            if (trace_iterations++ % trace_fn_mod === 0 || regardless) {
-                if (trace_enabled && trace_checkbox.checked) {
-                    const info = get_info?.() ?? '(no information given)';
-                    const output_data = sprintf('%-8d %s', work_count, info);
-                    const trace_output_element = await trace_ocx.printf('%s\n', output_data);
-                    const bounding_rect = trace_output_element.getBoundingClientRect();
-                    const parent_bounding_rect = trace_output_element.parentElement.getBoundingClientRect();
-                    if (bounding_rect.bottom <= parent_bounding_rect.bottom+100) {
-                        // only scroll back into view if already at least partially showing
-                        // (this is a little heavy-handed; scrollTo() wants the upper-left coordinate)
-                        trace_output_element.parentElement.scrollTo(0, trace_output_element.parentElement.scrollHeight);
-                    }
-                }
-            }
-            return stopped;
-        };
-    }
-
-    // return controls
-    return {
-        trace_fn,             // async (work_count, get_info, regardless) => stopped; no-op async function if !trace_enabled
-        trace_fn_mod,         // from options
-        trace_ocx,            // undefined if !trace_enabled
-        trace_checkbox,       // undefined if !trace_enabled
-        stop:                 (new_state=true) => { stopped = new_state; },
-        get_stopped:          () => stopped,
-        get_trace_iterations: () => trace_iterations,
-    };
-};
-
-keepalive();
-vars({
-    create_trace_mechanism,
-});
+<bq-cell id="id-f107eb0a-1fbe-4c07-90b9-f35d944a9bb5" data-type="javascript">
+const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
+vars({ create_trace_mechanism });
 </bq-cell>
 <bq-cell id="id-b16a63b0-0110-46d1-b97b-f86ac4de5e52" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
@@ -2295,6 +2189,7 @@ const {
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             30,
+    prefix_width:       7,
 });
 const trace_mod = 1;
 bqe.trace_fn = trace_fn;//!!!
@@ -3244,7 +3139,7 @@ const get_min_sequence_lengths_for_stages = async (options) => {
 
     const check_tick = make_check_tick(200);
 
-    trace_fn?.(0, () => `begin get_min_sequence_lengths_for_stages: "${start_sequence}", start_stage_index=${start_stage_index}, end_stage_index=${end_stage_index}`, true);
+    trace_fn?.('', `begin get_min_sequence_lengths_for_stages: "${start_sequence}", start_stage_index=${start_stage_index}, end_stage_index=${end_stage_index}`, true);
 
     const work_queue = [];
     const add_work = (accumulator, stage_index, extensions=null, depth_first_override=null) => {
@@ -3372,7 +3267,7 @@ bqe.caches = { min_sequence_length_cache, extensions_cache };//!!!
 
         // tracing and yield:
         if (work_count % trace_mod === 0) {
-            if (await trace_fn?.(work_count, () => `stage:${stage_index}; seq_len:"${seq_len}; extensions:(${extensions?.length}); extensions_cache:${count_extensions_cache_entries()}; work_queue:${work_queue.length}"`)) {
+            if (await trace_fn?.(work_count, `stage:${stage_index}; seq_len:"${seq_len}; extensions:(${extensions?.length}); extensions_cache:${count_extensions_cache_entries()}; work_queue:${work_queue.length}"`)) {
                 throw new Error('STOPPED');
             }
         }
@@ -3421,7 +3316,7 @@ const test_min_lengths_calculation_on_prior_result = async (result, options) => 
           .filter(solution => !solution.match(zigzag_re));
     const min_sequence_lengths_results = [];
     for (const earlier_solution of earlier_solutions) {
-        if (await trace_fn?.(0, () => `code "${code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
+        if (await trace_fn?.('-', `code "${code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
             throw new Error('STOPPED');
         }
         await check_tick();
@@ -3616,7 +3511,7 @@ const get_sequence_length_from_increasing_prior_result_intermediate_keypads = as
 
     const min_sequence_lengths_results = [];
     for (const earlier_solution of earlier_solutions) {
-        if (await trace_fn?.(0, () => `code "${prior_result.code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
+        if (await trace_fn?.('', `code "${prior_result.code}": calling get_min_sequence_lengths_for_stages("${earlier_solution}")`, true)) {
             throw new Error('STOPPED');
         }
         await check_tick?.();
@@ -3676,11 +3571,12 @@ const {
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             30,
+    prefix_width:       7,
 });
 const trace_mod = 100;
 bqe.trace_fn = trace_fn;//!!!
 
-await trace_fn(0, () => '--- computation trace begin ---')
+await trace_fn('--- computation trace begin ---')
 
 if (perform_tests) {
     await bqe.run_tests(ocx, {
