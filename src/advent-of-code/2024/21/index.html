@@ -5,18 +5,20 @@
     <script src="https://ed-puckett.github.io/bq/dist/bq-bootstrap.js"></script>
 </head>
 <body>
-<bq-cell id="id-ad75d5e4-4089-4d8f-894f-4bc56c7001ca" data-type="javascript">
+<bq-cell id="id-ad75d5e4-4089-4d8f-894f-4bc56c7001ca" data-type="javascript">const day_number = 21;
+ocx.bq.set_title(`AOC 2024 Day ${day_number} Solution`);
+
 const ccx = ocx.create_child_ocx({
     style: {
         'max-width': '100ch',
         border:      '1px solid grey',
         padding:     '1em',
-    },
+    }
 });
 
 await ccx.markdown(`
 # Excerpt of Problem
-## From: https://adventofcode.com/2024/day/21
+## From: https://adventofcode.com/2024/day/${day_number}
 `);
 const description = `
 --- Day 21: Keypad Conundrum ---
