@@ -154,6 +154,10 @@ await ccx.render_text(description, {
 const { create_trace_mechanism } = await import_local('../../../../lib/trace.js');
 vars({ create_trace_mechanism });
 </bq-cell>
+<bq-cell id="id-6107914f-adbe-4750-9cde-fdf3501b69b6" data-type="javascript">
+const { Direction } = await import_local('../../../../lib/direction.js');
+vars({ Direction });
+</bq-cell>
 <bq-cell id="id-a9580d8f-a5a1-490b-9131-8bc14fcdcefa" data-type="javascript" class="show-in-presentation">// input_data is a string with lines separated newlines
 
 const { input_data } = await import_local('./input-data.js');
@@ -165,6 +169,10 @@ if (typeof input_data !== 'string') {
 bqe.input_data = input_data.trim();
 </bq-cell>
 <bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-in-presentation">// utility definitions
+
+const {
+    Direction,
+} = bqe;
 
 const memory_output_options = {
     style: {
@@ -191,78 +199,6 @@ const solution_output_options = {
         border:                 '1px solid lightgrey',
     },
 };
-
-class Direction {
-    // public:
-
-    static {
-        Object.defineProperties(this, {
-            E_ch: { enumerable: true, value: '&gt;' },
-            N_ch: { enumerable: true, value: '^' },
-            W_ch: { enumerable: true, value: '&lt;' },
-            S_ch: { enumerable: true, value: 'v' },
-        });
-    }
-
-    // internal:
-
-    static #directions = {
-        //                     ch         name   dr  dc    left_ch    right_ch   back_ch
-        [this.E_ch]: new this( this.E_ch, 'E',    0,  1,   this.N_ch, this.S_ch, this.W_ch ),
-        [this.N_ch]: new this( this.N_ch, 'N',   -1,  0,   this.W_ch, this.E_ch, this.S_ch ),
-        [this.W_ch]: new this( this.W_ch, 'W',    0, -1,   this.S_ch, this.N_ch, this.E_ch ),
-        [this.S_ch]: new this( this.S_ch, 'S',    1,  0,   this.E_ch, this.W_ch, this.N_ch ),
-    };
-
-    static #permissable_chars    = [ this.E_ch, this.N_ch, this.W_ch, this.S_ch ];
-    static #permissable_chars_re = new RegExp(`^[${this.#permissable_chars.join('')}]*$`);
-
-    // public:
-
-    static {
-        Object.defineProperties(this, {
-            E: { enumerable: true, value: this.#directions[this.E_ch] },
-            N: { enumerable: true, value: this.#directions[this.N_ch] },
-            W: { enumerable: true, value: this.#directions[this.W_ch] },
-            S: { enumerable: true, value: this.#directions[this.S_ch] },
-        });
-    }
-
-    static from(dir_ch) {
-        if (!(dir_ch in this.#directions)) {
-            throw new Error('invalid dir_ch');
-        }
-        return this.#directions[dir_ch];
-    }
-
-    static chars() { return Object.keys(this.#directions); }
-    static dirs()  { return this.chars().map(dir_ch => this.from(dir_ch)); }
-
-    static permissable_chars    (){ return [ ...this.#permissable_chars ]; }
-    static permissable_chars_re (){ return this.#permissable_chars_re; }
-
-    // note: don't call constructor, use static methods to get pre-defined instances
-    // this is here to show the public properties it defines
-    constructor(ch, name, dr, dc, left_ch, right_ch, back_ch) {
-        Object.defineProperties(this, {
-            ch:       { enumerable: true, value: ch },
-            name:     { enumerable: true, value: name },
-            dr:       { enumerable: true, value: dr },
-            dc:       { enumerable: true, value: dc },
-            left_ch:  { enumerable: true, value: left_ch },
-            right_ch: { enumerable: true, value: right_ch },
-            back_ch:  { enumerable: true, value: back_ch },
-        });
-    }
-
-    // Would rather define left, right and back as properties in the constructor
-    // but get error: TypeError: Cannot read private member #directions from
-    // an object whose class did not declare it
-
-    get left  (){ return this.constructor.#directions[this.left_ch]; }
-    get right (){ return this.constructor.#directions[this.right_ch]; }
-    get back  (){ return this.constructor.#directions[this.back_ch]; }
-}
 
 // Generate integer coordinates for l1-norm (taxicab distance) circles
 // spiraling into the center counterclockwise starting from [ radius, 0 ].
@@ -801,7 +737,6 @@ const init_data = () => {
 globalThis.bqe = bqe;//!!!
 vars({
     memory_output_options, solution_output_options,
-    Direction,
     l1_circle_coordinates,
     empty_cell_ch, wall_cell_ch, start_cell_ch, end_cell_ch, path_cell_ch,
     permissable_memory_chars, permissable_memory_chars_re,
