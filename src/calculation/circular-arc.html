@@ -368,7 +368,7 @@ this.RangeEditControl = class RangeEditControl {
         } = options;
 
         if (!ocx) {
-            throw new Error('ocx must be given');
+            throw new TypeError('ocx must be given');
         }
 
         Object.defineProperties(this, {

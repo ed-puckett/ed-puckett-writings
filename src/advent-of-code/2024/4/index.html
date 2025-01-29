@@ -76,7 +76,7 @@ this.search_word = 'XMAS';
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
@@ -86,13 +86,13 @@ this.rows = this.grid.length;
 this.cols = this.grid[0].length;  // we expect all rows to be the same length
 
 if (this.rows < this.search_word.length) {
-    throw new Error(`input_data expected to have at least ${this.search_word.length} rows`);
+    throw new TypeError(`input_data expected to have at least ${this.search_word.length} rows`);
 }
 if (!this.grid.every(row => row.length === this.cols)) {
-    throw new Error('input_data does not have all rows the same length');
+    throw new TypeError('input_data does not have all rows the same length');
 }
 if (this.cols < this.search_word.length) {
-    throw new Error(`input_data expected to have at least ${this.search_word.length} columns`);
+    throw new TypeError(`input_data expected to have at least ${this.search_word.length} columns`);
 }</bq-cell>
 <bq-cell id="id-29d2a46d-5093-4a0b-8796-959bc3f50c74" data-type="javascript" class="show-in-presentation">// display the input data
 await ocx.println(`input data (${this.rows}x${this.cols}):`);
@@ -119,7 +119,7 @@ await ocx.render_text(this.input_data, {
 
 this.test_at = (r, c, wrapping=false) => {
     if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) {
-        throw new Error(`(r, c) = (${r}, ${c}) is out of bounds`);
+        throw new TypeError(`(r, c) = (${r}, ${c}) is out of bounds`);
     }
     const matches = [];  // array of { r, c, direction }
     for (const direction of this.search_directions) {

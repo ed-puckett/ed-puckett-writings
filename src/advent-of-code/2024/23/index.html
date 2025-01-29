@@ -106,7 +106,7 @@ vars({ create_trace_mechanism });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
@@ -173,7 +173,7 @@ td-yn
         const line = input_lines[line_index];
         const match = line.match(/^([a-z]{2})-([a-z]{2})$/);
         if (!match) {
-            throw new Error(`illegal format at line #${line_index+1}: "${line}"`);
+            throw new TypeError(`illegal format at line #${line_index+1}: "${line}"`);
         }
         const c1 = match[1];
         const c2 = match[2];

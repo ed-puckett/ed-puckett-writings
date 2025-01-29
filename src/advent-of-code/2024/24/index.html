@@ -164,7 +164,7 @@ vars({ create_trace_mechanism });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
@@ -174,7 +174,7 @@ globalThis.bqe = bqe;//!!!
 class Wire {
     constructor(name, trace_message=null) {
         if (typeof name !== 'string' || name === '') {
-            throw new Error('name must be a non-empty string');
+            throw new TypeError('name must be a non-empty string');
         }
         Object.defineProperties(this, {
             name:          { enumerable: true, value: name },
@@ -208,17 +208,17 @@ class Wire {
 class Gate {
     constructor(type, inputs, output, operation, trace_message=null) {
         if (typeof type !== 'string' || type === '') {
-            throw new Error('type must be a nonempty string');
+            throw new TypeError('type must be a nonempty string');
         }
         if (!Array.isArray(inputs) || inputs.length === 0 || !inputs.every(input => (input instanceof Wire))) {
-            throw new Error('inputs must be a non-empty array of Wire instances');
+            throw new TypeError('inputs must be a non-empty array of Wire instances');
         }
         if (!(output instanceof Wire)) {
-            throw new Error('output must be a Wire instance');
+            throw new TypeError('output must be a Wire instance');
         }
         if (typeof operation !== 'function' || operation.length !== inputs.length) {
             // bug: operations defined with variable number of arguments not handled
-            throw new Error(`operation must be an async function taking inputs.length (${inputs.length}) arguments`);
+            throw new TypeError(`operation must be an async function taking inputs.length (${inputs.length}) arguments`);
         }
         Object.defineProperties(this, {
             type:          { enumerable: true, value: type },
@@ -255,13 +255,13 @@ class Gate {
 
 const create_binary_gate_by_type = (type, inputs, output, trace_message=null) => {
     if (!Array.isArray(inputs) || inputs.length !== 2) {
-        throw new Error('inputs must be an array of length 2');
+        throw new TypeError('inputs must be an array of length 2');
     }
     switch (type) {
         case 'AND': return new Gate(type, inputs, output, (a, b) => ((!!a && !!b) ? 1 : 0), trace_message);
         case 'OR':  return new Gate(type, inputs, output, (a, b) => ((!!a || !!b) ? 1 : 0), trace_message);
         case 'XOR': return new Gate(type, inputs, output, (a, b) => ((!!a ^  !!b) ? 1 : 0), trace_message);
-        default: throw new Error(`unknown gate type "${type}"`);
+        default: throw new TypeError(`unknown gate type "${type}"`);
     }
 }
 
@@ -271,13 +271,13 @@ const output_wire_name_prefix = 'z';  // from problem
 
 // validate simplifying assumptions regarding wire name prefixes
 if (input1_wire_name_prefix.length !== input2_wire_name_prefix.length || input1_wire_name_prefix.length === 0) {
-    throw new Error('input wire name prefixes must be non-empty and must be the same length');
+    throw new TypeError('input wire name prefixes must be non-empty and must be the same length');
 }
 if (output_wire_name_prefix.length === 0) {
-    throw new Error('output wire name prefix must be non-empty');
+    throw new TypeError('output wire name prefix must be non-empty');
 }
 if (input1_wire_name_prefix.match(/[0-9]$/) || input2_wire_name_prefix.match(/[0-9]$/) || output_wire_name_prefix.match(/[0-9]$/)) {
-    throw new Error('wire name prefixes must not end with a digit');
+    throw new TypeError('wire name prefixes must not end with a digit');
 }
 
 const wire_number_re = /([0-9]+)$/;
@@ -292,13 +292,13 @@ const get_wire_number_from_wire_name = (wire_name) => {
 
 const make_wire_name = (prefix, wire_number, digit_count) => {
     if (typeof prefix !== 'string') {
-        throw new Error('prefix must be a string');
+        throw new TypeError('prefix must be a string');
     }
     if (!Number.isInteger(wire_number) || wire_number < 0) {
-        throw new Error('wire_number must be a non-negative integer');
+        throw new TypeError('wire_number must be a non-negative integer');
     }
     if (!Number.isInteger(digit_count) || digit_count <= 0) {
-        throw new Error('digit_count must be a positive integer');
+        throw new TypeError('digit_count must be a positive integer');
     }
     return `${prefix}${wire_number.toString().padStart(digit_count, '0')}`;
 };
@@ -411,7 +411,7 @@ tnw OR pbm -> gnj
 `;
         break;
 
-    default: throw new Error(`test_data_set ${test_data_set} not recognized`)
+    default: throw new TypeError(`test_data_set ${test_data_set} not recognized`)
     }
     input_lines = input_lines.trim().split('\n');
 
@@ -431,7 +431,7 @@ tnw OR pbm -> gnj
         const line = input_lines[line_index];
         if (line.length === 0) {
             if (inputting_gate_definitions) {
-                throw new Error('second empty line encountered at line #${line_index+1}');
+                throw new TypeError('second empty line encountered at line #${line_index+1}');
             }
             inputting_gate_definitions = true;
             continue;
@@ -440,12 +440,12 @@ tnw OR pbm -> gnj
 
             const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)[\s]*[:][\s]*([01])$/);
             if (!match) {
-                throw new Error(`illegal line format at line #${line_index+1}: "${line}"`);
+                throw new TypeError(`illegal line format at line #${line_index+1}: "${line}"`);
             }
             const name  = match[1];
             const value = +match[2];
             if (name in wire_initializers) {
-                throw new Error(`duplicate wire initializer for "${name}" at line #${line_index+1}: "${line}"`);
+                throw new TypeError(`duplicate wire initializer for "${name}" at line #${line_index+1}: "${line}"`);
             }
             wire_initializers[name] = value;
             wires[name] = new Wire(name, trace_message);
@@ -454,17 +454,17 @@ tnw OR pbm -> gnj
 
             const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)[\s]+(AND|OR|XOR)[\s]+([a-zA-Z][a-zA-Z0-9]*)[\s]*[-][>][\s]*([a-zA-Z][a-zA-Z0-9]*)$/);
             if (!match) {
-                throw new Error(`illegal line format at line #${line_index+1}: "${line}"`);
+                throw new TypeError(`illegal line format at line #${line_index+1}: "${line}"`);
             }
             const input_name1 = match[1];
             const type        = match[2];
             const input_name2 = match[3];
             const output_name = match[4];
             if (output_name in wire_initializers) {
-                throw new Error(`${type} gate given with output name "${output_name}" which was already specified by a wire initializer`);
+                throw new TypeError(`${type} gate given with output name "${output_name}" which was already specified by a wire initializer`);
             }
             if (gate_initializers[output_name]) {
-                throw new Error(`${type} gate given with output name "${output_name}" which was already specified earlier`);
+                throw new TypeError(`${type} gate given with output name "${output_name}" which was already specified earlier`);
             }
             gate_initializers[output_name] = { input_name1, type, input_name2, output_name };
             wires[output_name] = new Wire(output_name, trace_message);
@@ -474,7 +474,7 @@ tnw OR pbm -> gnj
     // validate input and output wire names
     const validate_wire_names = (label, name_prefix) => {  // returns an array of the corresponding names
         if (!name_prefix.match(/[a-zA-Z]+/)) {
-            throw new Error(`unexpected: ${label} wires: name_prefix "${name_prefix}" is not safe for the way name_re is created`);
+            throw new TypeError(`unexpected: ${label} wires: name_prefix "${name_prefix}" is not safe for the way name_re is created`);
         }
         const name_re = new RegExp(`^${name_prefix}(?&lt;bit_index&gt;[0-9]+)$`);
         const names = Object.values(wires)
@@ -482,14 +482,14 @@ tnw OR pbm -> gnj
               .filter(name => name.match(name_re))
               .sort();  // (OK to use sort() because filter() created a new intermediate array) this will sort lsb to msb ascending
         if (names.length < 1 || !names.every(name => (name.length === names[0].length))) {
-            throw new Error(`${label} wires names ("${name_prefix}" followed by 1 or more decimal digits) must all be the same length`)
+            throw new TypeError(`${label} wires names ("${name_prefix}" followed by 1 or more decimal digits) must all be the same length`)
         }
         const wire_bit_index_strings = names.map(name => name.match(name_re).groups.bit_index);  // we already know these will all match
         const wire_bit_indices = wire_bit_index_strings.map(string => +string);
         const start = Math.min( ...wire_bit_indices );
         const end   = Math.max( ...wire_bit_indices );
         if (start !== 0 || end !== new Set(wire_bit_indices).size-1) {
-            throw new Error(`there are missing bit indices for the ${label} wire names ("${name_prefix}" followed by 1 or more decimal digits)`);
+            throw new TypeError(`there are missing bit indices for the ${label} wire names ("${name_prefix}" followed by 1 or more decimal digits)`);
         }
         return names;
     };
@@ -500,7 +500,7 @@ tnw OR pbm -> gnj
 
     if (input_wire_names.length > 0) {
         if (!input_wire_names.every(name => (name.length === input_wire_names[0].length))) {
-            throw new Error('all input wire names must have the same length');
+            throw new TypeError('all input wire names must have the same length');
         }
     }
 
@@ -520,7 +520,7 @@ tnw OR pbm -> gnj
                           pair.length === 2   &&
                           pair.every(name => name in gate_initializers) );
              }) ) {
-            throw new Error('gate_output_swaps must be an array of arrays of two output_names that each exist in the gate initializers');
+            throw new TypeError('gate_output_swaps must be an array of arrays of two output_names that each exist in the gate initializers');
         }
         // swap the initializer entries for each specified pair in order
         // no check is performed for redundancy, etc....
@@ -538,15 +538,15 @@ tnw OR pbm -> gnj
     for (const { input_name1, type, input_name2, output_name } of Object.values(gate_initializers)) {
         const input1 = wires[input_name1];
         if (!input1) {
-            throw new Error(`wire "${input_name1}" not found`);
+            throw new TypeError(`wire "${input_name1}" not found`);
         }
         const input2 = wires[input_name2];
         if (!input2) {
-            throw new Error(`wire "${input_name2}" not found`);
+            throw new TypeError(`wire "${input_name2}" not found`);
         }
         const output = wires[output_name];
         if (!output) {
-            throw new Error(`wire "${output_name}" not found`);
+            throw new TypeError(`wire "${output_name}" not found`);
         }
         const inputs = [ input1, input2 ];
         const gate = create_binary_gate_by_type(type, inputs, output, trace_message);
@@ -873,7 +873,7 @@ const create_mapping_wire_name_to_gate_net = (options=null) => {
             } else {
                 const wire_gate_initializer = gate_initializers[wire_name];
                 if (!wire_gate_initializer) {
-                    throw new Error(`gate initializer not found for wire "${wire_name}"`);
+                    throw new TypeError(`gate initializer not found for wire "${wire_name}"`);
                 }
                 const { input_name1, input_name2, type, output_name } = wire_gate_initializer;
                 const mapped_to = {
@@ -1100,7 +1100,7 @@ const special_cases_are_ok = () => {
     // special case: n === 0: z[0] = { x[0] XOR y[0] }
     const gn00 = gate_net_mapping.z00;
     if (!gn00) {
-        throw new Error('unexpected: no gate found for output wire z00');
+        throw new TypeError('unexpected: no gate found for output wire z00');
     }
     if (!gn_same(gn00, { input1: 'x00', input2: 'y00', type: 'XOR', output_name: 'z00' })) {
         return false;
@@ -1110,7 +1110,7 @@ const special_cases_are_ok = () => {
     // special case: n === 1: z[1] = { { x[1] XOR y[1] } XOR { x[0] AND y[0] } }
     const gn01 = gate_net_mapping.z01;
     if (!gn01) {
-        throw new Error('unexpected: no gate found for output wire z01');
+        throw new TypeError('unexpected: no gate found for output wire z01');
     }
     if ( gn01.type !== 'XOR' ||
          !gn_same(gn01.input1, { input1: 'x01', input2: 'y01', type: 'XOR' }) ||
@@ -1131,10 +1131,10 @@ const special_cases_are_ok = () => {
         const has_yn = input2_names.includes(yn);
         if (!has_xn || !has_yn) {
             if (has_xn) {
-                throw new Error(`unexpected: output wire "${zn}" has corresponding input wire "${xn}" but does not have "${yn}"`);
+                throw new TypeError(`unexpected: output wire "${zn}" has corresponding input wire "${xn}" but does not have "${yn}"`);
             }
             if (has_yn) {
-                throw new Error(`unexpected: output wire "${zn}" does not have corresponding input wire "${xn}" but does have "${yn}"`);
+                throw new TypeError(`unexpected: output wire "${zn}" does not have corresponding input wire "${xn}" but does have "${yn}"`);
             }
 
             const xn_1 = configuration.make_input1_wire_name(n-1);
@@ -1142,7 +1142,7 @@ const special_cases_are_ok = () => {
             const has_xn_1 = input1_names.includes(xn_1);
             const has_yn_1 = input2_names.includes(yn_1);
             if (!has_xn_1 || !has_yn_1) {
-                throw new Error(`unexpected: output wire "${zn}" does not have corresponding input wires "${xn}" and "${yn}", but also does not have "${xn_1}" and "${yn_1}"`);
+                throw new TypeError(`unexpected: output wire "${zn}" does not have corresponding input wires "${xn}" and "${yn}", but also does not have "${xn_1}" and "${yn_1}"`);
             }
 
             const zn_1 = configuration.make_output_wire_name(n-1);

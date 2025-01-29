@@ -130,7 +130,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
@@ -145,7 +145,7 @@ this.init_map = () => {
     this.cols = this.input_map[0].length;  // we expect all rows to be the same length
 
     if (!this.input_map.every(row => row.length === this.cols)) {
-        throw new Error('input_data does not have all rows the same length');
+        throw new TypeError('input_data does not have all rows the same length');
     }
 
     // create a mutable copy of input_map for a workspace
@@ -162,10 +162,10 @@ this.init_map = () => {
             }
         }
         if (found_positions.length <= 0) {
-            throw new Error('guard not found');
+            throw new TypeError('guard not found');
         }
         if (found_positions.length > 1) {
-            throw new Error(`multiple guard positions found: ${found_positions.map(([fr, fc]) => `(${fr},${fc})`).join(', ')}`);
+            throw new TypeError(`multiple guard positions found: ${found_positions.map(([fr, fc]) => `(${fr},${fc})`).join(', ')}`);
         }
         return [ ...found_positions[0] ];
     }
@@ -247,13 +247,13 @@ await ocx.render_text(this.create_string_from_map(), this.map_output_options);</
 <bq-cell id="id-c6894a4e-d060-4a6d-89db-b5f9d12755d7" data-type="javascript" class="show-in-presentation">// set up some utility functions
 
 if (this.map.some(row => row.some(ch => ch === this.guard_prior_position_char))) {
-    throw new Error("the character used to mark the guard's prior positions already exists in the map");
+    throw new TypeError("the character used to mark the guard's prior positions already exists in the map");
 }
 
 this.change_direction = (dir_ch, counterclockwise=false) => {
     const index = this.direction_chars.indexOf(dir_ch);
     if (index === -1) {
-        throw new Error(`dir_ch "${dir_ch}" not found in direction_chars "${this.direction_chars}"`);
+        throw new TypeError(`dir_ch "${dir_ch}" not found in direction_chars "${this.direction_chars}"`);
     }
     const new_index = counterclockwise
           ? (index >= this.direction_chars.length-1) ? 0 : (index + 1)
@@ -268,10 +268,10 @@ this.direction_info = {
 };
 this.map_at = (r, c) => {  // returns undefined if r, c out of bounds, otherwise character stored at map
     if (typeof r !== 'number' || !Number.isInteger(r)) {
-        throw new Error('r must be an integer');
+        throw new TypeError('r must be an integer');
     }
     if (typeof c !== 'number' || !Number.isInteger(c)) {
-        throw new Error('c must be an integer');
+        throw new TypeError('c must be an integer');
     }
     if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) {
         return undefined
@@ -282,7 +282,7 @@ this.map_at = (r, c) => {  // returns undefined if r, c out of bounds, otherwise
 this.updated_location = (r, c, dir_ch) => {  // returns new { r, c, map_ch }; map_ch will be undefined if (r, c) off the map
     const dir_info = this.direction_info[dir_ch];
     if (!dir_info) {
-        throw new Error(`invalid dir_ch "${dir_ch}"`);
+        throw new TypeError(`invalid dir_ch "${dir_ch}"`);
     }
     const { dr, dc } = dir_info;
     r += dr;
@@ -323,7 +323,7 @@ globalThis.t = this;  // for testing...</bq-cell>
 
 this.walk_guard = (recorder=[]) => {  // recorder entries: { type, r, c, dir_ch } where type is one of 'move', 'turn', 'exit' or 'loop'
     if (!Array.isArray(recorder)) {
-        throw new Error('recorder must be an array');
+        throw new TypeError('recorder must be an array');
     }
     recorder.splice(0);  // clear recorder
     const move_actions_set = new Set();

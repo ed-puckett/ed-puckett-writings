@@ -100,7 +100,7 @@ vars({ Direction });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 // values given in problem
@@ -156,12 +156,12 @@ const init_data = () => {
         const line = input_lines[line_index];
         const match = line.match(/^([\d]+)[,]([\d]+)$/);
         if (!match) {
-            throw new Error(`bad line format at input line ${line_index+1}`);
+            throw new TypeError(`bad line format at input line ${line_index+1}`);
         }
         const x = +match[1];
         const y = +match[2];
         if (x < 0 || x >= bqe.cols || y < 0 || y >= bqe.rows) {
-            throw new Error(`input data ${x},${y} is out of range`);
+            throw new TypeError(`input data ${x},${y} is out of range`);
         }
         input_byte_coordinates.push([ y, x ]);  // [ r, c ]
     }
@@ -183,7 +183,7 @@ const init_data = () => {
 
     const set_cell = (r, c, ch) => {
         if (r < 0 || r >= bqe.rows || c < 0 || c >= bqe.cols) {
-            throw new Error(`(r,c) = (${r},${r}) is out of range`);
+            throw new TypeError(`(r,c) = (${r},${r}) is out of range`);
         }
         memory[r][c].ch = ch;
     }
@@ -219,7 +219,7 @@ const init_data = () => {
 
     const simulate_bytes = (bytes_to_simulate) => {
         if (bytes_to_simulate > input_byte_coordinates.length) {
-            throw new Error(`bytes_to_simulate = ${bytes_to_simulate} >= input_byte_coordinates.length = ${input_byte_coordinates.length}`);
+            throw new TypeError(`bytes_to_simulate = ${bytes_to_simulate} >= input_byte_coordinates.length = ${input_byte_coordinates.length}`);
         }
         for (let i = 0; i < bytes_to_simulate; i++) {
             const [ r, c ] = input_byte_coordinates[i];
@@ -238,7 +238,7 @@ const init_data = () => {
             let minimum_remaining = Math.abs(delta_r) + Math.abs(delta_c);
 
             if (!(dr === -1 || dr === 0 || dr === 1) && (dc === -1 || dc === 0 || dc === 1) && ((dr === 0) !== (dc === 0))) {
-                throw new Error('assumptions for calculating minimum_remaining violated');
+                throw new TypeError('assumptions for calculating minimum_remaining violated');
             }
             if (delta_r === 0) {
                 if (dr === 0) {
@@ -473,7 +473,7 @@ const input_data_examples = [
 const input_data_example_to_use = undefined;
 if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
-        throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+        throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
     const { rows, cols, bytes_to_simulate, input_data } = input_data_examples[input_data_example_to_use];
     vars({ rows, cols, bytes_to_simulate, input_data: input_data.trim() });

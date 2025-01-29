@@ -82,7 +82,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();</bq-cell>
@@ -116,7 +116,7 @@ this.init = () => {
     this.machines = [];
     for (let line_index = 0, id = 1; line_index < input_lines.length; id++) {
         const report_error = (line_number) => {
-            throw new Error(`unexpected format at line ${line_number}: ${line_number-1 >= input_lines.length ? 'end of input reached' : `"${input_lines[line_number-1]}"`}`);
+            throw new TypeError(`unexpected format at line ${line_number}: ${line_number-1 >= input_lines.length ? 'end of input reached' : `"${input_lines[line_number-1]}"`}`);
         };
 
         try {

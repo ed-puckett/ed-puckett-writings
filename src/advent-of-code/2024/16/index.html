@@ -125,7 +125,7 @@ vars({ Direction });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 bqe.input_data = input_data.trim();</bq-cell>
@@ -181,7 +181,7 @@ bqe.init_data = () => {
     for (let r = 0; r < bqe.input_lines.length; r++) {
         const line = bqe.input_lines[r];
         if (!line.match(bqe.permissable_map_chars_re)) {
-            throw new Error(`illegal map character at line ${r+1}`);
+            throw new TypeError(`illegal map character at line ${r+1}`);
         }
         const row = Array.from(line).map((ch, c) => {
             return { r, c, ch };
@@ -192,7 +192,7 @@ bqe.init_data = () => {
     bqe.cols = bqe.map[0].length;  // all rows are expected to be the same length
     // validate map row lengths
     if (!bqe.map.every(row => row.length === bqe.cols)) {
-        throw new Error('input_data does not have all map rows the same length');
+        throw new TypeError('input_data does not have all map rows the same length');
     }
 
     bqe.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
@@ -214,13 +214,13 @@ bqe.init_data = () => {
             const cell = bqe.get_cell(r, c);
             if (cell.ch === bqe.start_cell_ch) {
                 if (bqe.start_cell) {
-                    throw new Error(`second start found at (${r}, ${c})`);
+                    throw new TypeError(`second start found at (${r}, ${c})`);
                 } else {
                     bqe.start_cell = cell;
                 }
             } else if (cell.ch === bqe.end_cell_ch) {
                 if (bqe.end_cell) {
-                    throw new Error(`second end found at (${r}, ${c})`);
+                    throw new TypeError(`second end found at (${r}, ${c})`);
                 } else {
                     bqe.end_cell = cell;
                 }
@@ -228,10 +228,10 @@ bqe.init_data = () => {
         }
     }
     if (!bqe.start_cell) {
-        throw new Error('start not found in map');
+        throw new TypeError('start not found in map');
     }
     if (!bqe.end_cell) {
-        throw new Error('end not found in map');
+        throw new TypeError('end not found in map');
     }
 
     bqe.cell_toward = (cell, dir) => {
@@ -269,7 +269,7 @@ bqe.init_data = () => {
             let minimum_remaining = Math.abs(delta_r) + Math.abs(delta_c);
 
             if (!(dr === -1 || dr === 0 || dr === 1) && (dc === -1 || dc === 0 || dc === 1) && ((dr === 0) !== (dc === 0))) {
-                throw new Error('assumptions for calculating minimum_remaining violated');
+                throw new TypeError('assumptions for calculating minimum_remaining violated');
             }
             if (delta_r === 0) {
                 if (dr === 0) {
@@ -525,7 +525,7 @@ bqe.init_data = () => {
             if (prior_dir) {
                 if (prior_dir !== entry_dir) {
                     if (prior_dir.left !== entry_dir && prior_dir.right !== entry_dir) {
-                        throw new Error(`prior entry dir "${prior_dir.ch}" is neither left nor right of current entry dir "${entry_dir.ch}" at index ${i}`);
+                        throw new TypeError(`prior entry dir "${prior_dir.ch}" is neither left nor right of current entry dir "${entry_dir.ch}" at index ${i}`);
                     }
                     cost += bqe.turn_cost;
                 }
@@ -636,7 +636,7 @@ const input_data_examples = [
 const input_data_example_to_use = undefined;
 if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
-        throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+        throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
     bqe.input_data = input_data_examples[input_data_example_to_use].trim();
 }

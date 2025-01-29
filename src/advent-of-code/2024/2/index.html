@@ -61,7 +61,7 @@ await ocx.markdown(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data + '\n';  // newline to simplify loop termination later</bq-cell>
@@ -83,10 +83,10 @@ for (let i = 0, eol; i < this.input_data.length && (eol = this.input_data.indexO
     if (line) {
         const levels = line.split(/[\s]+/).map(str => +str);  // split on whitespace and convert to numbers
         if (levels.some(level => typeof level !== 'number' || Number.isNaN(level))) {
-            throw new Error(`bad input_data line at i = ${i}`);
+            throw new TypeError(`bad input_data line at i = ${i}`);
         }
         if (levels.length < 2) {
-            throw new Error(`not enough levels at i = ${i}`);
+            throw new TypeError(`not enough levels at i = ${i}`);
         }
         this.reports.push(levels);
     }

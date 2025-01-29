@@ -142,7 +142,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
@@ -218,7 +218,7 @@ const create_configuration = (test_data_set=null) => {
 `;
         break;
 
-    default: throw new Error(`test_data_set ${test_data_set} not recognized`)
+    default: throw new TypeError(`test_data_set ${test_data_set} not recognized`)
     }
     input_lines = input_lines.trim().split('\n');
 
@@ -233,12 +233,12 @@ const create_configuration = (test_data_set=null) => {
         const line = input_lines[line_index];
         if (line.length === 0) {
             if (rows) {
-                throw new Error(`encountered empty line with incomplete schematic at line #${line_index+1}`);
+                throw new TypeError(`encountered empty line with incomplete schematic at line #${line_index+1}`);
             }
             continue;
         }
         if (!line.match(line_re)) {
-            throw new Error(`encountered illegal format at line #${line_index+1}`);
+            throw new TypeError(`encountered illegal format at line #${line_index+1}`);
         }
         (rows ??= []).push(line);
         if (rows.length === rows_per_schematic) {
@@ -259,7 +259,7 @@ const create_configuration = (test_data_set=null) => {
                             break;
                         case filled_cell_char:
                             if (saw_empty) {
-                                throw new Error(`encountered bad lock schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
+                                throw new TypeError(`encountered bad lock schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
                             }
                             break;
                         }
@@ -281,7 +281,7 @@ const create_configuration = (test_data_set=null) => {
                             break;
                         case filled_cell_char:
                             if (saw_empty) {
-                                throw new Error(`encountered bad key schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
+                                throw new TypeError(`encountered bad key schematic with broken column at [${r},${c}] at line #${start_line_index+1}`);
                             }
                             break;
                         }
@@ -289,14 +289,14 @@ const create_configuration = (test_data_set=null) => {
                 }
                 keys.push(extents);
             } else {
-                throw new Error(`encountered bad schematic at line #${start_line_index+1}`);
+                throw new TypeError(`encountered bad schematic at line #${start_line_index+1}`);
             }
             rows = undefined;
         }
         //!!!
     }
     if (rows) {
-        throw new Error(`final schematic was incomplete`);
+        throw new TypeError(`final schematic was incomplete`);
     }
 
     const get_locks = () => locks.map(lock => Array.from(lock));

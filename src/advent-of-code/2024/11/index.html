@@ -89,13 +89,13 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
 
 if (!this.input_data.match(/^[\d]+(?:[\s]+[\d]+)*$/)) {
-    throw new Error(`input contains nondigit/non-whitespace character(s): ${this.input_data}`);
+    throw new TypeError(`input contains nondigit/non-whitespace character(s): ${this.input_data}`);
 }
 </bq-cell>
 <bq-cell id="id-d8097f0f-387e-4443-859b-34c64e51de17" data-type="javascript" class="show-in-presentation">// utility definitions
@@ -164,14 +164,14 @@ this.init_stones = () => {
         .map(number_string => {
             if (number_string.length > this.MAX_INPUT_DIGITS) {
                 // this is to ensure we don't need arbitrary-preciscion arithmetic...
-                throw new Error(`rejecting input number ${number_string} because it has more than ${this.MAX_INPUT_DIGITS} digits`);
+                throw new TypeError(`rejecting input number ${number_string} because it has more than ${this.MAX_INPUT_DIGITS} digits`);
             }
             return +number_string;
         });
 
     this.stone_blink_transition = (stone) => {  // returns an array of new stones that will replace the input stone
         if (!Number.isInteger(stone) || stone < 0) {
-            throw new Error(`stone is not a positive integer: ${stone}`);
+            throw new TypeError(`stone is not a positive integer: ${stone}`);
         }
 
         if (stone === 0) {

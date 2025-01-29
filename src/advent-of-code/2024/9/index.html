@@ -85,13 +85,13 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
 
 if (this.input_data.match(/[^0-9]/)) {
-    throw new Error('unexpected: input_data contains non-digits');
+    throw new TypeError('unexpected: input_data contains non-digits');
 }
 
 this.input_data_numbers = Array.from(this.input_data).map(str => +str);

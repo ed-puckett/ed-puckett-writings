@@ -107,7 +107,7 @@ await ccx.render_text(description);
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
@@ -118,12 +118,12 @@ this.input_lines = this.input_data.split('\n').map(line => line.trim());
 // find separation between the page ordering rules and the page queues: a single empty line
 const input_data_separation_line_index = this.input_lines.indexOf('');
 if (input_data_separation_line_index === -1) {
-    throw new Error('no empty line found separating the page ordering rules and the page queues in the input data');
+    throw new TypeError('no empty line found separating the page ordering rules and the page queues in the input data');
 }
 const first_page_queue_line = this.input_lines[input_data_separation_line_index + 1];
 if (!first_page_queue_line) {
     // either empty string or undefined
-    throw new Error('no page queues found after the single empty line following the page ordering rules');
+    throw new TypeError('no page queues found after the single empty line following the page ordering rules');
 }
 
 // break the input lines into the separate parts
@@ -131,10 +131,10 @@ this.page_ordering_rules_lines = this.input_lines.slice(0, input_data_separation
 this.page_queues_lines = this.input_lines.slice(input_data_separation_line_index + 1);
 
 if (this.page_ordering_rules_lines.length <= 0) {
-    throw new Error('no page ordering rules found in the input data');
+    throw new TypeError('no page ordering rules found in the input data');
 }
 if (this.page_queues_lines <= 0) {
-    throw new Error('no page queues found in the input data');
+    throw new TypeError('no page queues found in the input data');
 }</bq-cell>
 <bq-cell id="id-a8122768-9f11-4ee5-afab-a90f834d1c9d" data-type="javascript" class="show-in-presentation">// display the separated input data
 
@@ -159,7 +159,7 @@ await ocx.render_text(this.page_queues_lines.join('\n'), this.input_lines_output
 this.page_ordering_rules_pairs = this.page_ordering_rules_lines.map((line, line_index) => {
     const match = line.match(/^([\d]+)[|]([\d]+)$/);
     if (!match) {
-        throw new Error(`bad format for page ordering rule at index ${line_index}: ${line}`);
+        throw new TypeError(`bad format for page ordering rule at index ${line_index}: ${line}`);
     }
     return [ +match[1], +match[2] ];  // note: convert to numbers
 });
@@ -177,7 +177,7 @@ for (const [ before, after ] of this.page_ordering_rules_pairs) {
 this.page_queues = this.page_queues_lines.map((line, line_index) => {
     const match = line.match(/^[\d]+(?:[,][\d]+)*$/);
     if (!match) {
-        throw new Error(`bad format for page queue at index ${line_index}: ${line}`);
+        throw new TypeError(`bad format for page queue at index ${line_index}: ${line}`);
     }
     return line.split(',').map(s => +s);  // note: convert to numbers
 });
@@ -185,7 +185,7 @@ this.page_queues = this.page_queues_lines.map((line, line_index) => {
 for (let i = 0; i < this.page_queues.length; i++) {
     const page_queue = this.page_queues[i];
     if (page_queue.length % 2 !== 1) {
-        throw new Error(`page queue at index ${i} does not have an odd number of pages: ${page_queue}`);
+        throw new TypeError(`page queue at index ${i} does not have an odd number of pages: ${page_queue}`);
     }
 }
 // this.page_queue() returns undefined if the page_queue is valid.

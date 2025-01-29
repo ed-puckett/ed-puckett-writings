@@ -274,7 +274,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();</bq-cell>
@@ -330,13 +330,13 @@ this.init_data = () => {
 
             if (line.length === 0) {
                 if (this.map.length === 0) {
-                    throw new Error('newline encounted before map was parsed');
+                    throw new TypeError('newline encountered before map was parsed');
                 } else {
                     parsed_map = true;
                 }
             } else {
                 if (!line.match(this.permissable_map_chars_re)) {
-                    throw new Error(`illegal map character at line ${line_index+1}`);
+                    throw new TypeError(`illegal map character at line ${line_index+1}`);
                 }
                 this.map.push(Array.from(line));
             }
@@ -344,7 +344,7 @@ this.init_data = () => {
         } else {  // parsing directions
 
             if (!line.match(this.permissable_dir_chars_re)) {
-                throw new Error(`illegal move character at line ${line_index+1}`);
+                throw new TypeError(`illegal move character at line ${line_index+1}`);
             }
             for (const dir_ch of Array.from(line)) {
                 this.moves.push(dir_ch);
@@ -357,7 +357,7 @@ this.init_data = () => {
 
     // validate map row lengths
     if (!this.map.every(row => row.length === this.cols)) {
-        throw new Error('input_data does not have all map rows the same length');
+        throw new TypeError('input_data does not have all map rows the same length');
     }
 
     // find robot
@@ -368,7 +368,7 @@ this.init_data = () => {
         for (let c = 0; c < this.cols; c++) {
             if (this.map[r][c] === this.robot_cell) {
                 if (found_robot) {
-                    throw new Error(`second robot found at (${r}, ${c})`);
+                    throw new TypeError(`second robot found at (${r}, ${c})`);
                 } else {
                     found_robot = true;
                     this.robot_r = r;
@@ -378,13 +378,13 @@ this.init_data = () => {
         }
     }
     if (!found_robot) {
-        throw new Error('robot not found in map');
+        throw new TypeError('robot not found in map');
     }
 
     this.toward = (dir_ch, r=this.robot_r, c=this.robot_c) => {  // returns [ new_r, new_c ]
         const dir = this.directions[dir_ch];
         if (!dir) {
-            throw new Error(`illegal dir_ch "${dir_ch}"`);
+            throw new TypeError(`illegal dir_ch "${dir_ch}"`);
         }
         return [
             r + dir.dr,
@@ -395,7 +395,7 @@ this.init_data = () => {
     this.cell_toward = (dir_ch, r=this.robot_r, c=this.robot_c) => {  // returns { r, c, cell: this.map[new_r][new_c] }  // cell will be undefined if [ r, c ] out of bounds
         const dir = this.directions[dir_ch];
         if (!dir) {
-            throw new Error(`illegal dir_ch "${dir_ch}"`);
+            throw new TypeError(`illegal dir_ch "${dir_ch}"`);
         }
         const [ new_r, new_c ] = this.toward(dir_ch, r, c);
         return { r: new_r, c: new_c, cell: this.map[new_r]?.[new_c] };
@@ -421,13 +421,13 @@ this.init_data = () => {
         } else {
             const back_dir_ch = this.directions[dir_ch].back;
             if (!back_dir_ch) {
-                throw new Error(`illegal dir_ch "${dir_ch}"`);
+                throw new TypeError(`illegal dir_ch "${dir_ch}"`);
             }
             const { dr, dc } = this.directions[back_dir_ch];
             for (let [ r, c ] = blank_cell_location; !(r === this.robot_r && c === this.robot_c); r += dr, c += dc) {
                 const adjacent_cell = this.map[r+dr][c+dc];
                 if (adjacent_cell === this.wall_cell) {
-                    throw new Error(`map corruption: moving unexpected character "${adjacent_cell}" at (${r+dr},${c+dc}) to (${r},${c})`);
+                    throw new TypeError(`map corruption: moving unexpected character "${adjacent_cell}" at (${r+dr},${c+dc}) to (${r},${c})`);
                 }
                 this.map[r][c] = adjacent_cell;
             }
@@ -713,7 +713,7 @@ this.init_data_wide = () => {
             case this.wall_cell:  return [ this.wall_cell,  this.wall_cell  ];
             case this.box_cell:   return [ this.box_cell1,  this.box_cell2  ];
             case this.robot_cell: return [ this.robot_cell, this.blank_cell ];
-            default: throw new Error(`unexpected cell value "${cell}" encountered when converting map at (${r},${c})`);
+            default: throw new TypeError(`unexpected cell value "${cell}" encountered when converting map at (${r},${c})`);
             }
         });
     });
@@ -737,12 +737,12 @@ this.init_data_wide = () => {
                 const coord_cell = this.map[coord_r][coord_c];
                 if (coord_cell === this.box_cell1) {
                     if (this.map[coord_r][coord_c+1] !== this.box_cell2) {
-                        throw new Error(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
+                        throw new TypeError(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
                     }
                     return [ coord, [ coord_r, coord_c+1 ] ];
                 } else if (coord_cell === this.box_cell2) {
                     if (this.map[coord_r][coord_c-1] !== this.box_cell1) {
-                        throw new Error(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
+                        throw new TypeError(`corrupted map at (${coord_r},${coord_c-1}): unmatched box cell`);
                     }
                     return [ [ coord_r, coord_c-1 ], coord ];
                 } else {
@@ -783,7 +783,7 @@ this.init_data_wide = () => {
         } else {
             const dir = this.directions[dir_ch];
             if (!dir) {
-                throw new Error(`illegal dir_ch "${dir_ch}"`);
+                throw new TypeError(`illegal dir_ch "${dir_ch}"`);
             }
             const { dr, dc } = dir;
 

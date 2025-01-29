@@ -97,7 +97,7 @@ vars({ create_trace_mechanism, Direction });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
@@ -124,7 +124,7 @@ for (let line_index = 0; line_index < input_lines.length; line_index++) {
     const line = input_lines[line_index];
     const secret = +line;
     if (Number.isNaN(secret)) {
-        throw new Error(`not a decimal number at line #${line_index+1}: "${line}"`);
+        throw new TypeError(`not a decimal number at line #${line_index+1}: "${line}"`);
     }
     secrets.push(secret);
 }

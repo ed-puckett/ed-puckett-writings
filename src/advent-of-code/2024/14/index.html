@@ -153,7 +153,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
@@ -178,10 +178,10 @@ this.map_output_options = {
 this.init_data = (rows=103, cols=101) => {
 
     if (!Number.isInteger(rows) || rows <= 0 || rows % 2 !== 1) {
-        throw new Error(`rows value must be a positive odd integer`);
+        throw new TypeError(`rows value must be a positive odd integer`);
     }
     if (!Number.isInteger(cols) || cols <= 0 || cols % 2 !== 1) {
-        throw new Error(`cols value must be a positive odd integer`);
+        throw new TypeError(`cols value must be a positive odd integer`);
     }
 
     this.rows = rows;
@@ -201,7 +201,7 @@ this.init_data = (rows=103, cols=101) => {
         const line = this.input_lines[line_index];
         const match = line.match(robot_data_re);
         if (!match) {
-            throw new Error(`illegal robot data input at line ${line_index+1}`);
+            throw new TypeError(`illegal robot data input at line ${line_index+1}`);
         }
         // note: input data is given as x,y pairs which translates to c,r
         const c  = +match[1];
@@ -209,10 +209,10 @@ this.init_data = (rows=103, cols=101) => {
         const dc = +match[3];
         const dr = +match[4];
         if (c < 0 || c > this.cols) {
-            throw new Error(`robot col (x) specified at input line ${line_index+1} is not in range [0,${this.cols}]: ${c}`);
+            throw new TypeError(`robot col (x) specified at input line ${line_index+1} is not in range [0,${this.cols}]: ${c}`);
         }
         if (r < 0 || r > this.rows) {
-            throw new Error(`robot row (y) specified at input line ${line_index+1} is not in range [0,${this.rows}]: ${r}`);
+            throw new TypeError(`robot row (y) specified at input line ${line_index+1} is not in range [0,${this.rows}]: ${r}`);
         }
         this.robots.push({ r, c, dr, dc });
         this.map[r][c]++;
@@ -220,7 +220,7 @@ this.init_data = (rows=103, cols=101) => {
 
     const step_robot = (robot) => {  // robot must be an element of this.robots
         if (!this.robots.includes(robot)) {
-            throw new Error('robot must be an element of this.robots');
+            throw new TypeError('robot must be an element of this.robots');
         }
         const clamp = (v, limit) => (v < 0 ? v+limit : (v >= limit ? v-limit : v));
         const { r, c, dr, dc } = robot;
@@ -259,7 +259,7 @@ this.init_data = (rows=103, cols=101) => {
 
     this.calculate_safety_factor = (quadrant_robot_counts) => {
         if (!Array.isArray(quadrant_robot_counts) || quadrant_robot_counts.length !== 4 || !quadrant_robot_counts.every(c => (Number.isInteger(c) && c >= 0))) {
-            throw new Error('quadrant_robot_counts must be an array of 4 non-negative integers');
+            throw new TypeError('quadrant_robot_counts must be an array of 4 non-negative integers');
         }
         return quadrant_robot_counts.reduce((safety_factor, count) => (safety_factor * count), 1);
     };

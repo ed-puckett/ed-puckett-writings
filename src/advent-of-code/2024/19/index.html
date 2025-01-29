@@ -80,7 +80,7 @@ vars({ create_trace_mechanism });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 bqe.input_data = input_data.trim();
@@ -125,24 +125,24 @@ const init_data = () => {
     const input_lines = bqe.input_data.split('\n');
 
     if (input_lines.length < 3) {
-        throw new Error('too few input lines');
+        throw new TypeError('too few input lines');
     }
 
     if (!input_lines[0].match(new RegExp(String.raw`^[${Object.keys(colors).join('')}]+(?:[,][\s][${Object.keys(colors).join('')}]+)*$`))) {
-        throw new Error('illegal format for available towel patterns in input line 1');
+        throw new TypeError('illegal format for available towel patterns in input line 1');
     }
 
     const available_towel_patterns = input_lines[0].split(/[,][\s]/);
 
     if (input_lines[1].length !== 0) {
-        throw new Error('input line 2 is not empty as expected');
+        throw new TypeError('input line 2 is not empty as expected');
     }
 
     const designs = [];
     for (let line_index = 2; line_index < input_lines.length; line_index++) {
         const line = input_lines[line_index];
         if (!line.match(new RegExp(`^[${Object.keys(colors).join('')}]+$`))) {
-            throw new Error(`bad design format in input line ${line_index+1}`);
+            throw new TypeError(`bad design format in input line ${line_index+1}`);
         }
         designs.push(line);
     }
@@ -421,7 +421,7 @@ bbrgwb
 const set_test_dataset = (input_data_example_to_use) => {
     if (typeof input_data_example_to_use === 'number') {
         if (!(input_data_example_to_use in input_data_examples)) {
-            throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+            throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
         }
         bqe.input_data = input_data_examples[input_data_example_to_use].trim();
     }

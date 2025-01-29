@@ -164,7 +164,7 @@ vars({ Direction });
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 // values given in problem
@@ -206,10 +206,10 @@ const solution_output_options = {
 // spiraling into the center counterclockwise starting from [ radius, 0 ].
 function* l1_circle_coordinates(radius, min_radius=0) {
     if (!Number.isInteger(radius) || radius < 0) {
-        throw new Error('radius must be a non-negative integer');
+        throw new TypeError('radius must be a non-negative integer');
     }
     if (!Number.isInteger(min_radius) || min_radius > radius) {
-        throw new Error('min_radius must be an integer <= radius');
+        throw new TypeError('min_radius must be an integer <= radius');
     }
     const negate = (n) => (n === 0) ? 0 : -n;  // prevent -0...
     for (let r = radius; r >= min_radius; r--) {
@@ -253,18 +253,18 @@ const init_data = () => {
     for (let r = 0; r < input_lines.length; r++) {
         const line = input_lines[r];
         if (!line.match(permissable_memory_chars_re)) {
-            throw new Error(`illegal memory character at line ${r+1}`);
+            throw new TypeError(`illegal memory character at line ${r+1}`);
         }
         const row = Array.from(line).map((ch, c) => {
             const cell = { r, c, ch };
             if (ch === start_cell_ch) {
                 if (typeof the_start_cell !== 'undefined') {
-                    throw new Error(`second start cell found at line ${r+1}`);
+                    throw new TypeError(`second start cell found at line ${r+1}`);
                 }
                 the_start_cell = cell;
             } else if (ch === end_cell_ch) {
                 if (typeof the_end_cell !== 'undefined') {
-                    throw new Error(`second end cell found at line ${r+1}`);
+                    throw new TypeError(`second end cell found at line ${r+1}`);
                 }
                 the_end_cell = cell;
             }
@@ -273,16 +273,16 @@ const init_data = () => {
         memory.push(row);
     }
     if (typeof the_start_cell === 'undefined') {
-        throw new Error(`no start cell found`);
+        throw new TypeError(`no start cell found`);
     }
     if (typeof the_end_cell === 'undefined') {
-        throw new Error(`no end cell found`);
+        throw new TypeError(`no end cell found`);
     }
     const rows = memory.length;
     const cols = memory[0].length;  // all rows are expected to be the same length
     // validate memory row lengths
     if (!memory.every(row => row.length === cols)) {
-        throw new Error('input_data does not have all memory rows the same length');
+        throw new TypeError('input_data does not have all memory rows the same length');
     }
 
     const get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
@@ -291,7 +291,7 @@ const init_data = () => {
 
     const set_cell = (r, c, ch) => {
         if (r < 0 || r >= rows || c < 0 || c >= cols) {
-            throw new Error(`(r,c) = (${r},${r}) is out of range`);
+            throw new TypeError(`(r,c) = (${r},${r}) is out of range`);
         }
         memory[r][c].ch = ch;
     }
@@ -338,7 +338,7 @@ const init_data = () => {
             cheat_steps_max,
         } = (analyze_cheats ?? {});
         if (analyze_cheats && !(typeof Number.isInteger(cheat_steps_max) && cheat_steps_max > 0)) {
-            throw new Error('analyze_cheats.cheat_steps_max must be a positive integer');
+            throw new TypeError('analyze_cheats.cheat_steps_max must be a positive integer');
         }
         const cheat_potentials = analyze_cheats ? new Set() : undefined;
 
@@ -421,7 +421,7 @@ const init_data = () => {
         // finishes and all cell state values are populated.
         const perform_cheat_analysis = async () => {
             if (typeof result.best_solution?.cost !== 'number') {
-                throw new Error('perform_cheat_analysis() called without a valid result.best_solution');
+                throw new TypeError('perform_cheat_analysis() called without a valid result.best_solution');
             }
             const unique_cheats_map = new Map(
                 Array.from(cheat_potentials)  // each entry is the start of a cheat path
@@ -792,7 +792,7 @@ bqe.using_example_data = false;
 const set_test_dataset = (input_data_example_to_use) => {
     if (typeof input_data_example_to_use === 'number') {
         if (!(input_data_example_to_use in input_data_examples)) {
-            throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+            throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
         }
         bqe.input_data = input_data_examples[input_data_example_to_use].trim();
         bqe.using_example_data = true;

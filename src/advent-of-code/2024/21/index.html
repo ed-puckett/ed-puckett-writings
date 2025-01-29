@@ -138,7 +138,7 @@ const {
 class KeypadButton {
     constructor(label) {
         if (typeof label !== 'string' || label.length !== 1) {
-            throw new Error('label must be a single-character string');
+            throw new TypeError('label must be a single-character string');
         }
         Object.defineProperties(this, {  // make these properties immutable
             label: { enumerable: true, value: label },
@@ -166,10 +166,10 @@ class Keypad {
     constructor(spec, name='Unnamed') {
         const { type, keys } = spec;
         if (typeof type !== 'string') {
-            throw new Error('spec.type must be a string');
+            throw new TypeError('spec.type must be a string');
         }
         if (!Array.isArray(keys) || keys.length < 1) {
-            throw new Error('spec.keys must be an array with at least one row');
+            throw new TypeError('spec.keys must be an array with at least one row');
         }
         const rows = keys.length;
         this.#cells = [];
@@ -178,10 +178,10 @@ class Keypad {
         for (let r = 0; r < rows; r++) {
             const row_keys = keys[r];
             if (!Array.isArray(row_keys) && row_keys.length < 1) {
-                throw new Error('spec.keys must be an array of arrays with at least one element');
+                throw new TypeError('spec.keys must be an array of arrays with at least one element');
             }
             if (!row_keys.every(el => (el === null || (typeof el === 'string' && el.length === 1)))) {
-                throw new Error('spec.keys must be an array of at least one row, each row containing at least one element, and each element either null or a single-character string');
+                throw new TypeError('spec.keys must be an array of at least one row, each row containing at least one element, and each element either null or a single-character string');
             }
             const row = row_keys.map((el, c) => {
                 const cell = {};  // initialized further below
@@ -192,7 +192,7 @@ class Keypad {
                 if (button) {
                     button.subscribe(this.#button_observer.bind(this));  // never unsubscribed
                     if (this.#cell_from_label.get(button.label)) {
-                        throw new Error(`button with duplicate label specified: "${button.label}"`);
+                        throw new TypeError(`button with duplicate label specified: "${button.label}"`);
                     }
                     this.#cell_from_label.set(button.label, cell);
                 }
@@ -215,7 +215,7 @@ class Keypad {
         }
         const cols = keys[0].length;
         if (!this.#cells.every(row => row.length === cols)) {
-            throw new Error('spec.keys must be an array with at least one row and every row an array of uniform length');
+            throw new TypeError('spec.keys must be an array with at least one row and every row an array of uniform length');
         }
         // set up this.#paths and this.#direct_paths
         this.#paths        = {};
@@ -308,7 +308,7 @@ class Keypad {
         case Direction.S.ch:
         case Direction.S.name: return this.get( r+1, c   );
 
-        default: throw new Error(`unrecognized dir_ch "${dir_ch}"`);
+        default: throw new TypeError(`unrecognized dir_ch "${dir_ch}"`);
         }
     }
 
@@ -325,7 +325,7 @@ class Keypad {
             return [ [] ];  // one single empty path
         }
         if (from_button_cell.keypad !== to_button_cell.keypad) {
-            throw new Error('from_button_cell and to_button_cell must be from the same keypad');
+            throw new TypeError('from_button_cell and to_button_cell must be from the same keypad');
         }
         const paths = [];
         const walk = (cell, entry_dir=null, path_so_far=[], visited=new Set()) => {
@@ -397,7 +397,7 @@ class Keypad {
     #button_observer(button) {
         const cell = this.#cell_from_button.get(button);
         if (!cell) {
-            throw new Error('unexpected: cell not found for button');
+            throw new TypeError('unexpected: cell not found for button');
         }
         this.#emitter.dispatch({
             keypad: this,
@@ -408,11 +408,11 @@ class Keypad {
     #paths_between_using_mapping(from_label, to_label, mapping) {
         const row_mapping = mapping[from_label];
         if (!row_mapping) {
-            throw new Error(`from_label "${from_label}" not found`);
+            throw new TypeError(`from_label "${from_label}" not found`);
         }
         const paths = row_mapping[to_label];
         if (!paths) {
-            throw new Error(`to_label "${to_label}" not found`);
+            throw new TypeError(`to_label "${to_label}" not found`);
         }
         // copy to prevent caller from modifying internal structure:
         return paths.map(path => path.map(path_element => path_element));
@@ -422,10 +422,10 @@ class Keypad {
 class Robot {
     constructor(controller, controlled, name='Unnamed') {
         if (!(controller instanceof Keypad)) {
-            throw new Error('controller must be an instance of Keypad');
+            throw new TypeError('controller must be an instance of Keypad');
         }
         if (!(controlled instanceof Keypad)) {
-            throw new Error('controlled must be an instance of Keypad');
+            throw new TypeError('controlled must be an instance of Keypad');
         }
 
         Object.defineProperties(this, {  // make these properties immutable
@@ -443,7 +443,7 @@ class Robot {
         const previous_state = this.#state;
         const A_cell = this.controlled.find('A');
         if (!A_cell) {
-            throw new Error('cannot find "A" button in controlled keypad');
+            throw new TypeError('cannot find "A" button in controlled keypad');
         }
         this.#state = A_cell;
         const message = 'robot reset';
@@ -543,7 +543,7 @@ const create_keypad_css = (keypad) => `
 class KeypadDisplay {
     constructor(keypad, embedded=false) {
         if (!(keypad instanceof Keypad)) {
-            throw new Error('keypad must be an instance of Keypad');
+            throw new TypeError('keypad must be an instance of Keypad');
         }
         Object.defineProperties(this, {  // make these properties immutable
             keypad:   { enumerable: true, value: keypad },
@@ -638,7 +638,7 @@ class KeypadDisplay {
 class RobotDisplay {
     constructor(robot) {
         if (!(robot instanceof Robot)) {
-            throw new Error('robot must be an instance of Robot');
+            throw new TypeError('robot must be an instance of Robot');
         }
         Object.defineProperties(this, {  // make these properties immutable
             robot: { enumerable: true, value: robot },
@@ -770,7 +770,7 @@ vars({
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 bqe.input_data = input_data.trim();
 globalThis.bqe = bqe;//!!!
@@ -803,7 +803,7 @@ const codes = [];
 
 for (const line of input_lines) {
     if (!line.match(/^[\d]{3}A$/)) {
-        throw new Error(`bad input line: "${line}"`);
+        throw new TypeError(`bad input line: "${line}"`);
     }
     codes.push(line);
 }
@@ -877,7 +877,7 @@ const create_configuration = (intermediate_keypad_count) => {
         );
         for (const keypad of keypads) {
             if (!robot_keypads_set.has(keypad)) {
-                throw new Error(`some robot is not controlled by or controlling keypad named "${keypad.name}"`);
+                throw new TypeError(`some robot is not controlled by or controlling keypad named "${keypad.name}"`);
             }
         }
     }
@@ -890,7 +890,7 @@ const create_configuration = (intermediate_keypad_count) => {
         const check = (robot_keypad, keypad_check_set) => {
             if (all_intermediate_keypads_set.has(robot_keypad)) {
                 if (!keypad_check_set.has(robot_keypad)) {
-                    throw new Error(`keypad named "${robot_keypad.name}" is a controller for more than one robot"`);
+                    throw new TypeError(`keypad named "${robot_keypad.name}" is a controller for more than one robot"`);
                 } else {
                     keypad_check_set.delete(robot_keypad);
                 }
@@ -903,16 +903,16 @@ const create_configuration = (intermediate_keypad_count) => {
     }
     // (3) user_keypad is the controller for the first robot in robots:
     if (user_keypad !== robots[0].controller) {
-        throw new Error('user_keypad is not the controller for the first robot');
+        throw new TypeError('user_keypad is not the controller for the first robot');
     }
     // (4) the last robot in robots controls door_keypad:
     if (robots[robots.length-1].controlled !== door_keypad) {
-        throw new Error('last robot does not control door_keypad');
+        throw new TypeError('last robot does not control door_keypad');
     }
     // (5) all intermediate robots in order form a controller -> controlled chain:
     for (let i = 1; i < intermediate_robots.length; i++) {
         if (intermediate_robots[i-1].controlled !== intermediate_robots[i].controller) {
-            throw new Error('intermediate robots are not correctly chained controlled -> controller');
+            throw new TypeError('intermediate robots are not correctly chained controlled -> controller');
         }
     }
     // if we get here, all the assumptions are satisfied....
@@ -991,7 +991,7 @@ const create_simulator_ui = async (ocx, send_interval=0.05) => {
     } = bqe;
 
     if (!robots) {
-        throw new Error('init_data() must have been called before calling this function');
+        throw new TypeError('init_data() must have been called before calling this function');
     }
 
     const door_robot  = robots[robots.length-1];
@@ -1197,7 +1197,7 @@ const simulate = (input, robots=bqe.robots, quiet=false) => {
     } = bqe;
 
     if (!Array.isArray(robots) && !robots.every(element => element instanceof Robot) ) {
-        throw new Error('robots must be an array of Robot instances');
+        throw new TypeError('robots must be an array of Robot instances');
     }
 
     const user_keypad = robots[0].controller;
@@ -1212,7 +1212,7 @@ const simulate = (input, robots=bqe.robots, quiet=false) => {
     const illegal_input_char_re  = /[^\s^<>vVaA]/;
 
     if (input.match(illegal_input_char_re)) {
-        throw new Error('bad input');
+        throw new TypeError('bad input');
     }
 
     const make_conformant = (ch) => {
@@ -1414,7 +1414,7 @@ const optimize_directional_keypad_inputs = (inputs) => {
     } = bqe;
 
     if (!Array.isArray(inputs) || !inputs.every(input => (typeof input === 'string' && input.match(/^[<>^vA]*$/)))) {
-        throw new Error('inputs must be an array of strings consisting only of the characters "<", ">", "^", "v" or "A"');
+        throw new TypeError('inputs must be an array of strings consisting only of the characters "<", ">", "^", "v" or "A"');
     }
 
     if (inputs.length === 0) {
@@ -1522,7 +1522,7 @@ const get_best_paths_data = (keypad_type) => {
         switch (keypad_type) {
         case 'numeric':     return create_numeric_keypad();
         case 'directional': return create_directional_keypad();
-        default:            throw new Error(`unknown keypad_type ${keypad_type}`);
+        default:            throw new TypeError(`unknown keypad_type ${keypad_type}`);
         }
     };
 
@@ -1580,7 +1580,7 @@ const get_best_paths_data = (keypad_type) => {
           )
           .filter(result => !!result);
     if (unexpected_empty_path_locations.length > 0) {
-        throw new Error('unexpected: keypad_best_paths has empty entries');
+        throw new TypeError('unexpected: keypad_best_paths has empty entries');
     }
 
     // ambiguous_path_data is an array of entries in keypad_best_paths
@@ -1870,11 +1870,11 @@ const validate_requirements_for_solve = () => {
     } = bqe;
 
     if (!keypads) {
-        throw new Error('init_data() must have been called before calling this function');
+        throw new TypeError('init_data() must have been called before calling this function');
     }
 
     if (keypads.length < 3) {
-        throw new Error(`at least three keypads are expected (user, intermediates..., door) but found ${keypads.length}`);
+        throw new TypeError(`at least three keypads are expected (user, intermediates..., door) but found ${keypads.length}`);
     }
 
     // it is assumed that all keypads are of type 'directional' except the last which is of type 'numeric':
@@ -1882,7 +1882,7 @@ const validate_requirements_for_solve = () => {
         return ( (keypad_index === keypads.length-1 && keypad.type === 'numeric') ||
                  (keypad.type === 'directional') );
     }) ) {
-        throw new Error('all keypads must be of type "directional" except the last which must be of type "numeric"');
+        throw new TypeError('all keypads must be of type "directional" except the last which must be of type "numeric"');
     }
 };
 
@@ -1903,7 +1903,7 @@ const greedy_solve = async (output, options=null) => {
     let work_count = 0;
 
     if (typeof output !== 'string') {
-        throw new Error('output must be a string');
+        throw new TypeError('output must be a string');
     }
 
     const check_tick = make_check_tick(100);
@@ -1913,7 +1913,7 @@ const greedy_solve = async (output, options=null) => {
     const door_keypad_button_labels = door_keypad.get_labels();
     const adjusted_output = output.replaceAll('a', 'A');  // permit 'a' for 'A' in specified output
     if (!Array.from(adjusted_output).every(output_state => door_keypad_button_labels.includes(output_state))) {
-        throw new Error(`output contains characters not handled by the door keypad`);
+        throw new TypeError(`output contains characters not handled by the door keypad`);
     }
     // working last to first...
     const transform = async (output, keypad) => {
@@ -1969,7 +1969,7 @@ const iterative_solve = async (output, options=null) => {
     } = (options ?? {});
 
     if (typeof output !== 'string' || !output.match(/^[0-9aA]*$/)) {
-        throw new Error('improper output specified');
+        throw new TypeError('improper output specified');
     }
 
     if (output === '') {
@@ -2399,17 +2399,17 @@ const evolve_fragment = (start_fragment, options=null) => {
     const excessive_inputs_limit = 5e8;
 
     if (!Number.isInteger(stage_count) || stage_count <= 0) {
-        throw new Error('stage_count must be a positive integer');
+        throw new TypeError('stage_count must be a positive integer');
     }
 
     if (typeof start_fragment !== 'string' || !start_fragment.match(onlydirectional_keypad_labels_line_re)) {
-        throw new Error(`fragment must be a string composed of only the directional keypad labels "${directional_keypad_labels.toSorted().join('", "')}"`);
+        throw new TypeError(`fragment must be a string composed of only the directional keypad labels "${directional_keypad_labels.toSorted().join('", "')}"`);
     }
     if (!unrestricted && !core_fragments_set.has(start_fragment)) {
-        throw new Error(`!unrestricted mode but fragment is not one of the "core" fragments: "${Array.from(core_fragments_set.values()).join('", "')}"`);
+        throw new TypeError(`!unrestricted mode but fragment is not one of the "core" fragments: "${Array.from(core_fragments_set.values()).join('", "')}"`);
     }
     if (!allow_zigzag && start_fragment.match(zigzag_re)) {
-        throw new Error('!allow_zigzag mode but start_fragment contains a "zigzag" sequence');
+        throw new TypeError('!allow_zigzag mode but start_fragment contains a "zigzag" sequence');
     }
 
     const stages = [ [ start_fragment+'A' ] ];  // stage 0 complete (just the start_fragment)
@@ -2420,7 +2420,7 @@ const evolve_fragment = (start_fragment, options=null) => {
                 next_stage_sequences_from_sequence(sequence, options)
             );
             if (!unlimited && inputs_array.reduce((total, inputs) => (total + inputs.reduce((total, input) => (total + input.length), 0)), 0) >= excessive_inputs_limit) {
-                throw new Error('!unlimited and inputs generation limit exceeded');
+                throw new TypeError('!unlimited and inputs generation limit exceeded');
             }
         }
         stages.push(inputs_array.flat(1));
@@ -2488,7 +2488,7 @@ const validate_core_fragments = () => {
         }).flat(1).every(fragment => core_fragments_set.has(fragment));
     });
     if (!validated) {
-        throw new Error('validation failed');
+        throw new TypeError('validation failed');
     }
     return validated;
 };
@@ -2542,14 +2542,14 @@ const get_fragment_transition_alternatives = (fragment, allow_zigzag=false) => {
 // to that initializer with a terminating 'A'.
 const core_fragments_from_sequence = (sequence) => {
     if (typeof sequence !== 'string') {
-        throw new Error('sequence must be a string');
+        throw new TypeError('sequence must be a string');
     }
     const fragments = sequence.split('A')
     if (sequence.endsWith('A')) {
         fragments.pop();  // remove extraneous empty fragment from end
     }
     if (!fragments.every(fragment => _core_fragments_set.has(fragment))) {
-        throw new Error('sequence contains fragments that are not core fragments');
+        throw new TypeError('sequence contains fragments that are not core fragments');
     }
     return fragments;
 };
@@ -2578,7 +2578,7 @@ class CoreFragmentAccumulator {
     constructor(initializer_sequence=null) {
         const initializer_sequence_given = (initializer_sequence !== null && typeof initializer_sequence !== 'undefined');
         if (initializer_sequence_given && typeof initializer_sequence !== 'string') {
-            throw new Error('initializer_sequence must be null, undefined or a string');
+            throw new TypeError('initializer_sequence must be null, undefined or a string');
         }
         this.#initializer_fragments = initializer_sequence_given ? core_fragments_from_sequence(initializer_sequence) : [];
         // this initialization of this.#fragment_counts is brute force but easy to verify correctness....
@@ -2620,10 +2620,10 @@ class CoreFragmentAccumulator {
         let updates_entries;
         if ( typeof updates !== 'object' ||
              !(updates_entries = Object.entries(updates)).every(([ key, value ]) => _core_fragments_set.has(key) && Number.isInteger(value) && value >= 0) ) {
-            throw new Error('updates must be an object with only core fragments as keys and non-negative integers as values');
+            throw new TypeError('updates must be an object with only core fragments as keys and non-negative integers as values');
         }
         if (!Number.isInteger(multiplier)) {
-            throw new Error('multiplier must be an integer');
+            throw new TypeError('multiplier must be an integer');
         }
 
         // mutation begins:
@@ -2644,16 +2644,16 @@ class CoreFragmentAccumulator {
     // is an important fact with regard to caching.
     multiply(factor, divisor=1) {
         if (!Number.isInteger(factor) || factor <= 0) {
-            throw new Error('factor must be a positive integer');
+            throw new TypeError('factor must be a positive integer');
         }
         if (!Number.isInteger(divisor) || divisor <= 0) {
-            throw new Error('divisor must be a positive integer');
+            throw new TypeError('divisor must be a positive integer');
         }
         // do a trial calculation to make sure that the new counts
         // will all be integers.
         for (const fragment in this.#fragment_counts) {
             if (!Number.isInteger((this.#fragment_counts[fragment] * factor) / divisor)) {
-                throw new Error(`multiply() called with values factor=${factor} and divisor=${divisor} that would result in non-integer counts`);
+                throw new TypeError(`multiply() called with values factor=${factor} and divisor=${divisor} that would result in non-integer counts`);
             }
         }
 
@@ -2725,7 +2725,7 @@ class CoreFragmentAccumulator {
 
     static calculate_gcd(values) {
         if (!Array.isArray(values) || !values.every(value => Number.isInteger(value))) {
-            throw new Error('values must of an array of integers')
+            throw new TypeError('values must of an array of integers')
         }
         const euclidean_algorithm = (a, b) => {
             // a and b are both positive integers
@@ -2844,7 +2844,7 @@ const find_extension_sequence_lengths_for_core_fragment = async (core_fragment, 
     } = bqe;
 
     if (!get_core_fragments_set().has(core_fragment)) {
-        throw new Error(`fragment is not a core fragment: "${fragment}"`);
+        throw new TypeError(`fragment is not a core fragment: "${fragment}"`);
     }
 
     const create_stage_item = (accumulator, prior=null) => {
@@ -2905,7 +2905,7 @@ bqe.result = result;//!!!
             }
         }
         if (next_stage_items.length === 0) {
-            throw new Error('unexpected: next_stage_items is empty');
+            throw new TypeError('unexpected: next_stage_items is empty');
         }
         result.stage_items = next_stage_items
             .filter(({ accumulator }) => (accumulator.get_sequence_length() === result.min_data.min_length));
@@ -3033,10 +3033,10 @@ const init_best_fragment_transition_data = async (options) => {
 // no fan-out, one sequence returned for each core fragment
 const get_best_fragment_transition = (fragment) => {
     if (!best_fragment_transition) {
-        throw new Error('init_best_fragment_transition_data() must have been called at least once before calling this function!');
+        throw new TypeError('init_best_fragment_transition_data() must have been called at least once before calling this function!');
     }
     if (!_core_fragments_set.has(fragment)) {
-        throw new Error(`fragment is not a core fragment: "${fragment}"`);
+        throw new TypeError(`fragment is not a core fragment: "${fragment}"`);
     }
     return best_fragment_transition[fragment];
 };
@@ -3053,16 +3053,16 @@ const get_min_sequence_lengths_for_stages = async (options) => {
     } = (options ?? {});
 
     if (typeof start_sequence !== 'string') {
-        throw new Error('start_sequence must be a string');
+        throw new TypeError('start_sequence must be a string');
     }
     if (!Number.isInteger(start_stage_index) || start_stage_index < 0) {
-        throw new Error('start_stage_index must be a non-negative integer');
+        throw new TypeError('start_stage_index must be a non-negative integer');
     }
 
     const end_stage_index = esi ?? start_stage_index+1;
 
     if (!Number.isInteger(end_stage_index) || end_stage_index < start_stage_index) {
-        throw new Error('end_stage_index must be an integer <= start_stage_index');
+        throw new TypeError('end_stage_index must be an integer <= start_stage_index');
     }
 
     const check_tick = make_check_tick(200);
@@ -3141,7 +3141,7 @@ bqe.caches = { min_sequence_length_cache, extensions_cache };//!!!
             // particular intended use.
             let extensions = get_next_stage_extensions_for_accumulator(accumulator);
             if (extensions.length <= 0) {
-                throw new Error(`unexpected: attempting new extensions_cache entry: extensions.length=${extensions_cache_entry.extensions.length} <= 0`);
+                throw new TypeError(`unexpected: attempting new extensions_cache entry: extensions.length=${extensions_cache_entry.extensions.length} <= 0`);
             }
             const min_extension_length = extensions
                   .reduce(

@@ -100,7 +100,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 this.input_data = input_data.trim();
@@ -110,10 +110,10 @@ this.rows = this.input_map.length;
 this.cols = this.input_map[0].length;  // we expect all rows to be the same length
 
 if (!this.input_map.every(row => row.length === this.cols)) {
-    throw new Error('input_data does not have all rows the same length');
+    throw new TypeError('input_data does not have all rows the same length');
 }
 if (!this.input_map.every(row => row.length > 0 && row.match(/^[\d]+$/))) {
-    throw new Error('input data contains rows with non-digit characters');
+    throw new TypeError('input data contains rows with non-digit characters');
 }
 </bq-cell>
 <bq-cell id="id-cf331b50-7195-49a1-9841-21cda840bcaa" data-type="javascript" class="show-in-presentation">// utility definitions

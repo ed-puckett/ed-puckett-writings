@@ -94,7 +94,7 @@ await ccx.render_text(description, {
 
 const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
-    throw new Error('input_data is not a string');
+    throw new TypeError('input_data is not a string');
 }
 
 bqe.input_data = input_data.trim();</bq-cell>
@@ -157,12 +157,12 @@ const reset = () => {
                 // parsing registers
                 const match = line.match(/^Register[ ]([A-C])[:][ ]([\d]+)$/);
                 if (!match) {
-                    throw new Error(`error parsing registers at line ${line_index+1}`);
+                    throw new TypeError(`error parsing registers at line ${line_index+1}`);
                 } else {
                     const register = match[1];
                     const value    = +match[2];
                     if (register in registers) {
-                        throw new Error(`register ${register} specified more than once at line ${line_index+1}`);
+                        throw new TypeError(`register ${register} specified more than once at line ${line_index+1}`);
                     } else {
                         registers[register] = value;
                     }
@@ -172,10 +172,10 @@ const reset = () => {
 
                 const match = line.match(/^Program[:][ ]([\d]+(?:[,][\d]+)*)$/);
                 if (program) {
-                    throw new Error(`extra input after program specification at line ${line_index+1}`);
+                    throw new TypeError(`extra input after program specification at line ${line_index+1}`);
                 } else {
                     if (!match) {
-                        throw new Error(`program not specified after blank line following register specification at line ${line_index+1}`);
+                        throw new TypeError(`program not specified after blank line following register specification at line ${line_index+1}`);
                     } else {
                         program = match[1].split(',').map(number_string => +number_string);
                     }
@@ -187,14 +187,14 @@ const reset = () => {
     registers.PC = 0;
 
     if (register_names.some(r => !(r in registers))) {
-        throw new Error(`only registers "${register_names.join('", "')}" can be specified in input_data`);
+        throw new TypeError(`only registers "${register_names.join('", "')}" can be specified in input_data`);
     }
     if (!register_names.every(r => (r in registers))) {
-        throw new Error(`not all registers "${register_names.join('", "')}" initialized`);
+        throw new TypeError(`not all registers "${register_names.join('", "')}" initialized`);
     }
 
     if (!program) {
-        throw new Error('program not specified');
+        throw new TypeError('program not specified');
     }
 
     vars({
@@ -218,7 +218,7 @@ const combo_operand_defs = {
     4: { name: 'rA',       underlying_type: operand_type_register, eval: (operand) => registers.A },
     5: { name: 'rB',       underlying_type: operand_type_register, eval: (operand) => registers.B },
     6: { name: 'rC',       underlying_type: operand_type_register, eval: (operand) => registers.C },
-    7: { name: 'RESERVED', underlying_type: operand_type_reserved, eval: (operand) => { throw new Error(`reserved operand ${operand}`); } },
+    7: { name: 'RESERVED', underlying_type: operand_type_reserved, eval: (operand) => { throw new TypeError(`reserved operand ${operand}`); } },
 };
 
 const parse_operand = (operand, type, aux=undefined) => {
@@ -228,19 +228,19 @@ const parse_operand = (operand, type, aux=undefined) => {
     }
     case operand_type_register: {
         if (!(aux in registers)) {
-            throw new Error(`unknown register ${aux}`);
+            throw new TypeError(`unknown register ${aux}`);
         } else {
             return registers[aux];
         }
     }
     case operand_type_combo: {
         if (!(operand in combo_operand_defs)) {
-            throw new Error(`illegal combo operand ${operand}`);
+            throw new TypeError(`illegal combo operand ${operand}`);
         } else {
             return combo_operand_defs[operand].eval(operand);
         }
     }
-    default: throw new Error(`parse_operand: unsupported operand type ${type}`);
+    default: throw new TypeError(`parse_operand: unsupported operand type ${type}`);
     }
 };
 
@@ -358,12 +358,12 @@ const step_program = async (trace_outputter=null) => {
         const pc_start = registers.PC;
         const opcode = program[registers.PC++];
         if (!(opcode in opcode_defs)) {
-            throw new Error(`illegal opcode ${opcode} in instruction at location ${pc_start}`);
+            throw new TypeError(`illegal opcode ${opcode} in instruction at location ${pc_start}`);
         } else {
             const opcode_def = opcode_defs[opcode];
             const { mnemonic, operand_types, eval: _eval } = opcode_def;  // note: cannot bind "eval" in strict mode
             if (operand_types.some(type => type == operand_type_register)) {
-                throw new Error('step_program: operand_type_register not supported for opcode (use operand_type_combo)');
+                throw new TypeError('step_program: operand_type_register not supported for opcode (use operand_type_combo)');
             }
             const operands = operand_types.map(operand_type => program[registers.PC++]);
             const operand_values = operands.map((operand, i) => parse_operand(operand, operand_types[i]));
@@ -419,7 +419,7 @@ Program: 0,1,5,4,3,0
 const input_data_example_to_use = undefined;
 if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
-        throw new Error(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
+        throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
     bqe.input_data = input_data_examples[input_data_example_to_use].trim();
 }
@@ -597,7 +597,7 @@ const out_ocx = ocx.create_child_ocx({
 
 const group_digits = (s) => {
     if (typeof s !== 'string' || !s.match(/^[\d]*$/)) {
-        throw new Error('s must be a string containing only digits');
+        throw new TypeError('s must be a string containing only digits');
     }
     return s.replaceAll(/((?<=^[\d]{1,3}(?:[\d]{3})*)[\d]{3}(?=(?:[\d]{3})*$))/g, '_$1');
 };
