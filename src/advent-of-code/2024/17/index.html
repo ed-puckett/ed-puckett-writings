@@ -495,7 +495,7 @@ await ccx.render_text(description, {
 * loop if A != 0
 
 ### Equivalent JavaScript code:
-~~~ javascript $!
+~~~!$ javascript
 const test_equiv = async (N, out_ocx=ocx) => {
     const output = [];
     await out_ocx?.println(`A = ${N}:`);
@@ -525,7 +525,7 @@ But that can be avoided by moving the overall % 8 before the ^ and therefore the
 
 #### Define a fixed version and make the new version matches the old version on some test cases for which the old version does not return negative outputs:
 
-~~~ javascript $!
+~~~!$ javascript
 
 const test_equiv_fixed = async (N, out_ocx=ocx) => {
     const output = [];
@@ -581,7 +581,7 @@ await print__();
 
 ### Experimentation with generating some desired sequences...
 
-~~~ javascript $!
+~~~!$ javascript
 const out_ocx = ocx.create_child_ocx({
     style: {
         'font-family':          'monospace',
@@ -638,7 +638,7 @@ keepalive();
 vars({ out_ocx, group_digits, test });
 ~~~
 
-~~~ javascript !
+~~~! javascript
 // Enter a new javascript section, but without outputting the source code...
 keepalive();
 const { out_ocx, group_digits, test } = bqe;  // carry over from prior eval environment
