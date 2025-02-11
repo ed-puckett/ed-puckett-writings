@@ -144,8 +144,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqe.input_data = input_data.trim();
-globalThis.bqe = bqe;//!!!
+bqx.input_data = input_data.trim();
+globalThis.bqx = bqx;//!!!
 </bq-cell>
 <bq-cell id="id-52e8854d-6993-4b8a-9c38-b27f3d09f932" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -162,7 +162,7 @@ const empty_line_re  = new RegExp(`^[${empty_cell_char}]{${cols_per_row}}$`);  /
 const create_configuration = (test_data_set=null) => {
     keepalive();
 
-    const input_data = bqe.input_data;
+    const input_data = bqx.input_data;
 
     // parse input
     let testing;
@@ -325,14 +325,14 @@ vars({
 <bq-cell id="id-4073518a-0a06-48e2-8ec2-a6cd720be556" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
-bqe.init_data();
+bqx.init_data();
 
 const {
     cols_per_row,
     rows_per_schematic,
     get_locks,
     get_keys,
-} = bqe;
+} = bqx;
 
 
 const locks = get_locks();
@@ -348,7 +348,7 @@ for (const lock of locks) {
 }
 
 const answer_element = await ocx.markdown(`
-# Answer to Part One${bqe.testing ? ' (TESTING)' : ''}
+# Answer to Part One${bqx.testing ? ' (TESTING)' : ''}
 There are **${fits}** unique key/lock pairs that fit together without overlapping.
 `);
 

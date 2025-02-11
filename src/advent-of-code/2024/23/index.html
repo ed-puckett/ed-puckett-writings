@@ -108,8 +108,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqe.input_data = input_data.trim();
-globalThis.bqe = bqe;//!!!
+bqx.input_data = input_data.trim();
+globalThis.bqx = bqx;//!!!
 </bq-cell>
 <bq-cell id="id-84ce97df-2427-45b5-82bb-c5b16df6b127" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -127,10 +127,10 @@ const solution_output_options = {
 };
 
 const init_data = (testing) => {
-    //const input_lines = bqe.input_data.split('\n');
+    //const input_lines = bqx.input_data.split('\n');
 
     const input_lines = !testing
-          ? bqe.input_data.split('\n')
+          ? bqx.input_data.split('\n')
           : `
 kh-tc
 qp-kh
@@ -207,7 +207,7 @@ vars({
 <bq-cell id="id-64d74e15-9f06-4a39-abc5-678b93bbbc6d" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
-bqe.init_data(false);
+bqx.init_data(false);
 
 const {
     testing,
@@ -216,7 +216,7 @@ const {
     connected_to,
     connected0,
     connected1,
-} = bqe;
+} = bqx;
 
 // Note: not technically cliques, but subsets of cliques, but anyway....
 
@@ -275,7 +275,7 @@ vars({
 });
 
 const answer_element = await ocx.markdown(`
-# Answer to Part One${bqe.testing ? ' (TESTING)' : ''}
+# Answer to Part One${bqx.testing ? ' (TESTING)' : ''}
 Out of ${three_member_cliques.size} sets of three fully-connected computers with at least one computer name starting with "t" is **${three_member_cliques_with_node_starting_with_t.size}**.
 `);
 
@@ -331,13 +331,13 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             30,
 });
-bqe.trace_fn = trace_fn;//!!!
+bqx.trace_fn = trace_fn;//!!!
 
 await trace_fn('--- computation trace begin ---', true);
 
@@ -355,7 +355,7 @@ const {
     clique_predicate_fn,
     three_member_cliques,
     three_member_cliques_with_node_starting_with_t,
-} = bqe;
+} = bqx;
 
 const check_tick = make_check_tick(200);
 
@@ -390,7 +390,7 @@ while (cliques.size > 1) {
 }
 
 const answer_element = await ocx.markdown(`
-# Answer to Part Two${bqe.testing ? ' (TESTING)' : ''}
+# Answer to Part Two${bqx.testing ? ' (TESTING)' : ''}
 The password to get into the LAN party is "**${Array.from(cliques.values())[0]}**".
 `);
 sleep(0.1).then(() => answer_element.scrollIntoView());

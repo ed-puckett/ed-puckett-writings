@@ -168,13 +168,13 @@ if (typeof input_data !== 'string') {
 }
 
 // values given in problem
-bqe.input_data = input_data.trim();
+bqx.input_data = input_data.trim();
 </bq-cell>
 <bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const {
     Direction,
-} = bqe;
+} = bqx;
 
 const memory_output_options = {
     style: {
@@ -242,7 +242,7 @@ const permissable_memory_chars    = [ empty_cell_ch, wall_cell_ch, start_cell_ch
 const permissable_memory_chars_re = new RegExp(`^[${permissable_memory_chars.join('')}]*$`);
 
 const init_data = () => {
-    const input_lines = bqe.input_data.split('\n');
+    const input_lines = bqx.input_data.split('\n');
 
     // memory map to be parsed from the input:
     const memory = [];  // an array of rows, each row an array of { r, c, ch }
@@ -736,7 +736,7 @@ const init_data = () => {
     });
 };
 
-globalThis.bqe = bqe;//!!!
+globalThis.bqx = bqx;//!!!
 vars({
     memory_output_options, solution_output_options,
     l1_circle_coordinates,
@@ -788,14 +788,14 @@ const input_data_examples = [
 ###############
 `,
 ];
-bqe.using_example_data = false;
+bqx.using_example_data = false;
 const set_test_dataset = (input_data_example_to_use) => {
     if (typeof input_data_example_to_use === 'number') {
         if (!(input_data_example_to_use in input_data_examples)) {
             throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
         }
-        bqe.input_data = input_data_examples[input_data_example_to_use].trim();
-        bqe.using_example_data = true;
+        bqx.input_data = input_data_examples[input_data_example_to_use].trim();
+        bqx.using_example_data = true;
     }
 };
 
@@ -804,10 +804,10 @@ set_test_dataset(undefined);
 
 //----------------------------------------------------------------------
 
-bqe.init_data();
+bqx.init_data();
 
-await ocx.println(`The initial map (${bqe.rows}x${bqe.cols}):`)
-await bqe.render_memory(ocx);
+await ocx.println(`The initial map (${bqx.rows}x${bqx.cols}):`)
+await bqx.render_memory(ocx);
 
 const {
     trace_fn,
@@ -817,7 +817,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       10,
@@ -832,7 +832,7 @@ sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 //----------------------------------------------------------------------
 
-bqe.result = await bqe.find_best_maze_solution({
+bqx.result = await bqx.find_best_maze_solution({
     analyze_cheats: {
         cheat_steps_max: 2,
     },
@@ -840,13 +840,13 @@ bqe.result = await bqe.find_best_maze_solution({
     trace_mod,
 });
 
-let answer_markdown = bqe.result.best_solution
-    ? `* The best score for getting through the maze is ${bqe.result.best_solution.cost}.`
+let answer_markdown = bqx.result.best_solution
+    ? `* The best score for getting through the maze is ${bqx.result.best_solution.cost}.`
     : `* NO SOLUTIONS FOUND!`;
 
-if (bqe.result.best_solution && !bqe.using_example_data) {
+if (bqx.result.best_solution && !bqx.using_example_data) {
     const target_cheat_saving = 100;  // from problem
-    const cheats_achieving = bqe.result.cheat_analysis.data
+    const cheats_achieving = bqx.result.cheat_analysis.data
           .reduce((count, datum) => ((datum.cost_savings >= target_cheat_saving) ? count+1 : count), 0);
     answer_markdown += `\n* **${cheats_achieving}** cheat${cheats_achieving === 1 ? '' : 's'} save${cheats_achieving === 1 ? 's' : ''} at least ${target_cheat_saving} picoseconds.`;
 }
@@ -857,7 +857,7 @@ ${answer_markdown}
 `);
 
 // analysis breakdown
-const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
+const analysis_breakdown = Object.entries(bqx.result.cheat_analysis.histogram)
       .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
       .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
 const analysis_breakdown_markdown_lines = [];
@@ -868,14 +868,14 @@ for (const [ cost_savings, count ] of analysis_breakdown) {
 }
 await ocx.println();
 await ocx.println('Cheat cost savings breakdown (only positive results shown):');
-const ab_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+const ab_ocx = ocx.create_child_ocx(bqx.solution_output_options);
 await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
 
-if (bqe.result.best_solution) {
+if (bqx.result.best_solution) {
     await ocx.println();
-    await ocx.println(`The map with the first best path (${bqe.rows}x${bqe.cols}):`);
-    await bqe.render_memory(ocx, {
-        path: bqe.result.best_paths[0],
+    await ocx.println(`The map with the first best path (${bqx.rows}x${bqx.cols}):`);
+    await bqx.render_memory(ocx, {
+        path: bqx.result.best_paths[0],
     });
 }
 
@@ -970,7 +970,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       10,
@@ -985,10 +985,10 @@ sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
 // run the problem again with cheat_steps_max = 20:
 
-bqe.init_data();
+bqx.init_data();
 
 
-bqe.result = await bqe.find_best_maze_solution({
+bqx.result = await bqx.find_best_maze_solution({
     analyze_cheats: {
         cheat_steps_max: 20,
     },
@@ -996,13 +996,13 @@ bqe.result = await bqe.find_best_maze_solution({
     trace_mod,
 });
 
-let answer_markdown = bqe.result.best_solution
-    ? `* The best score for getting through the maze is ${bqe.result.best_solution.cost}.`
+let answer_markdown = bqx.result.best_solution
+    ? `* The best score for getting through the maze is ${bqx.result.best_solution.cost}.`
     : `* NO SOLUTIONS FOUND!`;
 
-if (bqe.result.best_solution && !bqe.using_example_data) {
+if (bqx.result.best_solution && !bqx.using_example_data) {
     const target_cheat_saving = 100;  // from problem
-    const cheats_achieving = bqe.result.cheat_analysis.data
+    const cheats_achieving = bqx.result.cheat_analysis.data
           .reduce((count, datum) => ((datum.cost_savings >= target_cheat_saving) ? count+1 : count), 0);
     answer_markdown += `\n* **${cheats_achieving}** cheat${cheats_achieving === 1 ? '' : 's'} save${cheats_achieving === 1 ? 's' : ''} at least ${target_cheat_saving} picoseconds.`;
 }
@@ -1013,7 +1013,7 @@ ${answer_markdown}
 `);
 
 // analysis breakdown
-const analysis_breakdown = Object.entries(bqe.result.cheat_analysis.histogram)
+const analysis_breakdown = Object.entries(bqx.result.cheat_analysis.histogram)
       .map(([ cost_savings_string, count ]) => [ +cost_savings_string, count ])
       .toSorted(([ cs1 ], [ cs2 ]) => (cs1 - cs2));
 const analysis_breakdown_markdown_lines = [];
@@ -1024,7 +1024,7 @@ for (const [ cost_savings, count ] of analysis_breakdown) {
 }
 await ocx.println();
 await ocx.println('Cheat cost savings breakdown (only positive results shown):');
-const ab_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+const ab_ocx = ocx.create_child_ocx(bqx.solution_output_options);
 const analysis_element = await ab_ocx.markdown(analysis_breakdown_markdown_lines.join('\n'));
 sleep(0.1).then(() => analysis_element.scrollIntoView(false));</bq-cell>
 </body>

@@ -97,10 +97,10 @@ if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
 
-bqe.input_data = input_data.trim();</bq-cell>
+bqx.input_data = input_data.trim();</bq-cell>
 <bq-cell id="id-3b4b7ef2-2604-42fb-8e00-80f188ba6ae2" data-type="javascript" class="show-in-presentation">// utility definitions
 
-globalThis.bqe = bqe;//!!!
+globalThis.bqx = bqx;//!!!
 
 keepalive();
 
@@ -145,7 +145,7 @@ const reset = () => {
     program   = undefined;
     output    = [];
 
-    const input_lines = bqe.input_data.split('\n');
+    const input_lines = bqx.input_data.split('\n');
 
     // parse input
     for (let line_index = 0, empty_line_seen = false; line_index < input_lines.length; line_index++) {
@@ -421,30 +421,30 @@ if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
         throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
-    bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+    bqx.input_data = input_data_examples[input_data_example_to_use].trim();
 }
 
 //keepalive();
 
-bqe.reset();
+bqx.reset();
 
-await ocx.println(`registers: ${bqe.registers_to_string()}`);
-await ocx.println(`program: ${bqe.program.join(',')}`);
+await ocx.println(`registers: ${bqx.registers_to_string()}`);
+await ocx.println(`program: ${bqx.program.join(',')}`);
 await ocx.println();
 await ocx.println('Program trace:');
 
-const instruction_output_ocx = ocx.create_child_ocx(bqe.information_output_options);
+const instruction_output_ocx = ocx.create_child_ocx(bqx.information_output_options);
 
 const trace_outputter = async (instruction_info) => {
     await instruction_output_ocx.print__();
     await instruction_output_ocx.render_text(instruction_info);
 }
 
-const result = await bqe.run_program(trace_outputter);
+const result = await bqx.run_program(trace_outputter);
 
 const answer_element = await ocx.markdown(`
 # Answer to Part One
-The program output is: **${bqe.output.join(',')}**
+The program output is: **${bqx.output.join(',')}**
 `);
 
 // scroll answer_element into view, but after a delay to let other rendering finish
@@ -551,12 +551,12 @@ const out_ocx = ocx.create_child_ocx({
 let mismatches_found = false;
 for (const test_value of [
     66245665,  // from Part One
-    bqe.bad_case,
+    bqx.bad_case,
     ...(new Array(100).fill().map((_, i) => i)),
     ...(new Array(100).fill().map((_, i) => 10000+i)),
     ...(new Array(100).fill().map((_, i) => 1000000000+i)),
 ]) {
-    const original_result = await bqe.test_equiv(test_value, null);
+    const original_result = await bqx.test_equiv(test_value, null);
     const fixed_result    = await test_equiv_fixed(test_value, null);
     if (original_result.some(out => out < 0)) {
         await out_ocx.println(`${test_value}: (some outputs of original_result were negative, so not comparing to fixed_result.)`);
@@ -641,14 +641,14 @@ vars({ out_ocx, group_digits, test });
 ~~~! javascript
 // Enter a new javascript section, but without outputting the source code...
 keepalive();
-const { out_ocx, group_digits, test } = bqe;  // carry over from prior eval environment
+const { out_ocx, group_digits, test } = bqx;  // carry over from prior eval environment
 
-const bad_case_results = await test(bqe.bad_case);
+const bad_case_results = await test(bqx.bad_case);
 if (bad_case_results.some(out => out < 0)) {
-    await out_ocx.render_error(`test(${bqe.bad_case}) for the "bad case" has negative outputs`);
+    await out_ocx.render_error(`test(${bqx.bad_case}) for the "bad case" has negative outputs`);
 } else {
     await out_ocx.println();
-    await out_ocx.println(`test(${bqe.bad_case}) for the "bad case" had no negative outputs!`);
+    await out_ocx.println(`test(${bqx.bad_case}) for the "bad case" had no negative outputs!`);
 }
 
 await out_ocx.print__();
@@ -769,7 +769,7 @@ const find_solution_candidates = (base_N=0, i=0) => {
     const candidates = [];
     for (let b = 0; b <= 7; b++) {
         const N = 8*base_N + b;
-        const generated = bqe.generate_outputs(N);
+        const generated = bqx.generate_outputs(N);
         if (generated[0] === desired_outputs[desired_outputs.length-1-i]) {
             candidates.push(N);
         }
@@ -784,7 +784,7 @@ const find_solution_candidates = (base_N=0, i=0) => {
 vars({ generate_outputs, desired_outputs_string, find_solution_candidates });</bq-cell>
 <bq-cell id="id-ce512a31-1c3e-435c-a5df-9c28222481ad" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-const solution_candidates = bqe.find_solution_candidates();
+const solution_candidates = bqx.find_solution_candidates();
 
 const answer_markup = (solution_candidates.length <= 0)
       ? 'NO SOLUTIONS FOUND!'
@@ -804,10 +804,10 @@ if (solution_candidates.length > 1) {
         solution_candidates
             .toSorted((a, b) => a-b)
             .map(N => {
-                return `0b${bqe.group_digits(N.toString(2))} = ${N}`;
+                return `0b${bqx.group_digits(N.toString(2))} = ${N}`;
             })
             .join('\n'),
-        bqe.information_output_options);
+        bqx.information_output_options);
 }
 </bq-cell>
 </body>

@@ -133,7 +133,7 @@ vars({ create_trace_mechanism, Direction });
 
 const {
     Direction,
-} = bqe;
+} = bqx;
 
 class KeypadButton {
     constructor(label) {
@@ -772,8 +772,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqe.input_data = input_data.trim();
-globalThis.bqe = bqe;//!!!
+bqx.input_data = input_data.trim();
+globalThis.bqx = bqx;//!!!
 </bq-cell>
 <bq-cell id="id-ad11a0e7-f7e2-404c-a2bd-e12f1d33d0db" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -782,7 +782,7 @@ const {
     KeypadButton,
     Keypad,
     Robot
-} = bqe;
+} = bqx;
 
 const solution_output_options = {
     style: {
@@ -797,7 +797,7 @@ const solution_output_options = {
     },
 };
 
-const input_lines = bqe.input_data.split('\n');
+const input_lines = bqx.input_data.split('\n');
 
 const codes = [];
 
@@ -965,7 +965,7 @@ const create_configuration = (intermediate_keypad_count) => {
 };
 
 const init_data = (intermediate_keypad_count=2) => {  // intermediate_keypad_count = 2 given in problem Part One
-    vars(  // export to bqe
+    vars(  // export to bqx
         create_configuration(intermediate_keypad_count)
     );
 };
@@ -988,7 +988,7 @@ const create_simulator_ui = async (ocx, send_interval=0.05) => {
         robots,
         KeypadDisplay,
         RobotDisplay,
-    } = bqe;
+    } = bqx;
 
     if (!robots) {
         throw new TypeError('init_data() must have been called before calling this function');
@@ -1190,11 +1190,11 @@ const create_simulator_ui = async (ocx, send_interval=0.05) => {
 };
 
 // returns { input, output, outputs }
-// example: cfg = bqe.create_configuration(2); bqe.simulate('<vA<AA>>^AvA^<A>AvA^A<v<A>A>^AvA^<A>A<v<A>>^AAAvA^A<v<A>A>^AAAvA^A<A>A', cfg.robots)
-const simulate = (input, robots=bqe.robots, quiet=false) => {
+// example: cfg = bqx.create_configuration(2); bqx.simulate('<vA<AA>>^AvA^<A>AvA^A<v<A>A>^AvA^<A>A<v<A>>^AAAvA^A<v<A>A>^AAAvA^A<A>A', cfg.robots)
+const simulate = (input, robots=bqx.robots, quiet=false) => {
     const {
         Robot,
-    } = bqe;
+    } = bqx;
 
     if (!Array.isArray(robots) && !robots.every(element => element instanceof Robot) ) {
         throw new TypeError('robots must be an array of Robot instances');
@@ -1275,7 +1275,7 @@ const zigzag_re = /v[<>]v|\^[<>]\^|<[v^]<|>[v^]>/;  // recognizer for "zigzag" p
 // first entry is optimal in terms of length
 const recursive_solve = (output, options=null) => {
     const {
-        robots       = bqe.robots,
+        robots       = bqx.robots,
         allow_zigzag = false,
     } = (options ?? {});
 
@@ -1320,7 +1320,7 @@ const recursive_solve = (output, options=null) => {
 // first entry is optimal in terms of length
 const async_recursive_solve = async (desired_output, options=null) => {
     const {
-        robots       = bqe.robots,
+        robots       = bqx.robots,
         allow_zigzag = false,
         trace_mod    = 1,
         trace_fn     = null,
@@ -1411,7 +1411,7 @@ const async_recursive_solve = async (desired_output, options=null) => {
 const optimize_directional_keypad_inputs = (inputs) => {
     const {
         changes_char_to_char,
-    } = bqe;
+    } = bqx;
 
     if (!Array.isArray(inputs) || !inputs.every(input => (typeof input === 'string' && input.match(/^[<>^vA]*$/)))) {
         throw new TypeError('inputs must be an array of strings consisting only of the characters "<", ">", "^", "v" or "A"');
@@ -1516,7 +1516,7 @@ const get_best_paths_data = (keypad_type) => {
         create_numeric_keypad,
         create_directional_keypad,
         changes_char_to_char,
-    } = bqe;
+    } = bqx;
 
     const get_example_keypad = (keypad_type) => {
         switch (keypad_type) {
@@ -1867,7 +1867,7 @@ The final optimal transition paths for directional keypads are:
 const validate_requirements_for_solve = () => {
     const {
         keypads,
-    } = bqe;
+    } = bqx;
 
     if (!keypads) {
         throw new TypeError('init_data() must have been called before calling this function');
@@ -1890,10 +1890,10 @@ const validate_requirements_for_solve = () => {
 const greedy_solve = async (output, options=null) => {
     const {
         get_best_path_for_keypad_type_between,
-    } = bqe;
+    } = bqx;
 
     const {
-        keypads   = bqe.keypads,
+        keypads   = bqx.keypads,
         trace_mod = 1,
         trace_fn  = null,
     } = (options ?? {});
@@ -1956,14 +1956,14 @@ vars({
 <bq-cell id="id-372c668a-d09f-49a9-bb22-7cbb00789e4a" data-type="javascript" class="show-in-presentation">// define a yet another new solver
 
 // THIS IS SLOW AND MEMORY HUNGRY...
-// example: cfg = bqe.create_configuration(2); stop = false; bqe.iterative_solve('029A', { robots: cfg.robots, trace_fn: (work_count, get_info, regardless) => { console.log('TRACE:', work_count, get_info()); return stop; }, trace_mod: 1 }).then(result => console.log('>>> RESULT:', result));
+// example: cfg = bqx.create_configuration(2); stop = false; bqx.iterative_solve('029A', { robots: cfg.robots, trace_fn: (work_count, get_info, regardless) => { console.log('TRACE:', work_count, get_info()); return stop; }, trace_mod: 1 }).then(result => console.log('>>> RESULT:', result));
 const iterative_solve = async (output, options=null) => {
     const {
         simulate,
-    } = bqe;
+    } = bqx;
 
     const {
-        robots    = bqe.robots,
+        robots    = bqx.robots,
         trace_mod = 1,
         trace_fn,
     } = (options ?? {});
@@ -2102,7 +2102,7 @@ vars({
 keepalive();
 
 let resolve_results_ready;
-bqe.results_ready = new Promise(resolve => { resolve_results_ready = resolve; });
+bqx.results_ready = new Promise(resolve => { resolve_results_ready = resolve; });
 
 const {
     trace_fn,
@@ -2112,7 +2112,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       1,
@@ -2120,7 +2120,7 @@ const {
     prefix_width:       7,
 });
 const trace_mod = 1;
-bqe.trace_fn = trace_fn;//!!!
+bqx.trace_fn = trace_fn;//!!!
 
 
 //----------------------------------------------------------------------
@@ -2143,19 +2143,19 @@ await message_ocx.render_text('Computing results', {
 
 const intermediate_keypad_count = 2;  // given in problem
 
-const solve = bqe.async_recursive_solve;
+const solve = bqx.async_recursive_solve;
 
 sleep(0.01).then(async () => {
     (trace_ocx?.element ?? message_ocx._element).scrollIntoView();
 
-    bqe.results = [];
-    for (const code of bqe.codes) {
+    bqx.results = [];
+    for (const code of bqx.codes) {
         await message_ocx.println(`computing sequence for "${code}"...`);
         await next_tick();
 
         await trace_ocx?.print__();
 
-        const cfg = bqe.create_configuration(intermediate_keypad_count);
+        const cfg = bqx.create_configuration(intermediate_keypad_count);
         let solutions;
         try {
             solutions = await solve(code, { robots: cfg.robots, trace_fn, trace_mod })
@@ -2168,14 +2168,14 @@ sleep(0.01).then(async () => {
             }
         }
 
-        const optimized_solutions = bqe.optimize_directional_keypad_inputs(solutions);
+        const optimized_solutions = bqx.optimize_directional_keypad_inputs(solutions);
         const result = {
             code,
             intermediate_keypad_count,
             solutions: optimized_solutions,
             sequence:  optimized_solutions[0],
         };
-        bqe.results.push(result);
+        bqx.results.push(result);
 
         await message_ocx.println(`    ${result.sequence}`);
         await message_ocx.println();
@@ -2184,7 +2184,7 @@ sleep(0.01).then(async () => {
     await trace_ocx?.println('DONE');
     trace_ocx?.element.scrollTo(0, trace_ocx?.element.scrollHeight);  // scroll to the last line ("DONE")
 
-    const sum_of_complexities = bqe.results
+    const sum_of_complexities = bqx.results
           .map(({ code, sequence }) => parseInt(code)*sequence.length)
           .reduce((total, n) => (total + n), 0);
 
@@ -2203,7 +2203,7 @@ The sum of the complexities of the given codes is **${sum_of_complexities}**.
 
 //----------------------------------------------------------------------
 
-bqe.init_data();
+bqx.init_data();
 
 await ocx.println();
 await ocx.print__();
@@ -2212,7 +2212,7 @@ const {
     reset_button,
     manual_input_element,
     manual_input_button,
-} = await bqe.create_simulator_ui(ocx, 0.01);
+} = await bqx.create_simulator_ui(ocx, 0.01);
 
 sleep(0.1).then(() => { ocx.element.scrollIntoView(); manual_input_element.focus(); });
 
@@ -2311,11 +2311,11 @@ const core_fragments_set = new Set([
     'v<<', '>>^',
 ]);
 
-const example_directional_keypad = bqe.create_directional_keypad();  // used by evolve_fragment(), created once here
+const example_directional_keypad = bqx.create_directional_keypad();  // used by evolve_fragment(), created once here
 const directional_keypad_labels = example_directional_keypad.get_labels();
 const onlydirectional_keypad_labels_line_re = new RegExp(`^[${directional_keypad_labels.join('').replace('^', '\\^')}]*$`);
 
-const zigzag_re = bqe.zigzag_re;
+const zigzag_re = bqx.zigzag_re;
 
 // Given a two states, which must be valid directional keypad labels, return
 // an array of sequences for the next higher stage (closer to the user keypad).
@@ -2516,17 +2516,17 @@ vars({
 });</bq-cell>
 <bq-cell id="id-1bc0d0bb-14e5-4783-ae72-dabd5c688f1e" data-type="javascript" class="show-in-presentation">// definitions for the solution to Part Two
 
-const _core_fragments     = bqe.get_core_fragments();      // make a copy local to this cell but not available outside
-const _core_fragments_set = bqe.get_core_fragments_set();  // make a copy local to this cell but not available outside
+const _core_fragments     = bqx.get_core_fragments();      // make a copy local to this cell but not available outside
+const _core_fragments_set = bqx.get_core_fragments_set();  // make a copy local to this cell but not available outside
 
 const _fragment_transitions = Object.fromEntries(  // only for use locally in cell (to avoid external modification)
-    bqe.get_core_fragments().map(fragment => [
+    bqx.get_core_fragments().map(fragment => [
         fragment,
-        bqe.next_stage_sequences_from_sequence(fragment+'A'),  // the next sequences function returns only sequences composed of core fragments (add implied 'A')
+        bqx.next_stage_sequences_from_sequence(fragment+'A'),  // the next sequences function returns only sequences composed of core fragments (add implied 'A')
     ])
 );
 
-const zigzag_re = bqe.zigzag_re;
+const zigzag_re = bqx.zigzag_re;
 
 const get_fragment_transition_alternatives = (fragment, allow_zigzag=false) => {
     // copy to prevent caller from modifying internal structure
@@ -2841,7 +2841,7 @@ const find_extension_sequence_lengths_for_core_fragment = async (core_fragment, 
 
     const {
         get_core_fragments_set,
-    } = bqe;
+    } = bqx;
 
     if (!get_core_fragments_set().has(core_fragment)) {
         throw new TypeError(`fragment is not a core fragment: "${fragment}"`);
@@ -2870,7 +2870,7 @@ const find_extension_sequence_lengths_for_core_fragment = async (core_fragment, 
 
         let next_stage_items = [];
         for (let stage_item_index = 0; stage_item_index < result.stage_items.length; stage_item_index++) {
-bqe.result = result;//!!!
+bqx.result = result;//!!!
             const stage_item = result.stage_items[stage_item_index];
             const { accumulator } = stage_item;
             const extensions = await get_next_stage_extensions_for_accumulator(accumulator, options);  // note "allow_computational_fan_out" option
@@ -3111,7 +3111,7 @@ const get_min_sequence_lengths_for_stages = async (options) => {
         // the .to_updated() or to_multiplied() methods must be used instead.
         extensions_cache[stage_index] = {};
     }
-bqe.caches = { min_sequence_length_cache, extensions_cache };//!!!
+bqx.caches = { min_sequence_length_cache, extensions_cache };//!!!
 
     // metrics
     const count_extensions_cache_entries = () => {
@@ -3223,7 +3223,7 @@ const test_min_lengths_calculation_on_prior_result = async (result, options) => 
         create_configuration,
         async_recursive_solve,
         zigzag_re,
-    } = bqe;
+    } = bqx;
 
     const {
         trace_fn,
@@ -3278,7 +3278,7 @@ const run_tests = async (ocx, test_options=null) => {
     const {
         get_core_fragments,
         get_min_sequence_lengths_for_stages,
-    } = bqe;
+    } = bqx;
 
     const test_ocx = ocx.create_child_ocx({
         style: {
@@ -3293,7 +3293,7 @@ const run_tests = async (ocx, test_options=null) => {
     };
 
     if (use_computed_test_results) {
-        await bqe.results_ready;
+        await bqx.results_ready;
         await output_test_message('COMPUTED TEST RESULTS READY');
     }
 
@@ -3302,7 +3302,7 @@ const run_tests = async (ocx, test_options=null) => {
 
     let test_results;
     if (use_computed_test_results) {
-        test_results = bqe.results;
+        test_results = bqx.results;
     } else {
         // simple canned data set that is available immediately:
         test_results = [
@@ -3377,7 +3377,7 @@ const run_tests = async (ocx, test_options=null) => {
     {
         const stage_count = 5;
 
-        bqe.compare_results = {};
+        bqx.compare_results = {};
         const check_tick = make_check_tick(200);
         for (const allow_computational_fan_out of [ true, false ]) {
             const compare_results_key = allow_computational_fan_out ? 'with-fan-out' : 'no-fan-out';
@@ -3393,7 +3393,7 @@ const run_tests = async (ocx, test_options=null) => {
                     allow_computational_fan_out,
                 },
             };
-            bqe.compare_results[compare_results_key] = result_record;
+            bqx.compare_results[compare_results_key] = result_record;
 
             for (const fragment of get_core_fragments()) {
                 const options = {
@@ -3430,7 +3430,7 @@ const get_sequence_length_from_increasing_prior_result_intermediate_keypads = as
         create_configuration,
         async_recursive_solve,
         get_min_sequence_lengths_for_stages
-    } = bqe;
+    } = bqx;
 
     const earlier_intermediate_keypad_count = 1;
     const cfg = create_configuration(earlier_intermediate_keypad_count);
@@ -3481,7 +3481,7 @@ vars({
 keepalive();
 
 const perform_tests             = false;  // run a set of tests?
-const use_computed_test_results = true;   // use bqe.results from Part One for testing?
+const use_computed_test_results = true;   // use bqx.results from Part One for testing?
 
 
 //----------------------------------------------------------------------
@@ -3494,7 +3494,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       1,
@@ -3502,12 +3502,12 @@ const {
     prefix_width:       7,
 });
 const trace_mod = 100;
-bqe.trace_fn = trace_fn;//!!!
+bqx.trace_fn = trace_fn;//!!!
 
 await trace_fn('--- computation trace begin ---')
 
 if (perform_tests) {
-    await bqe.run_tests(ocx, {
+    await bqx.run_tests(ocx, {
         use_computed_test_results,
         trace_ocx,
         trace_fn,
@@ -3518,7 +3518,7 @@ if (perform_tests) {
 
 //----------------------------------------------------------------------
 
-await bqe.results_ready;
+await bqx.results_ready;
 console.log('ready');
 
 const new_intermediate_keypad_count = 25;  // given in problem
@@ -3528,10 +3528,10 @@ await ocx.println(`Computing new sequence lengths for results with ${new_interme
 await ocx.println();
 
 const new_sequence_lengths = {};  // code -> sequence_length
-for (const result of bqe.results) {
+for (const result of bqx.results) {
     const code = result.code;
     (await ocx.println(`Computing for code "${code}"...`)).scrollIntoView();
-    const sequence_length = await bqe.get_sequence_length_from_increasing_prior_result_intermediate_keypads(result, new_intermediate_keypad_count, {
+    const sequence_length = await bqx.get_sequence_length_from_increasing_prior_result_intermediate_keypads(result, new_intermediate_keypad_count, {
         trace_mod:  100,
         trace_fn,
         check_tick: make_check_tick(200),

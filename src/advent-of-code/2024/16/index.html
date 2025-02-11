@@ -128,16 +128,16 @@ if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
 
-bqe.input_data = input_data.trim();</bq-cell>
+bqx.input_data = input_data.trim();</bq-cell>
 <bq-cell id="id-1567e835-d31b-42a0-b1af-dbe36b9127cc" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const {
     Direction,
-} = bqe;
+} = bqx;
 
-globalThis.bqe = bqe;//!!!
+globalThis.bqx = bqx;//!!!
 
-bqe.map_output_options = {
+bqx.map_output_options = {
     style: {
         'font-family':          'monospace',
         'white-space':          'nowrap',
@@ -150,7 +150,7 @@ bqe.map_output_options = {
     },
 };
 
-bqe.solution_output_options = {
+bqx.solution_output_options = {
     style: {
         'font-family':          'monospace',
         'white-space':          'nowrap',
@@ -164,88 +164,88 @@ bqe.solution_output_options = {
 };
 
 // map cell characters
-bqe.empty_cell_ch = '.';
-bqe.wall_cell_ch  = '#';
-bqe.start_cell_ch = 'S';
-bqe.end_cell_ch   = 'E';
+bqx.empty_cell_ch = '.';
+bqx.wall_cell_ch  = '#';
+bqx.start_cell_ch = 'S';
+bqx.end_cell_ch   = 'E';
 
-bqe.permissable_map_chars    = [ bqe.empty_cell_ch, bqe.wall_cell_ch, bqe.start_cell_ch, bqe.end_cell_ch ];
-bqe.permissable_map_chars_re = new RegExp(`^[${bqe.permissable_map_chars.join('')}]*$`);
+bqx.permissable_map_chars    = [ bqx.empty_cell_ch, bqx.wall_cell_ch, bqx.start_cell_ch, bqx.end_cell_ch ];
+bqx.permissable_map_chars_re = new RegExp(`^[${bqx.permissable_map_chars.join('')}]*$`);
 
-bqe.init_data = () => {
-    bqe.input_lines = bqe.input_data.split('\n');
+bqx.init_data = () => {
+    bqx.input_lines = bqx.input_data.split('\n');
 
     // map to be parsed from the input:
-    bqe.map = [];  // an array of rows, each row an array of { r, c, ch }
+    bqx.map = [];  // an array of rows, each row an array of { r, c, ch }
 
-    for (let r = 0; r < bqe.input_lines.length; r++) {
-        const line = bqe.input_lines[r];
-        if (!line.match(bqe.permissable_map_chars_re)) {
+    for (let r = 0; r < bqx.input_lines.length; r++) {
+        const line = bqx.input_lines[r];
+        if (!line.match(bqx.permissable_map_chars_re)) {
             throw new TypeError(`illegal map character at line ${r+1}`);
         }
         const row = Array.from(line).map((ch, c) => {
             return { r, c, ch };
         });
-        bqe.map.push(row);
+        bqx.map.push(row);
     }
-    bqe.rows = bqe.map.length;
-    bqe.cols = bqe.map[0].length;  // all rows are expected to be the same length
+    bqx.rows = bqx.map.length;
+    bqx.cols = bqx.map[0].length;  // all rows are expected to be the same length
     // validate map row lengths
-    if (!bqe.map.every(row => row.length === bqe.cols)) {
+    if (!bqx.map.every(row => row.length === bqx.cols)) {
         throw new TypeError('input_data does not have all map rows the same length');
     }
 
-    bqe.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
-        return bqe.map[r]?.[c];
+    bqx.get_cell = (r, c) => {  // returns cell at (r,c) or undefined if r or c out of range
+        return bqx.map[r]?.[c];
     }
 
     // costs for each action, given in the problem description
-    bqe.move_cost = 1;
-    bqe.turn_cost = 1000;
+    bqx.move_cost = 1;
+    bqx.turn_cost = 1000;
 
     // the start direction is given as East in the problem description
-    bqe.start_dir = Direction.E;
+    bqx.start_dir = Direction.E;
 
     // find start and end in map
-    bqe.start_cell = undefined;
-    bqe.end_cell   = undefined;
-    for (let r = 0; r < bqe.rows; r++) {
-        for (let c = 0; c < bqe.cols; c++) {
-            const cell = bqe.get_cell(r, c);
-            if (cell.ch === bqe.start_cell_ch) {
-                if (bqe.start_cell) {
+    bqx.start_cell = undefined;
+    bqx.end_cell   = undefined;
+    for (let r = 0; r < bqx.rows; r++) {
+        for (let c = 0; c < bqx.cols; c++) {
+            const cell = bqx.get_cell(r, c);
+            if (cell.ch === bqx.start_cell_ch) {
+                if (bqx.start_cell) {
                     throw new TypeError(`second start found at (${r}, ${c})`);
                 } else {
-                    bqe.start_cell = cell;
+                    bqx.start_cell = cell;
                 }
-            } else if (cell.ch === bqe.end_cell_ch) {
-                if (bqe.end_cell) {
+            } else if (cell.ch === bqx.end_cell_ch) {
+                if (bqx.end_cell) {
                     throw new TypeError(`second end found at (${r}, ${c})`);
                 } else {
-                    bqe.end_cell = cell;
+                    bqx.end_cell = cell;
                 }
             }
         }
     }
-    if (!bqe.start_cell) {
+    if (!bqx.start_cell) {
         throw new TypeError('start not found in map');
     }
-    if (!bqe.end_cell) {
+    if (!bqx.end_cell) {
         throw new TypeError('end not found in map');
     }
 
-    bqe.cell_toward = (cell, dir) => {
+    bqx.cell_toward = (cell, dir) => {
         const { r, c } = cell;
         const { dr, dc } = dir;
-        return bqe.get_cell(r+dr, c+dc);
+        return bqx.get_cell(r+dr, c+dc);
     }
 
-    bqe.render_map = async (ocx, with_path=null) => {
+    bqx.render_map = async (ocx, with_path=null) => {
         const path_cells = with_path
               ? new Map(with_path.map(({ cell, entry_dir }) => ([ cell, entry_dir.ch ])))
               : undefined;
         return ocx.render_text(
-            bqe.map
+            bqx.map
                 .map(row => {
                     return row
                         .map(cell => {
@@ -254,16 +254,16 @@ bqe.init_data = () => {
                         .join('');
                 })
                 .join('\n'),
-            bqe.map_output_options,
+            bqx.map_output_options,
         );
     };
 
-    bqe.calculate_minimum_remaining_cost = (cell, entry_dir) => {
-        if (cell === bqe.end_cell) {
+    bqx.calculate_minimum_remaining_cost = (cell, entry_dir) => {
+        if (cell === bqx.end_cell) {
             return 0;
         } else {
-            const delta_r = bqe.end_cell.r - cell.r;
-            const delta_c = bqe.end_cell.c - cell.c;
+            const delta_r = bqx.end_cell.r - cell.r;
+            const delta_c = bqx.end_cell.c - cell.c;
             const { dr, dc } = entry_dir;
 
             let minimum_remaining = Math.abs(delta_r) + Math.abs(delta_c);
@@ -274,35 +274,35 @@ bqe.init_data = () => {
             if (delta_r === 0) {
                 if (dr === 0) {
                     if ((delta_c * dc) < 0) {  // wrong direction?
-                        minimum_remaining += 2*bqe.turn_cost;  // must turn 180 degrees
+                        minimum_remaining += 2*bqx.turn_cost;  // must turn 180 degrees
                     }
                 } else {  // (dr !== 0)
-                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees
+                    minimum_remaining += bqx.turn_cost;  // must turn 90 degrees
                 }
             } else if (delta_c === 0) {  // (delta_c === 0) && (delta_r !== 0)
                 if (dc === 0) {
                     if (delta_r * dr < 0) {
-                        minimum_remaining += 2*bqe.turn_cost;  // must turn 180 degrees
+                        minimum_remaining += 2*bqx.turn_cost;  // must turn 180 degrees
                     }
                 } else {  // (dc !== 0)
-                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees
+                    minimum_remaining += bqx.turn_cost;  // must turn 90 degrees
                 }
             } else {  // (delta_c !== 0) && (delta_r !== 0)
                 if ((delta_c * dc) < 0 || (delta_r * dr) < 0) {  // wrong direction?
-                    minimum_remaining += bqe.turn_cost + bqe.turn_cost;  // must turn 90 degrees two times
+                    minimum_remaining += bqx.turn_cost + bqx.turn_cost;  // must turn 90 degrees two times
                 } else {
-                    minimum_remaining += bqe.turn_cost;  // must turn 90 degrees one time
+                    minimum_remaining += bqx.turn_cost;  // must turn 90 degrees one time
                 }
             }
             return minimum_remaining;
         }
     };
 
-    bqe.find_best_maze_solution = async (options) => {  // returns { cost, best_paths } or undefined if no solution was found; best_paths is an array of arrays of { cell, entry_dir }
+    bqx.find_best_maze_solution = async (options) => {  // returns { cost, best_paths } or undefined if no solution was found; best_paths is an array of arrays of { cell, entry_dir }
         const {
-            start_cell = bqe.start_cell,
-            start_dir  = bqe.start_dir,
-            end_cell   = bqe.end_cell,
+            start_cell = bqx.start_cell,
+            start_dir  = bqx.start_dir,
+            end_cell   = bqx.end_cell,
             trace_fn,
             trace_mod  = 1000,
         } = (options ?? {});
@@ -310,9 +310,9 @@ bqe.init_data = () => {
         let best_solution;  // undefined if none found yet, otherwise { cost, path }
 
         // initialize state for each cell
-        for (let r = 0; r < bqe.rows; r++) {
-            for (let c = 0; c < bqe.cols; c++) {
-                const cell = bqe.get_cell(r, c);
+        for (let r = 0; r < bqx.rows; r++) {
+            for (let c = 0; c < bqx.cols; c++) {
+                const cell = bqx.get_cell(r, c);
                 // cell.arrivals maps each direction ch to:
                 // - undefined if no path has entered with that entry_dir before
                 // - { cost } where cost is for the best path with the best cost for that entry_dir so far
@@ -323,7 +323,7 @@ bqe.init_data = () => {
         start_cell.arrivals[start_dir.ch] = { cost: 0 };
 
         const can_occupy = (test_cell) => {
-            return (test_cell === start_cell || test_cell === end_cell || test_cell.ch === bqe.empty_cell_ch);
+            return (test_cell === start_cell || test_cell === end_cell || test_cell.ch === bqx.empty_cell_ch);
         };
 
         // get_best_paths() must be called after the main work loop
@@ -353,11 +353,11 @@ bqe.init_data = () => {
                         for (const entry_dir_ch in arrivals) {
                             const entry_dir = Direction.from(entry_dir_ch);
                             const arrival = arrivals[entry_dir_ch];
-                            const adjusted_cost_budget = (!exit_dir || exit_dir === entry_dir) ? cost_budget : cost_budget-bqe.turn_cost;
+                            const adjusted_cost_budget = (!exit_dir || exit_dir === entry_dir) ? cost_budget : cost_budget-bqx.turn_cost;
                             if (arrival && arrival.cost === adjusted_cost_budget) {
-                                const prior_cell = bqe.cell_toward(walk_cell, entry_dir.back);
+                                const prior_cell = bqx.cell_toward(walk_cell, entry_dir.back);
                                 if (can_occupy(prior_cell)) {
-                                    const new_cost_budget = adjusted_cost_budget - bqe.move_cost;
+                                    const new_cost_budget = adjusted_cost_budget - bqx.move_cost;
                                     const new_path = [ { cell: walk_cell, entry_dir }, ...path_so_far ];
                                     const new_walked_cells = walked_cells.union(new Set([ walk_cell ]));
                                     walk(prior_cell, new_cost_budget, entry_dir, new_path, new_walked_cells);
@@ -380,12 +380,12 @@ bqe.init_data = () => {
                     for (const arrival_dir_ch in walk_cell.arrivals) {
                         const arrival_dir = Direction.from(arrival_dir_ch);
                         if (arrival_dir !== walk_dir.back) {
-                            const new_arrival_cost = walk_cost + ((arrival_dir === walk_dir) ? bqe.move_cost : bqe.turn_cost+bqe.move_cost);
+                            const new_arrival_cost = walk_cost + ((arrival_dir === walk_dir) ? bqx.move_cost : bqx.turn_cost+bqx.move_cost);
                             const arrival = walk_cell.arrivals[arrival_dir_ch];
                             if (arrival && new_arrival_cost < arrival.cost) {  // will not be populating any arrivals that are not already populated
                                 arrival.cost = new_arrival_cost;  // change to new lower cost
                                 // changed; continue if possible
-                                const next_cell = bqe.cell_toward(walk_cell, arrival_dir);
+                                const next_cell = bqx.cell_toward(walk_cell, arrival_dir);
                                 if (can_occupy(next_cell)) {
                                     walk(next_cell, arrival_dir, new_arrival_cost, new_walked_cells);
                                 }
@@ -405,7 +405,7 @@ bqe.init_data = () => {
                 if (!prior_arrival || cost < prior_arrival.cost) {
                     // found at least one direction where this arrival is advantageous
                     keep_arrival = true;
-                    if (can_occupy(bqe.cell_toward(new_cell, dir.back))) {  // make sure we could have come from that direction
+                    if (can_occupy(bqx.cell_toward(new_cell, dir.back))) {  // make sure we could have come from that direction
                         // store the new lower cost in arrival for direction dir
                         // note that recorded costs in cell.arrivals only ever go down...
                         new_cell.arrivals[dir.ch] = { cost };
@@ -415,8 +415,8 @@ bqe.init_data = () => {
             };
 
             check_new_arrival_for_dir(new_entry_dir,       new_cost);
-            check_new_arrival_for_dir(new_entry_dir.left,  new_cost+bqe.turn_cost);
-            check_new_arrival_for_dir(new_entry_dir.right, new_cost+bqe.turn_cost);
+            check_new_arrival_for_dir(new_entry_dir.left,  new_cost+bqx.turn_cost);
+            check_new_arrival_for_dir(new_entry_dir.right, new_cost+bqx.turn_cost);
 
             return keep_arrival;
         };
@@ -482,12 +482,12 @@ bqe.init_data = () => {
                 const new_visited_cells = visited_cells.union(new Set([ cell ]));
 
                 const try_to_extend_path_in_dir = (new_entry_dir) => {
-                    const new_cell = bqe.cell_toward(cell, new_entry_dir);
-                    if (new_cell && !new_visited_cells.has(new_cell) && new_cell.ch !== bqe.wall_cell_ch) {
-                        const cost_this_step = (new_entry_dir === entry_dir) ? bqe.move_cost : bqe.turn_cost+bqe.move_cost;
+                    const new_cell = bqx.cell_toward(cell, new_entry_dir);
+                    if (new_cell && !new_visited_cells.has(new_cell) && new_cell.ch !== bqx.wall_cell_ch) {
+                        const cost_this_step = (new_entry_dir === entry_dir) ? bqx.move_cost : bqx.turn_cost+bqx.move_cost;
                         const new_cost = cost + cost_this_step;
                         // check if this path has any hope of beating the current best (if any)
-                        const new_mrc = bqe.calculate_minimum_remaining_cost(new_cell, new_entry_dir);
+                        const new_mrc = bqx.calculate_minimum_remaining_cost(new_cell, new_entry_dir);
                         if (!best_solution || new_cost + new_mrc <= best_solution.cost) {
                             // finally, check that no earlier arrival already beats this path
                             if (check_new_arrival(new_cell, new_entry_dir, new_cost)) {
@@ -512,22 +512,22 @@ bqe.init_data = () => {
             };
     };
 
-    bqe.path_from_dir_ch_string = (dir_ch_string) => {  // returns a path that does not contain cell members, only entry_dir members
+    bqx.path_from_dir_ch_string = (dir_ch_string) => {  // returns a path that does not contain cell members, only entry_dir members
         return Array.from(dir_ch_string).map(dir_ch => ({ entry_dir: Direction.from(dir_ch) }));
     };
 
-    bqe.cost_from_path = (path) => {
+    bqx.cost_from_path = (path) => {
         let cost = 0;
         for (let i = 1; i < path.length; i++) {
             let prior_dir = path[i-1].entry_dir;
             let entry_dir = path[i].entry_dir;
-            cost += bqe.move_cost;
+            cost += bqx.move_cost;
             if (prior_dir) {
                 if (prior_dir !== entry_dir) {
                     if (prior_dir.left !== entry_dir && prior_dir.right !== entry_dir) {
                         throw new TypeError(`prior entry dir "${prior_dir.ch}" is neither left nor right of current entry dir "${entry_dir.ch}" at index ${i}`);
                     }
-                    cost += bqe.turn_cost;
+                    cost += bqx.turn_cost;
                 }
             }
             prior_dir = entry_dir;
@@ -535,16 +535,16 @@ bqe.init_data = () => {
         return cost;
     };
 
-    bqe.cost_from_dir_ch_string = (dir_ch_string) => {
-        return bqe.cost_from_path(bqe.path_from_dir_ch_string(dir_ch_string));
+    bqx.cost_from_dir_ch_string = (dir_ch_string) => {
+        return bqx.cost_from_path(bqx.path_from_dir_ch_string(dir_ch_string));
     };
 
-    bqe.format_path = (path) => {
+    bqx.format_path = (path) => {
         return path.map(({ cell, entry_dir }) => `${cell.ch} ${entry_dir.ch} (${cell.r},${cell.c})`).join('\n');
     };
 
-    bqe.get_cells_with_stored_solutions = () => {
-        return bqe.map
+    bqx.get_cells_with_stored_solutions = () => {
+        return bqx.map
             .flatMap(row => {
                 return row.filter(({ best_solution_from_here }) => best_solution_from_here);
             });
@@ -638,13 +638,13 @@ if (typeof input_data_example_to_use === 'number') {
     if (!(input_data_example_to_use in input_data_examples)) {
         throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
     }
-    bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+    bqx.input_data = input_data_examples[input_data_example_to_use].trim();
 }
 
-bqe.init_data();
+bqx.init_data();
 
-await ocx.render_text(`The map (${bqe.rows}x${bqe.cols}):`);
-await bqe.render_map(ocx);
+await ocx.render_text(`The map (${bqx.rows}x${bqx.cols}):`);
+await bqx.render_map(ocx);
 
 const trace_label = ocx.create_child({
     tag: 'label',
@@ -710,13 +710,13 @@ const trace_fn = async (data) => {
 };
 waiting_element.scrollIntoView();
 
-bqe.best_solution = await bqe.find_best_maze_solution({
+bqx.best_solution = await bqx.find_best_maze_solution({
     trace_fn,
     trace_mod,
 });
 
-const answer_markdown = bqe.best_solution
-      ? `The best score for getting through the maze is **${bqe.best_solution.cost}**.`
+const answer_markdown = bqx.best_solution
+      ? `The best score for getting through the maze is **${bqx.best_solution.cost}**.`
       : `NO SOLUTIONS FOUND!`;
 
 const answer_element = await ocx.markdown(`
@@ -726,21 +726,21 @@ ${answer_markdown}
 
 const show_all_best_paths = false;
 
-if (bqe.best_solution) {
+if (bqx.best_solution) {
     await println();
     if (show_all_best_paths) {
-        await println(`The ${bqe.best_solution.best_paths.length} best path${bqe.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqe.best_solution.cost}:`);
-        for (let i = 0; i < bqe.best_solution.best_paths.length; i++) {
-            await println(`${i+1}. ${bqe.best_solution.best_paths[i].map(({ entry_dir }) => entry_dir.ch).join('')}`);
+        await println(`The ${bqx.best_solution.best_paths.length} best path${bqx.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqx.best_solution.cost}:`);
+        for (let i = 0; i < bqx.best_solution.best_paths.length; i++) {
+            await println(`${i+1}. ${bqx.best_solution.best_paths[i].map(({ entry_dir }) => entry_dir.ch).join('')}`);
         }
     } else {
-        await println(`There ${bqe.best_solution.best_paths.length} best path${bqe.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqe.best_solution.cost}.`);
+        await println(`There ${bqx.best_solution.best_paths.length} best path${bqx.best_solution.best_paths.length === 1 ? '' : 's'} with a best score of ${bqx.best_solution.cost}.`);
         await println(`Here is the first best path:`);
-        await println(`${bqe.best_solution.best_paths[0].map(({ entry_dir }) => entry_dir.ch).join('')}`);
+        await println(`${bqx.best_solution.best_paths[0].map(({ entry_dir }) => entry_dir.ch).join('')}`);
     }
     await println();
     await ocx.render_text(`The final map with the first best path shown:`);
-    await bqe.render_map(ocx, bqe.best_solution.best_paths[0]);
+    await bqx.render_map(ocx, bqx.best_solution.best_paths[0]);
 }
 
 // scroll answer_element into view, but after a delay to let other rendering finish
@@ -813,7 +813,7 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-0f6276a7-6146-448d-803c-0623864d97e7" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-const answer = new Set((bqe?.best_solution?.best_paths ?? [ [] ]).flatMap(path => path.map(({ cell }) => cell))).size;
+const answer = new Set((bqx?.best_solution?.best_paths ?? [ [] ]).flatMap(path => path.map(({ cell }) => cell))).size;
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two

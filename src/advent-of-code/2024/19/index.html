@@ -83,7 +83,7 @@ if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
 
-bqe.input_data = input_data.trim();
+bqx.input_data = input_data.trim();
 </bq-cell>
 <bq-cell id="id-22b84bb3-c044-45e6-a530-ab8d4a007c8f" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -122,7 +122,7 @@ const colors = {
 };
 
 const init_data = () => {
-    const input_lines = bqe.input_data.split('\n');
+    const input_lines = bqx.input_data.split('\n');
 
     if (input_lines.length < 3) {
         throw new TypeError('too few input lines');
@@ -393,7 +393,7 @@ const init_data = () => {
     });
 };
 
-globalThis.bqe = bqe;//!!!
+globalThis.bqx = bqx;//!!!
 vars({
     data_output_options, solution_output_options,
     colors,
@@ -423,7 +423,7 @@ const set_test_dataset = (input_data_example_to_use) => {
         if (!(input_data_example_to_use in input_data_examples)) {
             throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
         }
-        bqe.input_data = input_data_examples[input_data_example_to_use].trim();
+        bqx.input_data = input_data_examples[input_data_example_to_use].trim();
     }
 };
 
@@ -431,9 +431,9 @@ const set_test_dataset = (input_data_example_to_use) => {
 //----------------------------------------------------------------------
 
 set_test_dataset(undefined);
-bqe.init_data();
+bqx.init_data();
 
-const solution_ocx = ocx.create_child_ocx(bqe.solution_output_options);
+const solution_ocx = ocx.create_child_ocx(bqx.solution_output_options);
 
 await ocx.print__();
 
@@ -445,7 +445,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqe.create_trace_mechanism(ocx, {
+} = bqx.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       10,
@@ -457,10 +457,10 @@ const trace_mod = 10;
 
 sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
-bqe.results = {};
-for (const design of bqe.designs) {
-    const result = await bqe.count_design_realizations(design, trace_fn, trace_mod);
-    bqe.results[design] = result;
+bqx.results = {};
+for (const design of bqx.designs) {
+    const result = await bqx.count_design_realizations(design, trace_fn, trace_mod);
+    bqx.results[design] = result;
     const indicator = (typeof result === 'undefined') ? 'XXX:' : ((result > 0) ? 'YES:' : 'NO: ');
     await solution_ocx.printf(`%s %-80s\n`, indicator, design);
 
@@ -473,13 +473,13 @@ for (const design of bqe.designs) {
         break;
     }
 }
-const success_count = Object.values(bqe.results).filter(result => !!result).length;
+const success_count = Object.values(bqx.results).filter(result => !!result).length;
 
 vars({ get_stopped, success_count });
 
 const answer_element = await ocx.markdown(`
 # Answer to Part One
-Of the ${bqe.designs.length} design${bqe.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
+Of the ${bqx.designs.length} design${bqx.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
 ${get_stopped() ? '* However, the search process was stopped before all were tested' : ''}
 `);
 
@@ -542,9 +542,9 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-1184f9a6-deb3-41df-aefe-52554c1200a8" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-const answer_markup = bqe.get_stopped()
+const answer_markup = bqx.get_stopped()
       ? '**The calculation was stopped before the answer was computed.**'
-      : `The sum of the different ways of making each design is **${Object.values(bqe.results).reduce((total, r) => total+r)}**.`
+      : `The sum of the different ways of making each design is **${Object.values(bqx.results).reduce((total, r) => total+r)}**.`
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
