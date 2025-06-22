@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v0.2/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v10.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-c73d6204-9adb-4e41-89f7-b95228e64286" data-type="javascript">const day_number = 24;
@@ -166,8 +166,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqx.input_data = input_data.trim();
-globalThis.bqx = bqx;//!!!
+bqv.input_data = input_data.trim();
+globalThis.bqv = bqv;//!!!
 </bq-cell>
 <bq-cell id="id-97cbb4a7-dc9b-4626-9d72-7c586b867686" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -306,7 +306,7 @@ const make_wire_name = (prefix, wire_number, digit_count) => {
 const create_configuration = (test_data_set=null, configuration_options=null) => {
     keepalive();
 
-    const input_data = bqx.input_data;
+    const input_data = bqv.input_data;
 
     const {
         defer_set_inputs  = false,  // can use go() to perform later
@@ -707,13 +707,13 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqx.create_trace_mechanism(ocx, {
+} = bqv.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             32,
 });
-bqx.trace_fn = trace_fn;//!!!
+bqv.trace_fn = trace_fn;//!!!
 
 await trace_fn('--- computation trace begin ---', true);
 sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
@@ -722,7 +722,7 @@ const trace_message_outputter = trace_fn
       ? async (message) => { await trace_fn(message, true); }  // hopefully the async outputter methods will serialize correctly....
       : undefined;
 
-bqx.init_data(null, {
+bqv.init_data(null, {
     trace_message_enabled: true,
     trace_message_outputter,
 });
@@ -730,12 +730,12 @@ bqx.init_data(null, {
 const {
     testing,
     nodes,
-} = bqx;
+} = bqv;
 
-const answer = await bqx.get_output_wires_number();
+const answer = await bqv.get_output_wires_number();
 
 const answer_element = await ocx.markdown(`
-# Answer to Part One${bqx.testing ? ' (TESTING)' : ''}
+# Answer to Part One${bqv.testing ? ' (TESTING)' : ''}
 The circuit outputs the number **${answer}** (in decimal).
 `);
 
@@ -831,17 +831,17 @@ await ccx.render_text(description, {
 <bq-cell id="id-007e8abf-2e6a-4214-8c64-de60ff0fd8d6" data-type="javascript" class="show-in-presentation">// define functions for exploring gate nets
 
 // options: {
-//     configuration     = bqx.current_configuration,
+//     configuration     = bqv.current_configuration,
 //     gate_initializers = configuration.get_gate_initializers(),  // (with configuration as defined above)
 //     canonical         = false,
 // }
 // If gate_initializers is specified, then if it was created from a different
-// configuration than bqx.current_configuration, that different configuration
+// configuration than bqv.current_configuration, that different configuration
 // must also be given.
 //
 // returns mapping: wire_name -> gate_net  // (does not include input wire names)
 const create_mapping_wire_name_to_gate_net = (options=null) => {
-    const configuration = options?.configuration ?? bqx.current_configuration;
+    const configuration = options?.configuration ?? bqv.current_configuration;
 
     const gate_initializers = options?.gate_initializers
           ? Object.fromEntries( Object.entries(options.gate_initializers).map(([ output_name, initializer ]) => [ output_name, { ...initializer } ]) )  // make a copy
@@ -978,25 +978,25 @@ const format_gate_net = (gate_net, options=null) => {
 };
 
 // options: {
-//     configuration                 = bqx.current_configuration,
+//     configuration                 = bqv.current_configuration,
 //     mapping_wire_name_to_gate_net = create_mapping_wire_name_to_gate_net(options),
 //     gate_initializers             = configuration.get_gate_initializers(),  // if create_mapping_wire_name_to_gate_net() called (with configuration as defined above)
 //     canonical                     = false,                                  // if create_mapping_wire_name_to_gate_net() called
 //     indent_size                   = 2,                                      // for format_gate_net()
 // }
 // If gate_initializers or mapping_wire_name_to_gate_net is specified, then if
-// those were created from a different configuration than bqx.current_configuration,
+// those were created from a different configuration than bqv.current_configuration,
 // that different configuration must also be given.
 //
 // Example with different configuration
 // ------------------------------------
-// const configuration = bqx.create_configuration(0);
+// const configuration = bqv.create_configuration(0);
 // const gate_initializers = configuration.get_gate_initializers();
-// const mapping_wire_name_to_gate_net = bqx.create_mapping_wire_name_to_gate_net({ configuration, gate_initializers, canonical: true });
-// const console.log(bqx.format_entire_gate_net({ configuration, mapping_wire_name_to_gate_net }));
+// const mapping_wire_name_to_gate_net = bqv.create_mapping_wire_name_to_gate_net({ configuration, gate_initializers, canonical: true });
+// const console.log(bqv.format_entire_gate_net({ configuration, mapping_wire_name_to_gate_net }));
 const format_entire_gate_net = (options=null) => {
     const {
-        configuration = bqx.current_configuration,
+        configuration = bqv.current_configuration,
     } = (options ?? {});
     const {
         mapping_wire_name_to_gate_net = create_mapping_wire_name_to_gate_net({ ...options, configuration }),
@@ -1017,7 +1017,7 @@ vars({
 <bq-cell id="id-1a83ed94-a673-4efe-825c-a8bf4eaed772" data-type="javascript" class="show-in-presentation">// display gate net to help understand its structure
 
 const show_gate_net = async (ocx, configuration, title='Current Gate Net') => {
-    const formatted_gate_net = bqx.format_entire_gate_net({ configuration, canonical: true });
+    const formatted_gate_net = bqv.format_entire_gate_net({ configuration, canonical: true });
 
     await ocx.markdown(`# ${title}`);
 
@@ -1037,7 +1037,7 @@ const show_gate_net = async (ocx, configuration, title='Current Gate Net') => {
     await gate_net_ocx.render_text(formatted_gate_net);
 };
 
-const configuration = bqx.create_configuration();
+const configuration = bqv.create_configuration();
 await show_gate_net(ocx, configuration);
 
 keepalive();
@@ -1094,8 +1094,8 @@ const special_cases_are_ok = () => {
         defer_set_inputs:      true,
     };
 
-    const configuration = bqx.create_configuration(test_data_set, configuration_options);
-    const gate_net_mapping = bqx.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
+    const configuration = bqv.create_configuration(test_data_set, configuration_options);
+    const gate_net_mapping = bqv.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
 
     // special case: n === 0: z[0] = { x[0] XOR y[0] }
     const gn00 = gate_net_mapping.z00;
@@ -1124,7 +1124,7 @@ const special_cases_are_ok = () => {
     const input2_names = configuration.get_input2_wire_names();
     const output_names = configuration.get_output_wire_names();
     for (const zn of output_names) {
-        const n = bqx.get_wire_number_from_wire_name(zn);
+        const n = bqv.get_wire_number_from_wire_name(zn);
         const xn = configuration.make_input1_wire_name(n);
         const yn = configuration.make_input2_wire_name(n);
         const has_xn = input1_names.includes(xn);
@@ -1181,8 +1181,8 @@ const defect_recognizer = (options=null) => {
         gate_output_swaps,
     };
 
-    const configuration = bqx.create_configuration(test_data_set, configuration_options);
-    const gate_net_mapping = bqx.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
+    const configuration = bqv.create_configuration(test_data_set, configuration_options);
+    const gate_net_mapping = bqv.create_mapping_wire_name_to_gate_net({ configuration, canonical: true });
 
     // The special cases have already been verified above.
     // Check the remaining general cases.
@@ -1191,7 +1191,7 @@ const defect_recognizer = (options=null) => {
           .filter(name => !special_cases_verified.includes(name));
 
     for (const zn of remaining_output_wire_names_to_check) {
-        const n = bqx.get_wire_number_from_wire_name(zn);
+        const n = bqv.get_wire_number_from_wire_name(zn);
         const xn = configuration.make_input1_wire_name(n);
         const yn = configuration.make_input2_wire_name(n);
         const xn_1 = configuration.make_input1_wire_name(n-1);
@@ -1301,7 +1301,7 @@ for (let i = 0; i < 10; i++) {
     // new inputs and getting an output number more than once!!!
 
     // This should now be a working gate configuration for the adder circuit:
-    const configuration = bqx.create_configuration(test_data_set, {
+    const configuration = bqv.create_configuration(test_data_set, {
         trace_message_enabled: false,
         defer_set_inputs:      true,
         gate_output_swaps,
@@ -1335,7 +1335,7 @@ if (failure_count > 0) {
 const answer = gate_output_swaps.flat(1).toSorted().join(',');
 
 const answer_element = await ocx.markdown(`
-# Answer to Part Two${bqx.testing ? ' (TESTING)' : ''}
+# Answer to Part Two${bqv.testing ? ' (TESTING)' : ''}
 The sorted, comma-separated swapped gate wire names is **"${answer}"**.
 `);
 sleep(0.1).then(() => answer_element.scrollIntoView());

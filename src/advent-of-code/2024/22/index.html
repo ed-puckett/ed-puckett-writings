@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v0.2/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v10.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-c0a0870e-a467-448a-a696-a8e89542619f" data-type="javascript">const day_number = 22;
@@ -99,8 +99,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqx.input_data = input_data.trim();
-globalThis.bqx = bqx;//!!!
+bqv.input_data = input_data.trim();
+globalThis.bqv = bqv;//!!!
 </bq-cell>
 <bq-cell id="id-14b908c5-5c4e-4955-96b4-60a10b303fb7" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -117,7 +117,7 @@ const solution_output_options = {
     },
 };
 
-const input_lines = bqx.input_data.split('\n');
+const input_lines = bqv.input_data.split('\n');
 
 const secrets = [];
 for (let line_index = 0; line_index < input_lines.length; line_index++) {
@@ -160,7 +160,7 @@ const mxf = (m, s) => {
 };
 
 if (test) {
-    bqx.secrets = [
+    bqv.secrets = [
         1,
         10,
         100,
@@ -180,7 +180,7 @@ vars({
 const {
     secrets,
     processing_times_per_day,
-} = bqx;
+} = bqv;
 
 const answer = secrets
       .reduce(
@@ -286,7 +286,7 @@ const {
     monkey_delta_memory_size,
     xf,
     mxf,
-} = bqx;
+} = bqv;
 
 // returns { price_matrix, price_for_sequence }
 // price_for_matrix: array of buyer_data, one for each buyer
@@ -501,14 +501,14 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqx.create_trace_mechanism(ocx, {
+} = bqv.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       1,
     height:             30,
     prefix_width:       7,
 });
-bqx.trace_fn = trace_fn;//!!!
+bqv.trace_fn = trace_fn;//!!!
 
 await trace_fn('--- computation trace begin ---', true)
 
@@ -522,7 +522,7 @@ const {
     get_delta_windows,
     find_best_delta_window,
     find_best_delta_window_optimized,
-} = bqx;
+} = bqv;
 
 const options = {
     trace_fn,

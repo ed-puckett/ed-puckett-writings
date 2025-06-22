@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v0.2/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v10.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-ba454bb1-8a7d-4e38-85ee-16ee20b1bda6" data-type="javascript">const day_number = 19;
@@ -83,7 +83,7 @@ if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
 
-bqx.input_data = input_data.trim();
+bqv.input_data = input_data.trim();
 </bq-cell>
 <bq-cell id="id-22b84bb3-c044-45e6-a530-ab8d4a007c8f" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -122,7 +122,7 @@ const colors = {
 };
 
 const init_data = () => {
-    const input_lines = bqx.input_data.split('\n');
+    const input_lines = bqv.input_data.split('\n');
 
     if (input_lines.length < 3) {
         throw new TypeError('too few input lines');
@@ -393,7 +393,7 @@ const init_data = () => {
     });
 };
 
-globalThis.bqx = bqx;//!!!
+globalThis.bqv = bqv;//!!!
 vars({
     data_output_options, solution_output_options,
     colors,
@@ -423,7 +423,7 @@ const set_test_dataset = (input_data_example_to_use) => {
         if (!(input_data_example_to_use in input_data_examples)) {
             throw new TypeError(`** misconfigured input_data_example_to_use: ${input_data_example_to_use}`);
         }
-        bqx.input_data = input_data_examples[input_data_example_to_use].trim();
+        bqv.input_data = input_data_examples[input_data_example_to_use].trim();
     }
 };
 
@@ -431,9 +431,9 @@ const set_test_dataset = (input_data_example_to_use) => {
 //----------------------------------------------------------------------
 
 set_test_dataset(undefined);
-bqx.init_data();
+bqv.init_data();
 
-const solution_ocx = ocx.create_child_ocx(bqx.solution_output_options);
+const solution_ocx = ocx.create_child_ocx(bqv.solution_output_options);
 
 await ocx.print__();
 
@@ -445,7 +445,7 @@ const {
     stop,
     get_stopped,
     get_trace_iterations,
-} = bqx.create_trace_mechanism(ocx, {
+} = bqv.create_trace_mechanism(ocx, {
     trace_enabled:      true,
     trace_initially_on: true,
     trace_fn_mod:       10,
@@ -457,10 +457,10 @@ const trace_mod = 10;
 
 sleep(0.1).then(() => trace_ocx?.element.scrollIntoView());
 
-bqx.results = {};
-for (const design of bqx.designs) {
-    const result = await bqx.count_design_realizations(design, trace_fn, trace_mod);
-    bqx.results[design] = result;
+bqv.results = {};
+for (const design of bqv.designs) {
+    const result = await bqv.count_design_realizations(design, trace_fn, trace_mod);
+    bqv.results[design] = result;
     const indicator = (typeof result === 'undefined') ? 'XXX:' : ((result > 0) ? 'YES:' : 'NO: ');
     await solution_ocx.printf(`%s %-80s\n`, indicator, design);
 
@@ -473,13 +473,13 @@ for (const design of bqx.designs) {
         break;
     }
 }
-const success_count = Object.values(bqx.results).filter(result => !!result).length;
+const success_count = Object.values(bqv.results).filter(result => !!result).length;
 
 vars({ get_stopped, success_count });
 
 const answer_element = await ocx.markdown(`
 # Answer to Part One
-Of the ${bqx.designs.length} design${bqx.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
+Of the ${bqv.designs.length} design${bqv.designs.length === 1 ? '' : 's'}, **${success_count}** ${success_count === 1 ? 'was' : 'were'} found to be possible.
 ${get_stopped() ? '* However, the search process was stopped before all were tested' : ''}
 `);
 
@@ -542,9 +542,9 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-1184f9a6-deb3-41df-aefe-52554c1200a8" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-const answer_markup = bqx.get_stopped()
+const answer_markup = bqv.get_stopped()
       ? '**The calculation was stopped before the answer was computed.**'
-      : `The sum of the different ways of making each design is **${Object.values(bqx.results).reduce((total, r) => total+r)}**.`
+      : `The sum of the different ways of making each design is **${Object.values(bqv.results).reduce((total, r) => total+r)}**.`
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two

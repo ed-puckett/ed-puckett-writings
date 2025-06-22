@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v0.2/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v10.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-1f3b3f41-4e40-47ca-ad55-28c6b7d49c26" data-type="javascript">const day_number = 25;
@@ -144,8 +144,8 @@ const { input_data } = await import_local('./input-data.js');
 if (typeof input_data !== 'string') {
     throw new TypeError('input_data is not a string');
 }
-bqx.input_data = input_data.trim();
-globalThis.bqx = bqx;//!!!
+bqv.input_data = input_data.trim();
+globalThis.bqv = bqv;//!!!
 </bq-cell>
 <bq-cell id="id-52e8854d-6993-4b8a-9c38-b27f3d09f932" data-type="javascript" class="show-in-presentation">// utility definitions
 
@@ -162,7 +162,7 @@ const empty_line_re  = new RegExp(`^[${empty_cell_char}]{${cols_per_row}}$`);  /
 const create_configuration = (test_data_set=null) => {
     keepalive();
 
-    const input_data = bqx.input_data;
+    const input_data = bqv.input_data;
 
     // parse input
     let testing;
@@ -325,14 +325,14 @@ vars({
 <bq-cell id="id-4073518a-0a06-48e2-8ec2-a6cd720be556" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part One
 keepalive();
 
-bqx.init_data();
+bqv.init_data();
 
 const {
     cols_per_row,
     rows_per_schematic,
     get_locks,
     get_keys,
-} = bqx;
+} = bqv;
 
 
 const locks = get_locks();
@@ -348,7 +348,7 @@ for (const lock of locks) {
 }
 
 const answer_element = await ocx.markdown(`
-# Answer to Part One${bqx.testing ? ' (TESTING)' : ''}
+# Answer to Part One${bqv.testing ? ' (TESTING)' : ''}
 There are **${fits}** unique key/lock pairs that fit together without overlapping.
 `);
 

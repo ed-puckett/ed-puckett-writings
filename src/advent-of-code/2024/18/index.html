@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-eval>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v0.2/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v10.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-f1cb0c53-b379-4aea-b818-1780109426ad" data-type="javascript">const day_number = 18;
@@ -104,16 +104,16 @@ if (typeof input_data !== 'string') {
 }
 
 // values given in problem
-bqx.rows = 71;
-bqx.cols = 71;
-bqx.bytes_to_simulate = 1024;
-bqx.input_data = input_data.trim();
+bqv.rows = 71;
+bqv.cols = 71;
+bqv.bytes_to_simulate = 1024;
+bqv.input_data = input_data.trim();
 </bq-cell>
 <bq-cell id="id-7c301c61-48fa-4465-b0db-b3eb208daf5c" data-type="javascript" class="show-in-presentation">// utility definitions
 
 const {
     Direction,
-} = bqx;
+} = bqv;
 
 const memory_output_options = {
     style: {
@@ -149,7 +149,7 @@ const permissable_memory_chars    = [ empty_cell_ch, corrupt_cell_ch ];
 const permissable_memory_chars_re = new RegExp(`^[${permissable_memory_chars.join('')}]*$`);
 
 const init_data = () => {
-    const input_lines = bqx.input_data.split('\n');
+    const input_lines = bqv.input_data.split('\n');
 
     const input_byte_coordinates = [];  // array of [ r, c ]
     for (let line_index = 0; line_index < input_lines.length; line_index++) {
@@ -160,15 +160,15 @@ const init_data = () => {
         }
         const x = +match[1];
         const y = +match[2];
-        if (x < 0 || x >= bqx.cols || y < 0 || y >= bqx.rows) {
+        if (x < 0 || x >= bqv.cols || y < 0 || y >= bqv.rows) {
             throw new TypeError(`input data ${x},${y} is out of range`);
         }
         input_byte_coordinates.push([ y, x ]);  // [ r, c ]
     }
 
-    // an array of bqx.rows, each row an array bqx.cols { r, c, ch } elements
-    const memory = new Array(bqx.rows).fill().map((_, r) => {
-        return new Array(bqx.cols).fill().map((_, c) => {
+    // an array of bqv.rows, each row an array bqv.cols { r, c, ch } elements
+    const memory = new Array(bqv.rows).fill().map((_, r) => {
+        return new Array(bqv.cols).fill().map((_, c) => {
             return {
                 r,
                 c,
@@ -182,7 +182,7 @@ const init_data = () => {
     }
 
     const set_cell = (r, c, ch) => {
-        if (r < 0 || r >= bqx.rows || c < 0 || c >= bqx.cols) {
+        if (r < 0 || r >= bqv.rows || c < 0 || c >= bqv.cols) {
             throw new TypeError(`(r,c) = (${r},${r}) is out of range`);
         }
         memory[r][c].ch = ch;
@@ -191,7 +191,7 @@ const init_data = () => {
     const the_start_dir = Direction.E;
 
     const the_start_cell = get_cell(0, 0);
-    const the_end_cell   = get_cell(bqx.rows-1, bqx.cols-1);
+    const the_end_cell   = get_cell(bqv.rows-1, bqv.cols-1);
 
     const move_cost = 1;
     const turn_cost = 0;
@@ -277,8 +277,8 @@ const init_data = () => {
         let best_solution;  // undefined if none found yet, otherwise { cost, path }
 
         // initialize state for each cell
-        for (let r = 0; r < bqx.rows; r++) {
-            for (let c = 0; c < bqx.cols; c++) {
+        for (let r = 0; r < bqv.rows; r++) {
+            for (let c = 0; c < bqv.cols; c++) {
                 const cell = get_cell(r, c);
                 // cell.arrivals maps each direction ch to:
                 // - undefined if no path has entered with that entry_dir before
@@ -427,7 +427,7 @@ const init_data = () => {
     });
 };
 
-globalThis.bqx = bqx;//!!!
+globalThis.bqv = bqv;//!!!
 vars({
     memory_output_options, solution_output_options,
     empty_cell_ch, corrupt_cell_ch,
@@ -479,18 +479,18 @@ if (typeof input_data_example_to_use === 'number') {
     vars({ rows, cols, bytes_to_simulate, input_data: input_data.trim() });
 }
 
-bqx.init_data();
+bqv.init_data();
 
-//bqx.bytes_to_simulate = 3014;//!!!
-bqx.simulate_bytes(bqx.bytes_to_simulate);
+//bqv.bytes_to_simulate = 3014;//!!!
+bqv.simulate_bytes(bqv.bytes_to_simulate);
 
-await ocx.println(`The memory (${bqx.rows}x${bqx.cols}) after ${bqx.bytes_to_simulate} bytes have dropped:`);
-await bqx.render_memory(ocx);
+await ocx.println(`The memory (${bqv.rows}x${bqv.cols}) after ${bqv.bytes_to_simulate} bytes have dropped:`);
+await bqv.render_memory(ocx);
 
-bqx.best_solution = await bqx.find_best_maze_solution();
+bqv.best_solution = await bqv.find_best_maze_solution();
 
-const answer_markdown = bqx.best_solution
-      ? `The best score for getting through the maze is **${bqx.best_solution.cost}**.`
+const answer_markdown = bqv.best_solution
+      ? `The best score for getting through the maze is **${bqv.best_solution.cost}**.`
       : `NO SOLUTIONS FOUND!`;
 
 const answer_element = await ocx.markdown(`
@@ -550,14 +550,14 @@ await ccx.render_text(description, {
 </bq-cell>
 <bq-cell id="id-b2e4ae00-d28e-4f30-8852-763819f030bf" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
 
-let min = 1024, max = bqx.input_byte_coordinates.length
+let min = 1024, max = bqv.input_byte_coordinates.length
 while (min !== max) {
 
     const mid = Math.trunc((min + max) / 2);
 
-    bqx.init_data();
-    bqx.simulate_bytes(mid);
-    if (await bqx.find_best_maze_solution()) {
+    bqv.init_data();
+    bqv.simulate_bytes(mid);
+    if (await bqv.find_best_maze_solution()) {
         // found a solution, need to increase
         min = mid + 1;
     } else {
@@ -568,7 +568,7 @@ while (min !== max) {
 }
 
 const first_failure_coordinates_count = min;
-const first_failure_coordinates       = bqx.input_byte_coordinates[first_failure_coordinates_count-1];
+const first_failure_coordinates       = bqv.input_byte_coordinates[first_failure_coordinates_count-1];
 
 const answer_element = await ocx.markdown(`
 # Answer to Part Two
