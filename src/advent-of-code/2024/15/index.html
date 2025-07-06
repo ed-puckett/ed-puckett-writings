@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-39749fff-85f2-4585-8d36-7810277ad4ad" data-type="javascript">const day_number = 15;
@@ -264,7 +264,7 @@ The lanternfish would like to know the sum of all boxes' GPS coordinates after t
 Predict the motion of the robot and boxes in the warehouse. After the robot is finished moving, what is the sum of all boxes' GPS coordinates?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -439,7 +439,7 @@ this.init_data = () => {
     };
 
     this.render_map = async (ocx) => {
-        return ocx.render_text(this.map.map(row => row.join('')).join('\n'), this.map_output_options);
+        return ocx.print(this.map.map(row => row.join('')).join('\n'), this.map_output_options);
     };
 
     this.gps_coordinate = (r, c) => (100*r + c);
@@ -478,21 +478,21 @@ if (use_test_data) {
 
 this.init_data();
 
-await ocx.render_text(`The initial map (${this.rows}x${this.cols}):`);
+await ocx.print(`The initial map (${this.rows}x${this.cols}):`);
 await this.render_map(ocx);
 
 for (const dir_ch of this.moves) {
     const moved = this.move_robot(dir_ch);
     if (use_test_data) {
         await ocx.println();
-        await ocx.render_text(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
+        await ocx.print(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
         await this.render_map(ocx);
     }
 }
 
 if (!use_test_data) {
     await ocx.println();
-    await ocx.render_text(`The final map:`);
+    await ocx.print(`The final map:`);
     await this.render_map(ocx);
 }
 
@@ -690,7 +690,7 @@ The sum of these boxes' GPS coordinates is 9021.
 Predict the motion of the robot and boxes in this new, scaled-up warehouse. What is the sum of all boxes' final GPS coordinates?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -803,7 +803,7 @@ this.init_data_wide = () => {
     // this.render_map() does not depend on this.rows or this.cols so it will
     // work for either the original or the widened map.
     this.render_map = async (ocx, map=this.map) => {
-        return ocx.render_text(map.map(row => row.join('')).join('\n'), this.map_output_options);
+        return ocx.print(map.map(row => row.join('')).join('\n'), this.map_output_options);
     };
 };</bq-cell>
 <bq-cell id="id-f561045c-52d5-49c4-bbd0-b240b2b501ff" data-type="javascript" class="show-in-presentation">// calculate and display the answer to Part Two
@@ -825,25 +825,25 @@ if (use_test_data) {
 
 this.init_data_wide();
 
-await ocx.render_text(`The original initial map:`);
+await ocx.print(`The original initial map:`);
 await this.render_map(ocx, this.original_map);
 
 await println();
-await ocx.render_text(`The initial widened map:`);
+await ocx.print(`The initial widened map:`);
 await this.render_map(ocx);
 
 for (const dir_ch of this.moves) {
     const moved = this.move_robot(dir_ch);
     if (use_test_data) {
         await ocx.println();
-        await ocx.render_text(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
+        await ocx.print(`Move ${dir_ch}${moved ? '' : ' (not possible)'}:`);
         await this.render_map(ocx);
     }
 }
 
 if (!use_test_data) {
     await ocx.println();
-    await ocx.render_text(`The final widened map:`);
+    await ocx.print(`The final widened map:`);
     await this.render_map(ocx);
 }
 

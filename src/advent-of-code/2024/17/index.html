@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-cd37e083-e721-48c7-a3c2-78219f79c8f0" data-type="javascript">const day_number = 17;
@@ -84,7 +84,7 @@ Your first task is to determine what the program is trying to output. To do this
 Using the information provided by the debugger, initialize the registers to the given values, then run the program. Once it halts, what do you get if you use commas to join the values it output into a single string?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -437,7 +437,7 @@ const instruction_output_ocx = ocx.create_child_ocx(bqv.information_output_optio
 
 const trace_outputter = async (instruction_info) => {
     await instruction_output_ocx.print__();
-    await instruction_output_ocx.render_text(instruction_info);
+    await instruction_output_ocx.print(instruction_info);
 }
 
 const result = await bqv.run_program(trace_outputter);
@@ -477,7 +477,7 @@ This program outputs a copy of itself if register A is instead initialized to 11
 What is the lowest positive initial value for register A that causes the program to output a copy of itself?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -800,7 +800,7 @@ ${answer_markup}
 if (solution_candidates.length > 1) {
     await ocx.println();
     await ocx.println('All the solutions sorted in ascending order:');
-    await ocx.render_text(
+    await ocx.print(
         solution_candidates
             .toSorted((a, b) => a-b)
             .map(N => {

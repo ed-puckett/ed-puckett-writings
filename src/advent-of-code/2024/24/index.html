@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-c73d6204-9adb-4e41-89f7-b95228e64286" data-type="javascript">const day_number = 24;
@@ -150,7 +150,7 @@ Combining the bits from all wires starting with z produces the binary number 001
 Simulate the system of gates and wires. What decimal number does it output on the wires starting with z?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -822,7 +822,7 @@ Of course, your actual system is much more complex than this, and the gates that
 Your system of gates and wires has four pairs of gates which need their output wires swapped - eight wires in total. Determine which four pairs of gates need their outputs swapped so that your system correctly performs addition; what do you get if you sort the names of the eight wires involved in a swap and then join those names with commas?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -1034,7 +1034,7 @@ const show_gate_net = async (ocx, configuration, title='Current Gate Net') => {
             border:                 '1px solid var(--theme-ou-rc)',
         },
     });
-    await gate_net_ocx.render_text(formatted_gate_net);
+    await gate_net_ocx.print(formatted_gate_net);
 };
 
 const configuration = bqv.create_configuration();

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-1f3b3f41-4e40-47ca-ad55-28c6b7d49c26" data-type="javascript">const day_number = 25;
@@ -132,7 +132,7 @@ So, in this example, the number of unique lock/key pairs that fit together witho
 Analyze your lock and key schematics. How many unique lock/key pairs fit together without overlapping in any column?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -397,7 +397,7 @@ If you'd like to see more things like this in the future, please consider suppor
 I've highlighted the easter eggs in each puzzle, just in case you missed any. Hover your mouse over them, and the easter egg will appear.
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

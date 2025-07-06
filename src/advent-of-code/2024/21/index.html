@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-ad75d5e4-4089-4d8f-894f-4bc56c7001ca" data-type="javascript">const day_number = 21;
@@ -118,7 +118,7 @@ In the above example, complexity of the five codes can be found by calculating 6
 Find the fewest number of button presses you'll need to perform in order to cause the robot in front of the door to type each code. What is the sum of the complexities of the five codes on your list?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -565,7 +565,7 @@ class KeypadDisplay {
                 color:               'var(--keypad-color-fg)',
             },
         });
-        await child_ocx.render_text(this.keypad.name, {
+        await child_ocx.print(this.keypad.name, {
             style: {
                 'font-weight': 'bold',
                 'font-size':   this.embedded ? 'small' : 'initial',
@@ -665,7 +665,7 @@ class RobotDisplay {
                 color:                      'var(--robot-display-color-fg)',
             },
         });
-        await child_ocx.render_text(this.robot.name, { style: { 'font-weight': 'bold' } });
+        await child_ocx.print(this.robot.name, { style: { 'font-weight': 'bold' } });
         const keypad_controls = await this.#keypad_display.render(child_ocx);
         const current_state_display_element = child_ocx.create_child_mapping({
             tag: 'label',
@@ -1145,7 +1145,7 @@ const create_simulator_ui = async (ocx, send_interval=0.05) => {
             color:              'var(--theme-ui-fg)',
         },
     });
-    await door_keypad_output_ocx.render_text('Door keypad output:', { style: { 'font-weight': 'bold' } });
+    await door_keypad_output_ocx.print('Door keypad output:', { style: { 'font-weight': 'bold' } });
     const door_keypad_output_element = await door_keypad_output_ocx.create_child({
         style: {
             'font-family':          'monospace',
@@ -2133,7 +2133,7 @@ const message_ocx = ocx.create_child_ocx({
     },
 });
 await message_ocx.print__();
-await message_ocx.render_text('Computing results', {
+await message_ocx.print('Computing results', {
     style: {
         'font-weight':   'bold',
         'font-size':     'large',
@@ -2247,7 +2247,7 @@ The door codes are the same this time around; only the number of robots and dire
 Find the fewest number of button presses you'll need to perform in order to cause the robot in front of the door to type each code. What is the sum of the complexities of the five codes on your list?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

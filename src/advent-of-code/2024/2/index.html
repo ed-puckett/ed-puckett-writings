@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-c65389d7-e3d5-4094-9931-ee8377f7a49f" data-type="javascript">const day_number = 2;
@@ -67,7 +67,7 @@ if (typeof input_data !== 'string') {
 this.input_data = input_data + '\n';  // newline to simplify loop termination later</bq-cell>
 <bq-cell id="id-0b28dbf2-321b-458f-92e2-970a120a8e1d" data-type="javascript" class="show-in-presentation">// display the input data
 await ocx.println('input data:');
-await ocx.render_text(this.input_data.trim(), {
+await ocx.print(this.input_data.trim(), {
     style: {
         'max-height': '20ch',
         'max-width':  'fit-content',
@@ -157,7 +157,7 @@ const answer_element = await ocx.markdown(`
 **There were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**
 `);
 await ocx.println('results:');
-await ocx.render_text(results.map(([ _, comment ]) => comment).join('\n'), {
+await ocx.print(results.map(([ _, comment ]) => comment).join('\n'), {
     style: {
         'font-family': 'monospace',
         'max-height':  '60ch',
@@ -234,7 +234,7 @@ const answer_element = await ocx.markdown(`
 **After "dampening" the reports, there were ${safe_count} safe report${safe_count === 1 ? '' : 's'} out of ${this.reports.length} total report${this.reports.length === 1 ? '' : 's'}.**
 `);
 await ocx.println('results:');
-await ocx.render_text(results.map(([ _, comment ]) => comment).join('\n'), {
+await ocx.print(results.map(([ _, comment ]) => comment).join('\n'), {
     style: {
         'font-family': 'monospace',
         'max-height':  '60ch',

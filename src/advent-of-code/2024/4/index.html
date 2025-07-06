@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-9719296c-83a8-4a7c-b202-7905cb3d9bcb" data-type="javascript">const day_number = 4;
@@ -96,7 +96,7 @@ if (this.cols < this.search_word.length) {
 }</bq-cell>
 <bq-cell id="id-29d2a46d-5093-4a0b-8796-959bc3f50c74" data-type="javascript" class="show-in-presentation">// display the input data
 await ocx.println(`input data (${this.rows}x${this.cols}):`);
-await ocx.render_text(this.input_data, {
+await ocx.print(this.input_data, {
     style: {
         'font-family': 'monospace',
         'max-height':  '20ch',
@@ -178,7 +178,7 @@ const answer_element = await ocx.markdown(`
 
 // display all_matches
 await ocx.println(`matches:`);
-await ocx.render_text(
+await ocx.print(
     all_matches
         .map(match => `${match.direction.label} at (${match.r}, ${match.c})`)
         .join('\n'),
@@ -270,7 +270,7 @@ const answer_element = await ocx.markdown(`
 
 // display x_locations
 await ocx.println(`Locations of the central A in the Xs:`);
-await ocx.render_text(
+await ocx.print(
     x_locations
         .map(location => `(${location[0]}, ${location[1]})`)
         .join('\n'),

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-38578ef0-4815-4dba-9289-be6432cbde3c" data-type="javascript">const day_number = 10;
@@ -90,7 +90,7 @@ This larger example has 9 trailheads. Considering the trailheads in reading orde
 The reindeer gleefully carries over a protractor and adds it to the pile. What is the sum of the scores of all trailheads on your topographic map?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -244,7 +244,7 @@ this.init_map = () => {
     };
 
     this.render_map = async (ocx) => {
-        return ocx.render_text(this.create_string_from_map(), this.map_output_options);
+        return ocx.print(this.create_string_from_map(), this.map_output_options);
     };
 };</bq-cell>
 <bq-cell id="id-f713d2f5-664c-4293-8e1e-db8abddd2556" data-type="javascript" class="show-in-presentation">// show initial input data and calculate results
@@ -252,7 +252,7 @@ this.init_map = () => {
 this.init_map();
 
 await ocx.println(`Input map data (${this.rows}x${this.cols}) with ${this.trailheads.length} trailhead${this.trailheads.length === 1 ? '' : 's'}:`);
-await ocx.render_text(
+await ocx.print(
     this.map
         .map(row => row.map(({ height }) => height).join(''))
         .join('\n'),
@@ -279,13 +279,13 @@ const answer_element = await ocx.markdown(`
 The total score for the map is **${this.map_score}**.
 `);
 
-await ocx.render_text(`The trails from each trailhead (${this.trailheads.length}):`);
+await ocx.print(`The trails from each trailhead (${this.trailheads.length}):`);
 await (() => {
     const trailhead_labels = this.trailhead_results.map(({ trailhead }) => `(${trailhead.r},${trailhead.c})`);
     const max_trailhead_label_length = trailhead_labels.reduce((max, label) => (max < label.length ? label.length : max), 0);
     const trailhead_score_strings = this.trailhead_results.map(({ score }) => score.toString());
     const max_trailhead_score_string_length = trailhead_score_strings.reduce((max, score_string) => (max < score_string.length ? score_string.length : max), 0);
-    return ocx.render_text(
+    return ocx.print(
         this.trailhead_results
             .map(({ trailhead, trails, score }, index) => {
                 const padded_label = `${trailhead_labels[index]}:`.padEnd(max_trailhead_label_length + 1);
@@ -374,7 +374,7 @@ Considering its trailheads in reading order, they have ratings of 20, 24, 10, 4,
 You're not sure how, but the reindeer seems to have crafted some tiny flags out of toothpicks and bits of paper and is using them to mark trailheads on your topographic map. What is the sum of the ratings of all trailheads?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

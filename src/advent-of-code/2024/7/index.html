@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-16d714a0-b846-4651-9a42-9b4b255cc623" data-type="javascript">const day_number = 7;
@@ -56,7 +56,7 @@ The engineers just need the total calibration result, which is the sum of the te
 Determine which equations could possibly be true. What is their total calibration result?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -115,7 +115,7 @@ const formatted_input_lines = this.equation_values
           return `${this.padded_result_labels[line_index]} ${values.join(' ')}`;
       })
       .join('\n');
-await ocx.render_text(formatted_input_lines, this.data_output_options);</bq-cell>
+await ocx.print(formatted_input_lines, this.data_output_options);</bq-cell>
 <bq-cell id="id-5d16d7cd-45b1-41d5-9e18-46d4490f1362" data-type="javascript" class="show-in-presentation">// define calculation functions
 
 this.find_equation_completions = (result, values, operators) => {  // operators: array of { label, op }; returns an array of arrays of operator labels
@@ -207,7 +207,7 @@ const answer_element = await ocx.markdown(`
 `);
 
 await ocx.println(`Completion results:`);
-await ocx.render_text(formatted_completion_results, this.data_output_options);
+await ocx.print(formatted_completion_results, this.data_output_options);
 
 // scroll answer_element into view, but after a delay to let other rendering finish
 sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
@@ -239,7 +239,7 @@ Adding up all six test values (the three that could be made before using only + 
 Using your new knowledge of elephant hiding spots, determine which equations could possibly be true. What is their total calibration result?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -261,7 +261,7 @@ const wait_ocx = ocx.create_child_ocx({
         padding:      '1em',
     }
 });
-const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
+const waiting_element = await wait_ocx.print('Part Two: working ', { inline: true });
 
 // this time the calculation takes a while, so provide a heartbeat_fn to show progress,,,
 const attempted_completion_results = await this.get_completion_results(operators, async (equation_values_index) => {
@@ -289,7 +289,7 @@ await ocx.markdown(`
 `);
 
 const completion_results_element = await ocx.println(`Completion results for Part Two:`);
-await ocx.render_text(formatted_completion_results, this.data_output_options);
+await ocx.print(formatted_completion_results, this.data_output_options);
 completion_results_element.scrollIntoView();</bq-cell>
 </body>
 </html>

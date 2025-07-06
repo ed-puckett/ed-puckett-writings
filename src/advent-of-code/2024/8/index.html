@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-178053c2-2dec-4061-a1f7-fac77f95a995" data-type="javascript">const day_number = 8;
@@ -103,7 +103,7 @@ Because the topmost A-frequency antenna overlaps with a 0-frequency antinode, th
 Calculate the impact of the signal. How many unique locations within the bounds of the map contain an antinode?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -214,7 +214,7 @@ this.display_map = async (the_ocx, with_antinodes=false) => {
     } else {
         map_string = this.map.map(row => row.join('')).join('\n');
     }
-    return the_ocx.render_text(map_string, this.map_output_options);
+    return the_ocx.print(map_string, this.map_output_options);
 };</bq-cell>
 <bq-cell id="id-f77fa301-af96-43c3-93d8-4c68a330fa99" data-type="javascript" class="show-in-presentation">// show initial input data
 
@@ -303,7 +303,7 @@ The original example now has 34 antinodes, including the antinodes that appear o
 Calculate the impact of the signal using this updated model. How many unique locations within the bounds of the map contain an antinode?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

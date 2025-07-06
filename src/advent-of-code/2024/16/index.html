@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-ec33f750-af93-480c-8f91-4ca44e0b5940" data-type="javascript">const day_number = 16;
@@ -111,7 +111,7 @@ Note that the path shown above includes one 90 degree turn as the very first mov
 Analyze your map carefully. What is the lowest score a Reindeer could possibly get?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -244,7 +244,7 @@ bqv.init_data = () => {
         const path_cells = with_path
               ? new Map(with_path.map(({ cell, entry_dir }) => ([ cell, entry_dir.ch ])))
               : undefined;
-        return ocx.render_text(
+        return ocx.print(
             bqv.map
                 .map(row => {
                     return row
@@ -643,7 +643,7 @@ if (typeof input_data_example_to_use === 'number') {
 
 bqv.init_data();
 
-await ocx.render_text(`The map (${bqv.rows}x${bqv.cols}):`);
+await ocx.print(`The map (${bqv.rows}x${bqv.cols}):`);
 await bqv.render_map(ocx);
 
 const trace_label = ocx.create_child({
@@ -683,7 +683,7 @@ const wait_ocx = ocx.create_child_ocx({
         padding:      '1em',
     }
 });
-const waiting_element = await wait_ocx.render_text('Part One: working ', { inline: true });
+const waiting_element = await wait_ocx.print('Part One: working ', { inline: true });
 sleep(0.1).then(() => waiting_element.scrollIntoView());
 
 const trace_mod            = 100;  // attempts between calls to trace_fn in find_best_maze_solution()
@@ -739,7 +739,7 @@ if (bqv.best_solution) {
         await println(`${bqv.best_solution.best_paths[0].map(({ entry_dir }) => entry_dir.ch).join('')}`);
     }
     await println();
-    await ocx.render_text(`The final map with the first best path shown:`);
+    await ocx.print(`The final map with the first best path shown:`);
     await bqv.render_map(ocx, bqv.best_solution.best_paths[0]);
 }
 
@@ -805,7 +805,7 @@ In the second example, there are 64 tiles that are part of at least one of the b
 Analyze your map further. How many tiles are part of at least one of the best paths through the maze?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-16d714a0-b846-4651-9a42-9b4b255cc623" data-type="javascript">const day_number = 6;
@@ -119,7 +119,7 @@ In this example, the guard will visit 41 distinct positions on your map.
 Predict the path of the guard. How many distinct positions will the guard visit before leaving the mapped area?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -243,7 +243,7 @@ this.create_string_from_map = () => {
 }
 
 await ocx.println(`The initial map (${this.rows}x${this.cols}):`);
-await ocx.render_text(this.create_string_from_map(), this.map_output_options);</bq-cell>
+await ocx.print(this.create_string_from_map(), this.map_output_options);</bq-cell>
 <bq-cell id="id-c6894a4e-d060-4a6d-89db-b5f9d12755d7" data-type="javascript" class="show-in-presentation">// set up some utility functions
 
 if (this.map.some(row => row.some(ch => ch === this.guard_prior_position_char))) {
@@ -406,7 +406,7 @@ ${looped ? `* **(loop size = ${loop_size})**` : ''}
 `);
 
 await ocx.println(`The final map (${this.rows}x${this.cols}):`);
-await ocx.render_text(this.create_string_from_map(), this.map_output_options);
+await ocx.print(this.create_string_from_map(), this.map_output_options);
 
 // scroll answer_element into view, but after a delay to let other rendering finish
 sleep(0.1).then(() => answer_element.scrollIntoView());</bq-cell>
@@ -516,7 +516,7 @@ It doesn't really matter what you choose to use as an obstacle so long as you an
 You need to get the guard stuck in a loop by adding a single new obstruction. How many different positions could you choose for this obstruction?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -532,7 +532,7 @@ const wait_ocx = ocx.create_child_ocx({
         padding:      '1em',
     }
 });
-const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
+const waiting_element = await wait_ocx.print('Part Two: working ', { inline: true });
 
 this.init_map();
 this.obstruction_tries = 0;

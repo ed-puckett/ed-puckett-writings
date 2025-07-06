@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-4c914ad9-6649-4275-aa5f-735c9c384ddd" data-type="javascript">const day_number = 12;
@@ -108,7 +108,7 @@ So, it has a total price of 1930.
 What is the total price of fencing all regions on your map?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -182,7 +182,7 @@ this.init_map = () => {
     }
 
     this.render_map = async (ocx) => {
-        return ocx.render_text(this.map.map(row => row.join('')).join('\n'), this.map_output_options);
+        return ocx.print(this.map.map(row => row.join('')).join('\n'), this.map_output_options);
     };
 
     const make_empty_plot_cell = (r, c) => {
@@ -325,7 +325,7 @@ continue;//!!!
 
 this.init_map();
 
-await ocx.render_text(`The map (${this.rows}x${this.cols}):`);
+await ocx.print(`The map (${this.rows}x${this.cols}):`);
 await this.render_map(ocx);
 
 const total_fence_price = this.regions.reduce((total, region) => (total + region.get_fence_price()), 0)
@@ -407,7 +407,7 @@ Adding these together produces its new total price of 1206.
 What is the new total price of fencing all regions on your map?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

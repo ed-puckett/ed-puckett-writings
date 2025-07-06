@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-8c53dc72-acd7-48b6-8f10-e673749dd635" data-type="javascript">
@@ -50,7 +50,7 @@ for (let i = 0; i <= s.length; i++) {
         '-->'.padStart(s.length-t.length+3, '-'),
         t_,
     );
-    await ocx.render_text(output, output_options);
+    await ocx.print(output, output_options);
     if (!valid || !same) {
         throw new Error('conversion failed');
     }

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-ba454bb1-8a7d-4e38-85ee-16ee20b1bda6" data-type="javascript">const day_number = 19;
@@ -66,7 +66,7 @@ In this example, 6 of the eight designs are possible with the available towel pa
 To get into the onsen as soon as possible, consult your list of towel patterns and desired designs carefully. How many designs are possible?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -534,7 +534,7 @@ Adding up all of the ways the towels in this example could be arranged into the 
 They'll let you into the onsen as soon as you have the list. What do you get if you add up the number of different ways you could make each design?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-6db339fd-91ee-47ab-8d08-d6e014bccd51" data-type="javascript">const day_number = 3;
@@ -60,7 +60,7 @@ if (typeof input_data !== 'string') {
 this.input_data = input_data;</bq-cell>
 <bq-cell id="id-d6b4d231-b397-4e3f-bb20-6b1cbaff0a68" data-type="javascript" class="show-in-presentation">// display the input data
 await ocx.println('input data:');
-await ocx.render_text(this.input_data, {
+await ocx.print(this.input_data, {
     style: {
         'max-height': '20ch',
         'max-width':  'fit-content',
@@ -96,7 +96,7 @@ const answer_element = await ocx.markdown(`
 
 // display found_expressions
 await ocx.println(`found expressions (${found_expressions.length}):`);
-await ocx.render_text(found_expressions.join('\n'), {
+await ocx.print(found_expressions.join('\n'), {
     style: {
         'max-height': '20ch',
         'max-width':  'fit-content',
@@ -178,7 +178,7 @@ await ocx.markdown(`
 
 // display found_expressions
 await ocx.println(`found expressions (${found_expressions.length}):`);
-await ocx.render_text(found_expressions.join('\n'), {
+await ocx.print(found_expressions.join('\n'), {
     style: {
         'max-height': '20ch',
         'max-width':  'fit-content',

@@ -2,7 +2,7 @@
 <html lang="en" data-cell-view="presentation" data-auto-render>
 <head>
     <meta charset="utf-8">
-    <script src="https://ed-puckett.github.io/bq/dist/v11.0/bq-bootstrap.js"></script>
+    <script src="https://ed-puckett.github.io/bq/dist/v13.0/bq-bootstrap.js"></script>
 </head>
 <body>
 <bq-cell id="id-0c881870-9317-4460-8d18-d73f11a47923" data-type="javascript">const day_number = 11;
@@ -79,7 +79,7 @@ In this example, after blinking six times, you would have 22 stones. After blink
 Consider the arrangement of stones in front of you. How many stones will you have after blinking 25 times?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -192,7 +192,7 @@ this.init_stones = () => {
     };
 
     this.output_stones = async (ocx) => {
-        return ocx.render_text(this.stones.join(' '), this.stone_output_options);
+        return ocx.print(this.stones.join(' '), this.stone_output_options);
     };
 };</bq-cell>
 <bq-cell id="id-695807ce-e481-4c7d-8d92-83c767acf649" data-type="javascript" class="show-in-presentation">// show initial input data and calculate results
@@ -243,7 +243,7 @@ The Historians sure are taking a long time. To be fair, the infinite corridors a
 How many stones would you have after blinking a total of 75 times?
 `;
 
-await ccx.render_text(description, {
+await ccx.print(description, {
     style: {
         'font-family': 'monospace',
     },
@@ -468,7 +468,7 @@ const wait_ocx = ocx.create_child_ocx({
         padding:      '1em',
     }
 });
-const waiting_element = await wait_ocx.render_text('Part Two: working ', { inline: true });
+const waiting_element = await wait_ocx.print('Part Two: working ', { inline: true });
 
 let heartbeat_iterations = 0;
 const heartbeat_fn = async () => {
