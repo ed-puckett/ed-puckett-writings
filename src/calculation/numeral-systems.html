@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" data-cell-view="presentation" data-auto-render>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ed-puckett.github.io/bq/dist/v17.0/bq-bootstrap.js"></script>
+</head>
+<body>
+<bq-cell data-type="javascript">
+ocx.bq.set_title('Numeral Systems') 
+</bq-cell>
+<bq-cell data-type="markdown">
+## Counting
+~~~! javascript
+const { draw_hands } = await import_local('./hands.js');
+await draw_hands(ocx, canvas_tools, {
+    fingers_start_at_1: true,
+});
+~~~
+</bq-cell>
+</body>
+</html>
